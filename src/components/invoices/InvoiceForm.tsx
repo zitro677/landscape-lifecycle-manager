@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,11 +24,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { useCreateInvoice } from "./useInvoices";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
+  client_id: z.string().optional(),
   client: z.string().min(2, {
     message: "Client name must be at least 2 characters.",
   }),
@@ -62,10 +64,32 @@ const InvoiceForm: React.FC = () => {
     new Date(new Date().setDate(new Date().getDate() + 30)),
     "yyyy-MM-dd"
   );
+  const createInvoice = useCreateInvoice();
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name");
+
+      if (error) {
+        console.error("Error fetching clients:", error);
+        toast.error("Error loading clients");
+        return;
+      }
+
+      setClients(data || []);
+    };
+
+    fetchClients();
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      client_id: "",
       client: "",
       email: "",
       address: "",
@@ -92,6 +116,76 @@ const InvoiceForm: React.FC = () => {
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
+  const handleClientChange = async (clientId: string) => {
+    form.setValue("client_id", clientId);
+    
+    if (clientId) {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("name, email, address")
+        .eq("id", clientId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching client details:", error);
+        return;
+      }
+
+      if (data) {
+        form.setValue("client", data.name);
+        form.setValue("email", data.email || "");
+        form.setValue("address", data.address || "");
+      }
+    }
+  };
+
+  const generateInvoiceNumber = () => {
+    const year = new Date().getFullYear();
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    return `INV-${year}-${randomPart}`;
+  };
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    
+    try {
+      const totalAmount = values.items.reduce(
+        (sum, item) => sum + item.quantity * item.unitPrice,
+        0
+      );
+      
+      const invoiceData = {
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        client_id: values.client_id || null,
+        invoice_number: generateInvoiceNumber(),
+        issue_date: values.invoiceDate,
+        due_date: values.dueDate,
+        amount: totalAmount,
+        tax_rate: taxRate,
+        notes: values.notes,
+        status: "Pending",
+      };
+      
+      const invoiceItems = values.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+      }));
+      
+      await createInvoice.mutateAsync({
+        invoice: invoiceData,
+        items: invoiceItems,
+      });
+      
+      navigate("/invoices");
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      toast.error("Failed to create invoice");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   const addItem = () => {
     form.setValue("items", [
       ...form.getValues("items"),
@@ -109,17 +203,6 @@ const InvoiceForm: React.FC = () => {
     }
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Invoice Created",
-      description: "Invoice has been successfully created.",
-    });
-
-    // In a real app, we would save the invoice to the database here
-    navigate("/invoices");
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -136,12 +219,13 @@ const InvoiceForm: React.FC = () => {
             <Button type="button" variant="outline" onClick={() => form.reset()}>
               Reset
             </Button>
-            <Button type="submit">Save Invoice</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save Invoice"}
+            </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Client Information */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -150,6 +234,23 @@ const InvoiceForm: React.FC = () => {
             <Card>
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Client Information</h3>
+                
+                <div className="mb-4">
+                  <FormLabel>Select Client</FormLabel>
+                  <Select onValueChange={handleClientChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
@@ -202,7 +303,6 @@ const InvoiceForm: React.FC = () => {
             </Card>
           </motion.div>
 
-          {/* Invoice Details */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -263,7 +363,6 @@ const InvoiceForm: React.FC = () => {
             </Card>
           </motion.div>
 
-          {/* Summary */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -292,7 +391,6 @@ const InvoiceForm: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Line Items */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -395,7 +493,6 @@ const InvoiceForm: React.FC = () => {
           </Card>
         </motion.div>
 
-        {/* Notes */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -428,7 +525,9 @@ const InvoiceForm: React.FC = () => {
           <Button type="button" variant="outline" onClick={() => navigate("/invoices")}>
             Cancel
           </Button>
-          <Button type="submit">Save Invoice</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Invoice"}
+          </Button>
         </div>
       </form>
     </Form>

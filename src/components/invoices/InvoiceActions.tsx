@@ -1,24 +1,64 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Mail, Eye, MoreHorizontal } from "lucide-react";
+import { Download, Mail, Eye, MoreHorizontal, CheckCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { useUpdateInvoiceStatus, useDeleteInvoice } from "./useInvoices";
+import { Invoice } from "./types";
+import { toast } from "sonner";
 
-const InvoiceActions: React.FC = () => {
+interface InvoiceActionsProps {
+  invoice: Invoice;
+}
+
+const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
+  const navigate = useNavigate();
+  const updateInvoiceStatus = useUpdateInvoiceStatus();
+  const deleteInvoice = useDeleteInvoice();
+
+  const handleMarkAsPaid = async () => {
+    try {
+      await updateInvoiceStatus.mutateAsync({ id: invoice.id, status: "Paid" });
+    } catch (error) {
+      console.error("Error marking invoice as paid:", error);
+    }
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (window.confirm("Are you sure you want to delete this invoice?")) {
+      try {
+        await deleteInvoice.mutateAsync(invoice.id);
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+      }
+    }
+  };
+
+  const handleSendEmail = () => {
+    // In a real app, this would send an email with the invoice
+    toast.info("Email functionality will be implemented soon");
+  };
+
+  const handleDownloadPDF = () => {
+    // In a real app, this would generate and download a PDF
+    toast.info("PDF generation will be implemented soon");
+  };
+
   return (
     <div className="flex gap-2">
-      <Button size="sm" variant="outline">
+      <Button size="sm" variant="outline" onClick={() => {}}>
         <Eye className="h-4 w-4 mr-1" /> View
       </Button>
-      <Button size="sm" variant="outline">
+      <Button size="sm" variant="outline" onClick={handleDownloadPDF}>
         <Download className="h-4 w-4 mr-1" /> PDF
       </Button>
-      <Button size="sm" variant="outline">
+      <Button size="sm" variant="outline" onClick={handleSendEmail}>
         <Mail className="h-4 w-4 mr-1" /> Email
       </Button>
       <DropdownMenu>
@@ -28,9 +68,18 @@ const InvoiceActions: React.FC = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>Mark as Paid</DropdownMenuItem>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem className="text-red-500">
+          {invoice.status !== "Paid" && (
+            <DropdownMenuItem onClick={handleMarkAsPaid}>
+              <CheckCircle className="h-4 w-4 mr-2" /> Mark as Paid
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={() => {}}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            className="text-red-500"
+            onClick={handleDeleteInvoice}
+          >
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

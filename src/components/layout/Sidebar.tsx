@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -14,6 +13,8 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { toast } from "sonner";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -76,6 +77,18 @@ const sidebarVariants = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("You have been logged out");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to log out");
+    }
+  };
+
   return (
     <>
       {/* Mobile overlay */}
@@ -159,6 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
             <Button
               variant="ghost"
               className="w-full justify-start text-muted-foreground hover:text-current"
+              onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out

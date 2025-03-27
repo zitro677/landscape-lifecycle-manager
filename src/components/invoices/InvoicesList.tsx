@@ -2,15 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import InvoiceCard from "./InvoiceCard";
-
-interface Invoice {
-  id: string;
-  client: string;
-  date: string;
-  dueDate: string;
-  amount: string;
-  status: string;
-}
+import { Invoice } from "./types";
 
 interface InvoicesListProps {
   invoices: Invoice[];
