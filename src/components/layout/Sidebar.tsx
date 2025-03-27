@@ -102,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b px-4">
-          <h2 className="text-lg font-semibold">LandscapeOS</h2>
+          <h2 className="text-lg font-semibold">Landscape Irrigation</h2>
         </div>
 
         <ScrollArea className="h-[calc(100vh-4rem)]">
