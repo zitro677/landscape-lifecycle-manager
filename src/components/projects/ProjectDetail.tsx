@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Clock, Calendar, DollarSign, Users, Edit, Share, Download } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, DollarSign, Users, Edit, Share, Download, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import AnimatedPage from "../shared/AnimatedPage";
