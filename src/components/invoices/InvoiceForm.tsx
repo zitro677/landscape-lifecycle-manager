@@ -157,6 +157,8 @@ const InvoiceForm: React.FC = () => {
       const invoiceData = {
         user_id: (await supabase.auth.getUser()).data.user?.id,
         client_id: values.client_id || null,
+        project_id: null,
+        proposal_id: null,
         invoice_number: generateInvoiceNumber(),
         issue_date: values.invoiceDate,
         due_date: values.dueDate,
