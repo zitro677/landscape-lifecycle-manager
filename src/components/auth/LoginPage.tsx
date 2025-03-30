@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Google } from "lucide-react";
+import { AlertCircle, Mail } from "lucide-react"; // Changed Google to Mail
 import { useAuth } from "./AuthProvider";
 import { motion } from "framer-motion";
 
@@ -61,7 +61,7 @@ const LoginPage: React.FC = () => {
               className="w-full flex items-center justify-center gap-2"
               disabled={isSubmitting}
             >
-              <Google className="h-5 w-5" />
+              <Mail className="h-5 w-5" /> {/* Changed Google to Mail icon */}
               {isSubmitting ? "Connecting..." : "Sign in with Google"}
             </Button>
           </CardContent>
