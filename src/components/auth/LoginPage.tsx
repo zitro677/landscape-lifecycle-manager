@@ -6,6 +6,7 @@ import { useAuth } from "./AuthProvider";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginPage: React.FC = () => {
   const { user, loading } = useAuth();
