@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -29,6 +30,9 @@ import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { useCreateInvoice } from "./useInvoices";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "../auth/AuthProvider";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const formSchema = z.object({
   client_id: z.string().optional(),
@@ -67,6 +71,8 @@ const InvoiceForm: React.FC = () => {
   const createInvoice = useCreateInvoice();
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { user } = useAuth();
+  const [authError, setAuthError] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -149,13 +155,21 @@ const InvoiceForm: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Check if user is authenticated
+      if (!user) {
+        console.error("User is not authenticated");
+        setAuthError(true);
+        setIsLoading(false);
+        return;
+      }
+      
       const totalAmount = values.items.reduce(
         (sum, item) => sum + item.quantity * item.unitPrice,
         0
       );
       
       const invoiceData = {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: user.id, // Use the user ID from Auth context
         client_id: values.client_id || null,
         project_id: null,
         proposal_id: null,
@@ -179,6 +193,7 @@ const InvoiceForm: React.FC = () => {
         items: invoiceItems,
       });
       
+      toast.success("Invoice created successfully");
       navigate("/invoices");
     } catch (error) {
       console.error("Error creating invoice:", error);
@@ -204,6 +219,23 @@ const InvoiceForm: React.FC = () => {
       );
     }
   };
+
+  if (authError) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Authentication Error</AlertTitle>
+          <AlertDescription>
+            You must be logged in to create an invoice. Please login and try again.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4">
+          <Button onClick={() => navigate("/auth")}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
