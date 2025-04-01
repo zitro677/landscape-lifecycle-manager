@@ -42,6 +42,95 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string
+          project_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          hours_used: number | null
+          id: string
+          life_span: unknown | null
+          name: string
+          purchase_date: string | null
+          quantity: number | null
+          status: string | null
+          unit_cost: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          hours_used?: number | null
+          id?: string
+          life_span?: unknown | null
+          name: string
+          purchase_date?: string | null
+          quantity?: number | null
+          status?: string | null
+          unit_cost?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          hours_used?: number | null
+          id?: string
+          life_span?: unknown | null
+          name?: string
+          purchase_date?: string | null
+          quantity?: number | null
+          status?: string | null
+          unit_cost?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string | null
@@ -289,6 +378,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tax_records: {
+        Row: {
+          created_at: string | null
+          deductions: Json | null
+          expenses: number | null
+          gross_income: number | null
+          id: string
+          quarter: number
+          status: string | null
+          tax_due: number | null
+          updated_at: string | null
+          user_id: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          deductions?: Json | null
+          expenses?: number | null
+          gross_income?: number | null
+          id?: string
+          quarter: number
+          status?: string | null
+          tax_due?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          deductions?: Json | null
+          expenses?: number | null
+          gross_income?: number | null
+          id?: string
+          quarter?: number
+          status?: string | null
+          tax_due?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          year?: number
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
