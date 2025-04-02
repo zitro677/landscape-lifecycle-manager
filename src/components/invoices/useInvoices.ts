@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceItem, InvoiceStatus } from "./types";
@@ -14,7 +13,9 @@ export const useInvoices = () => {
         .select(`
           *,
           clients (
-            name
+            name,
+            email,
+            address
           )
         `)
         .order("created_at", { ascending: false });

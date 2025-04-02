@@ -40,6 +40,14 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
     }
   };
 
+  const handleViewInvoice = () => {
+    // For now, just log and show a toast notification
+    console.log("Viewing invoice:", invoice.id);
+    toast.info(`Viewing invoice ${invoice.invoice_number}`);
+    // In a real implementation, you would navigate to an invoice detail page
+    // navigate(`/invoices/${invoice.id}`);
+  };
+
   const handleSendEmail = () => {
     // In a real app, this would send an email with the invoice
     toast.info("Email functionality will be implemented soon");
@@ -50,9 +58,16 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
     toast.info("PDF generation will be implemented soon");
   };
 
+  const handleEditInvoice = () => {
+    // For now, just log and show a toast notification
+    toast.info(`Editing invoice ${invoice.invoice_number}`);
+    // In a real implementation, you would navigate to the edit invoice page
+    // navigate(`/invoices/edit/${invoice.id}`);
+  };
+
   return (
     <div className="flex gap-2">
-      <Button size="sm" variant="outline" onClick={() => {}}>
+      <Button size="sm" variant="outline" onClick={handleViewInvoice}>
         <Eye className="h-4 w-4 mr-1" /> View
       </Button>
       <Button size="sm" variant="outline" onClick={handleDownloadPDF}>
@@ -73,7 +88,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
               <CheckCircle className="h-4 w-4 mr-2" /> Mark as Paid
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => {}}>
+          <DropdownMenuItem onClick={handleEditInvoice}>
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem 
