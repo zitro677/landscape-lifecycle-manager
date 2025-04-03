@@ -44,6 +44,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
   };
 
   const handleViewInvoice = () => {
+    console.log("Viewing invoice:", invoice.id);
     setViewDialogOpen(true);
   };
 
