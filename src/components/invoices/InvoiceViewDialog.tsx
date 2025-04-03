@@ -2,7 +2,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Mail } from "lucide-react";
+import { Download, Mail, Printer } from "lucide-react";
 import { Invoice } from "./types";
 import { formatCurrency } from "./utils";
 
@@ -12,6 +12,7 @@ interface InvoiceViewDialogProps {
   onOpenChange: (open: boolean) => void;
   onDownloadPDF: () => void;
   onSendEmail: () => void;
+  onPrintInvoice: () => void;
 }
 
 const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
@@ -20,6 +21,7 @@ const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
   onOpenChange,
   onDownloadPDF,
   onSendEmail,
+  onPrintInvoice,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -94,6 +96,9 @@ const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
           )}
 
           <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onPrintInvoice}>
+              <Printer className="h-4 w-4 mr-1" /> Print
+            </Button>
             <Button variant="outline" onClick={onDownloadPDF}>
               <Download className="h-4 w-4 mr-1" /> Download PDF
             </Button>

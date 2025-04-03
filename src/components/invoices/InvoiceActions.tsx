@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Mail, Eye, MoreHorizontal, CheckCircle } from "lucide-react";
+import { Download, Mail, Eye, MoreHorizontal, CheckCircle, Printer } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,7 @@ import InvoiceViewDialog from "./InvoiceViewDialog";
 import InvoicePdfGenerator from "./InvoicePdfGenerator";
 import InvoiceEmailService from "./InvoiceEmailService";
 import InvoiceStatusManager from "./InvoiceStatusManager";
+import InvoicePrintService from "./InvoicePrintService";
 
 interface InvoiceActionsProps {
   invoice: Invoice;
@@ -24,10 +25,11 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
   const navigate = useNavigate();
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   
-  // Use our new service components
+  // Use our service components
   const pdfGenerator = InvoicePdfGenerator({ invoice });
   const emailService = InvoiceEmailService({ invoice });
   const statusManager = InvoiceStatusManager({ invoice });
+  const printService = InvoicePrintService({ invoice });
 
   const handleViewInvoice = () => {
     console.log("Viewing invoice:", invoice.id);
@@ -40,6 +42,10 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
 
   const handleSendEmail = () => {
     emailService.sendEmail();
+  };
+
+  const handlePrintInvoice = () => {
+    printService.printInvoice();
   };
 
   const handleEditInvoice = () => {
@@ -57,6 +63,9 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
         </Button>
         <Button size="sm" variant="outline" onClick={handleDownloadPDF}>
           <Download className="h-4 w-4 mr-1" /> PDF
+        </Button>
+        <Button size="sm" variant="outline" onClick={handlePrintInvoice}>
+          <Printer className="h-4 w-4 mr-1" /> Print
         </Button>
         <Button size="sm" variant="outline" onClick={handleSendEmail}>
           <Mail className="h-4 w-4 mr-1" /> Email
@@ -92,6 +101,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
         onOpenChange={setViewDialogOpen}
         onDownloadPDF={handleDownloadPDF}
         onSendEmail={handleSendEmail}
+        onPrintInvoice={handlePrintInvoice}
       />
     </>
   );
