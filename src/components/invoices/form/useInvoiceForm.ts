@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCreateInvoice } from "../useInvoices";
-import { formSchema, InvoiceFormValues } from "./formSchema";
+import { formSchema, InvoiceFormValues, InvoiceItemType } from "./formSchema";
 
 export const useInvoiceForm = () => {
   const navigate = useNavigate();
@@ -73,7 +72,7 @@ export const useInvoiceForm = () => {
     fetchClients();
   }, []);
 
-  const items = form.watch("items");
+  const items = form.watch("items") as InvoiceItemType[];
   
   const subtotal = items.reduce(
     (sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0),
@@ -88,7 +87,6 @@ export const useInvoiceForm = () => {
       console.log("Client selected:", clientId);
       form.setValue("client_id", clientId, { shouldValidate: true });
       
-      // Find the client in our already loaded clients array
       const selectedClient = clients.find(client => client.id === clientId);
       
       if (selectedClient) {
@@ -97,7 +95,6 @@ export const useInvoiceForm = () => {
         form.setValue("email", selectedClient.email || "", { shouldValidate: true });
         form.setValue("address", selectedClient.address || "", { shouldValidate: true });
       } else {
-        // Fallback to fetching from database if not found in local array
         const { data, error } = await supabase
           .from("clients")
           .select("name, email, address")
@@ -133,7 +130,6 @@ export const useInvoiceForm = () => {
     setIsLoading(true);
     
     try {
-      // Check if user is authenticated
       if (!user) {
         console.error("User is not authenticated");
         setAuthError(true);
@@ -186,7 +182,7 @@ export const useInvoiceForm = () => {
   const addItem = () => {
     form.setValue("items", [
       ...form.getValues("items"),
-      { description: "", quantity: 1, unitPrice: 0 },
+      { description: "", quantity: 1, unitPrice: 0 } as InvoiceItemType,
     ]);
   };
 
@@ -195,7 +191,7 @@ export const useInvoiceForm = () => {
     if (currentItems.length > 1) {
       form.setValue(
         "items",
-        currentItems.filter((_, i) => i !== index)
+        currentItems.filter((_, i) => i !== index) as InvoiceItemType[]
       );
     }
   };
