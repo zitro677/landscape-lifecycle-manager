@@ -75,24 +75,6 @@ const InvoiceForm: React.FC = () => {
   const { user } = useAuth();
   const [authError, setAuthError] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, name");
-
-      if (error) {
-        console.error("Error fetching clients:", error);
-        toast.error("Error loading clients");
-        return;
-      }
-
-      setClients(data || []);
-    };
-
-    fetchClients();
-  }, []);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -113,6 +95,35 @@ const InvoiceForm: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching clients...");
+        
+        const { data, error } = await supabase
+          .from("clients")
+          .select("id, name, email, address");
+
+        if (error) {
+          console.error("Error fetching clients:", error);
+          toast.error("Error loading clients");
+          return;
+        }
+
+        console.log("Clients loaded:", data);
+        setClients(data || []);
+      } catch (err) {
+        console.error("Exception fetching clients:", err);
+        toast.error("Failed to load clients");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
   const items = form.watch("items");
   
   const subtotal = items.reduce(
@@ -124,25 +135,42 @@ const InvoiceForm: React.FC = () => {
   const total = subtotal + tax;
 
   const handleClientChange = async (clientId: string) => {
-    if (clientId) {
+    try {
+      console.log("Client selected:", clientId);
       form.setValue("client_id", clientId, { shouldValidate: true });
       
-      const { data, error } = await supabase
-        .from("clients")
-        .select("name, email, address")
-        .eq("id", clientId)
-        .single();
+      // Find the client in our already loaded clients array
+      const selectedClient = clients.find(client => client.id === clientId);
+      
+      if (selectedClient) {
+        console.log("Client details:", selectedClient);
+        form.setValue("client", selectedClient.name, { shouldValidate: true });
+        form.setValue("email", selectedClient.email || "", { shouldValidate: true });
+        form.setValue("address", selectedClient.address || "", { shouldValidate: true });
+      } else {
+        // Fallback to fetching from database if not found in local array
+        const { data, error } = await supabase
+          .from("clients")
+          .select("name, email, address")
+          .eq("id", clientId)
+          .single();
 
-      if (error) {
-        console.error("Error fetching client details:", error);
-        return;
-      }
+        if (error) {
+          console.error("Error fetching client details:", error);
+          toast.error("Error loading client details");
+          return;
+        }
 
-      if (data) {
-        form.setValue("client", data.name, { shouldValidate: true });
-        form.setValue("email", data.email || "", { shouldValidate: true });
-        form.setValue("address", data.address || "", { shouldValidate: true });
+        if (data) {
+          console.log("Client details from DB:", data);
+          form.setValue("client", data.name, { shouldValidate: true });
+          form.setValue("email", data.email || "", { shouldValidate: true });
+          form.setValue("address", data.address || "", { shouldValidate: true });
+        }
       }
+    } catch (err) {
+      console.error("Error in handleClientChange:", err);
+      toast.error("Failed to load client details");
     }
   };
 
@@ -182,6 +210,8 @@ const InvoiceForm: React.FC = () => {
         notes: values.notes,
         status: "Pending",
       };
+      
+      console.log("Submitting invoice:", invoiceData);
       
       const invoiceItems = values.items.map((item) => ({
         description: item.description,
@@ -280,18 +310,25 @@ const InvoiceForm: React.FC = () => {
                         <Select 
                           onValueChange={handleClientChange}
                           value={field.value}
+                          defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-full bg-white">
                               <SelectValue placeholder="Select a client" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            {clients.map((client) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                {client.name}
+                          <SelectContent className="bg-white">
+                            {clients.length === 0 ? (
+                              <SelectItem value="no-clients" disabled>
+                                No clients available
                               </SelectItem>
-                            ))}
+                            ) : (
+                              clients.map((client) => (
+                                <SelectItem key={client.id} value={client.id}>
+                                  {client.name}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
