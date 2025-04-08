@@ -34,7 +34,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 
 const formSchema = z.object({
-  client_id: z.string().optional(),
+  client_id: z.string().min(1, {
+    message: "Please select a client.",
+  }),
   client: z.string().min(2, {
     message: "Client name must be at least 2 characters.",
   }),
@@ -122,9 +124,9 @@ const InvoiceForm: React.FC = () => {
   const total = subtotal + tax;
 
   const handleClientChange = async (clientId: string) => {
-    form.setValue("client_id", clientId);
-    
     if (clientId) {
+      form.setValue("client_id", clientId, { shouldValidate: true });
+      
       const { data, error } = await supabase
         .from("clients")
         .select("name, email, address")
@@ -137,9 +139,9 @@ const InvoiceForm: React.FC = () => {
       }
 
       if (data) {
-        form.setValue("client", data.name);
-        form.setValue("email", data.email || "");
-        form.setValue("address", data.address || "");
+        form.setValue("client", data.name, { shouldValidate: true });
+        form.setValue("email", data.email || "", { shouldValidate: true });
+        form.setValue("address", data.address || "", { shouldValidate: true });
       }
     }
   };
@@ -168,8 +170,8 @@ const InvoiceForm: React.FC = () => {
       );
       
       const invoiceData = {
-        user_id: user.id, // Use the user ID from Auth context
-        client_id: values.client_id || null,
+        user_id: user.id,
+        client_id: values.client_id,
         project_id: null,
         proposal_id: null,
         invoice_number: generateInvoiceNumber(),
@@ -269,19 +271,33 @@ const InvoiceForm: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-4">Client Information</h3>
                 
                 <div className="mb-4">
-                  <FormLabel>Select Client</FormLabel>
-                  <Select onValueChange={handleClientChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormField
+                    control={form.control}
+                    name="client_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Client</FormLabel>
+                        <Select 
+                          onValueChange={handleClientChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a client" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
                 
                 <div className="space-y-4">
