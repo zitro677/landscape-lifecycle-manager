@@ -15,15 +15,11 @@ import { Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { formSchema } from "./formSchema";
+import { formSchema, InvoiceItemType } from "./formSchema";
 
 interface InvoiceItemsSectionProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  items: {
-    description: string;
-    quantity: number;
-    unitPrice: number;
-  }[];
+  items: InvoiceItemType[];
   addItem: () => void;
   removeItem: (index: number) => void;
 }

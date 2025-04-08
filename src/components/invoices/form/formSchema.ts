@@ -31,3 +31,10 @@ export const formSchema = z.object({
 });
 
 export type InvoiceFormValues = z.infer<typeof formSchema>;
+
+// Define the item type for reuse across components
+export type InvoiceItemType = {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
