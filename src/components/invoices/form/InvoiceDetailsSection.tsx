@@ -21,6 +21,7 @@ import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { formSchema } from "./formSchema";
+import { useInvoiceDetails } from "./hooks/useInvoiceDetails";
 
 interface InvoiceDetailsSectionProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -29,6 +30,8 @@ interface InvoiceDetailsSectionProps {
 const InvoiceDetailsSection: React.FC<InvoiceDetailsSectionProps> = ({
   form,
 }) => {
+  const { invoiceNumber, paymentTerms, selectedTerm, handlePaymentTermChange } = useInvoiceDetails(form);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -41,7 +44,7 @@ const InvoiceDetailsSection: React.FC<InvoiceDetailsSectionProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-lg font-medium">Invoice #</span>
-              <span className="font-mono">INV-2023-001</span>
+              <span className="font-mono">{invoiceNumber}</span>
             </div>
             <FormField
               control={form.control}
@@ -71,17 +74,19 @@ const InvoiceDetailsSection: React.FC<InvoiceDetailsSectionProps> = ({
             />
             <FormItem>
               <FormLabel>Payment Terms</FormLabel>
-              <Select defaultValue="net30">
+              <Select 
+                value={selectedTerm} 
+                onValueChange={handlePaymentTermChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select terms" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="net15">Net 15</SelectItem>
-                  <SelectItem value="net30">Net 30</SelectItem>
-                  <SelectItem value="net60">Net 60</SelectItem>
-                  <SelectItem value="dueOnReceipt">
-                    Due on Receipt
-                  </SelectItem>
+                  {paymentTerms.map((term) => (
+                    <SelectItem key={term.value} value={term.value}>
+                      {term.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </FormItem>
