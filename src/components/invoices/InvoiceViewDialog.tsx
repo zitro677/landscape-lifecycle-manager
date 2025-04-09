@@ -60,6 +60,35 @@ const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
             </div>
           </div>
 
+          {/* Display invoice items if available */}
+          {invoice.items && invoice.items.length > 0 ? (
+            <div className="border rounded-md p-4">
+              <h3 className="font-medium mb-2">Items</h3>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Description</th>
+                    <th className="text-right py-2">Quantity</th>
+                    <th className="text-right py-2">Unit Price</th>
+                    <th className="text-right py-2">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.items.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="py-2">{item.description}</td>
+                      <td className="text-right py-2">{item.quantity}</td>
+                      <td className="text-right py-2">{formatCurrency(Number(item.unit_price))}</td>
+                      <td className="text-right py-2">
+                        {formatCurrency(Number(item.quantity) * Number(item.unit_price))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
           <div className="border rounded-md p-4">
             <h3 className="font-medium mb-2">Summary</h3>
             <div className="flex justify-between items-center py-2 border-b">

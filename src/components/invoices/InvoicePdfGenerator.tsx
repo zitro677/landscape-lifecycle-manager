@@ -32,6 +32,7 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th { text-align: left; border-bottom: 1px solid #ddd; padding: 10px 5px; }
             td { padding: 10px 5px; border-bottom: 1px solid #eee; }
+            .text-right { text-align: right; }
             .total-row { font-weight: bold; }
             .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 14px; }
             .status-paid { background: #d1fae5; color: #047857; }
@@ -64,17 +65,32 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
             <thead>
               <tr>
                 <th>Description</th>
-                <th>Amount</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th class="text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Services</td>
-                <td>${formatCurrency(Number(invoice.amount))}</td>
-              </tr>
+              ${invoice.items && invoice.items.length > 0 ? 
+                invoice.items.map(item => `
+                  <tr>
+                    <td>${item.description}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatCurrency(Number(item.unit_price))}</td>
+                    <td class="text-right">${formatCurrency(Number(item.quantity) * Number(item.unit_price))}</td>
+                  </tr>
+                `).join('') 
+                : 
+                `<tr>
+                  <td>Services</td>
+                  <td>1</td>
+                  <td>${formatCurrency(Number(invoice.amount))}</td>
+                  <td class="text-right">${formatCurrency(Number(invoice.amount))}</td>
+                </tr>`
+              }
               <tr class="total-row">
-                <td><strong>Total</strong></td>
-                <td><strong>${formatCurrency(Number(invoice.amount))}</strong></td>
+                <td colspan="3" class="text-right"><strong>Total</strong></td>
+                <td class="text-right"><strong>${formatCurrency(Number(invoice.amount))}</strong></td>
               </tr>
             </tbody>
           </table>

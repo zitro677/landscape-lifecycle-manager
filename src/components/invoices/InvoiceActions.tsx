@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Mail, Eye, MoreHorizontal, CheckCircle } from "lucide-react";
+import { Download, Mail, Eye, MoreHorizontal, CheckCircle, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,10 +43,8 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
   };
 
   const handleEditInvoice = () => {
-    // For now, just log and show a toast notification
-    toast.info(`Editing invoice ${invoice.invoice_number}`);
-    // In a real implementation, you would navigate to the edit invoice page
-    // navigate(`/invoices/edit/${invoice.id}`);
+    // Navigate to the edit invoice page with the invoice ID
+    navigate(`/invoices/edit/${invoice.id}`);
   };
 
   return (
@@ -74,7 +72,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={handleEditInvoice}>
-              Edit
+              <Edit className="h-4 w-4 mr-2" /> Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="text-red-500"

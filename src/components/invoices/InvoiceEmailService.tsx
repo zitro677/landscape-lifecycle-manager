@@ -35,9 +35,22 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
       doc.text(`Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 20, 58);
       doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 64);
       
-      // Add table header
-      const headers = [["Description", "Amount"]];
-      const data = [["Services", formatCurrency(Number(invoice.amount))]];
+      // Prepare table data for invoice items
+      const headers = [["Description", "Quantity", "Unit Price", "Amount"]];
+      let data = [];
+      
+      // Check if invoice has items and add them to the table
+      if (invoice.items && invoice.items.length > 0) {
+        data = invoice.items.map(item => [
+          item.description,
+          item.quantity.toString(),
+          formatCurrency(Number(item.unit_price)),
+          formatCurrency(Number(item.quantity) * Number(item.unit_price))
+        ]);
+      } else {
+        // If no items, just show the total amount as a single row
+        data = [["Services", "1", formatCurrency(Number(invoice.amount)), formatCurrency(Number(invoice.amount))]];
+      }
       
       // @ts-ignore - jspdf-autotable types are not included in the TS definition
       doc.autoTable({
@@ -50,12 +63,23 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
       
       // Add total
       const finalY = (doc as any).lastAutoTable.finalY + 10;
-      doc.text(`Total: ${formatCurrency(Number(invoice.amount))}`, 190, finalY, { align: "right" });
+      doc.text(`Subtotal: ${formatCurrency(Number(invoice.amount))}`, 190, finalY, { align: "right" });
+      
+      // Add tax if applicable
+      let currentY = finalY + 6;
+      if (invoice.tax_rate && Number(invoice.tax_rate) > 0) {
+        const taxAmount = Number(invoice.amount) * (Number(invoice.tax_rate) / 100);
+        doc.text(`Tax (${invoice.tax_rate}%): ${formatCurrency(taxAmount)}`, 190, currentY, { align: "right" });
+        currentY += 6;
+        doc.text(`Total: ${formatCurrency(Number(invoice.amount) + taxAmount)}`, 190, currentY, { align: "right" });
+      } else {
+        doc.text(`Total: ${formatCurrency(Number(invoice.amount))}`, 190, currentY, { align: "right" });
+      }
       
       // Add notes
       if (invoice.notes) {
-        doc.text("Notes:", 20, finalY + 15);
-        doc.text(invoice.notes || 'No additional notes', 20, finalY + 22);
+        doc.text("Notes:", 20, currentY + 15);
+        doc.text(invoice.notes || 'No additional notes', 20, currentY + 22);
       }
       
       return doc;

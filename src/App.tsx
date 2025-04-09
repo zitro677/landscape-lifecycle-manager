@@ -31,6 +31,7 @@ const AppRoutes = () => (
         <Route index element={<DashboardPage />} />
         <Route path="invoices" element={<InvoicesPage />} />
         <Route path="invoices/new" element={<InvoiceForm />} />
+        <Route path="invoices/edit/:id" element={<InvoiceForm />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/new" element={<ClientForm />} />
         <Route path="clients/edit/:id" element={<ClientForm />} />
