@@ -28,6 +28,7 @@ import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { useProposals } from "./useProposals";
+import { ProposalFormData } from "./types";
 
 const formSchema = z.object({
   client: z.string().min(2, {
