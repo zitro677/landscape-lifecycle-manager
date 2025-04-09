@@ -11,6 +11,7 @@ import SummarySection from "./form/SummarySection";
 import InvoiceItemsSection from "./form/InvoiceItemsSection";
 import NotesSection from "./form/NotesSection";
 import AuthErrorAlert from "./form/AuthErrorAlert";
+import { toast } from "sonner";
 
 const InvoiceForm: React.FC = () => {
   const navigate = useNavigate();
@@ -33,9 +34,23 @@ const InvoiceForm: React.FC = () => {
     return <AuthErrorAlert show={authError} />;
   }
 
+  const handleFormSubmit = async (data: any) => {
+    if (!data.client_id || data.client_id === "") {
+      toast.error("Please select a client");
+      return;
+    }
+    
+    if (items.length === 0) {
+      toast.error("Please add at least one item");
+      return;
+    }
+    
+    onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
         <div className="flex justify-between items-center">
           <Button
             type="button"

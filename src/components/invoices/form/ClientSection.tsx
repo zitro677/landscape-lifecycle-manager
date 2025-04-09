@@ -22,6 +22,8 @@ import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { formSchema } from "./formSchema";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 interface ClientSectionProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -64,11 +66,12 @@ const ClientSection: React.FC<ClientSectionProps> = ({
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-white">
+                    <SelectContent className="bg-white z-50">
                       {clients.length === 0 ? (
-                        <SelectItem value="no-clients" disabled>
-                          No clients available
-                        </SelectItem>
+                        <div className="p-2 text-center text-gray-500">
+                          <p>No clients available</p>
+                          <p className="text-sm mt-1">Please add a client first</p>
+                        </div>
                       ) : (
                         clients.map((client) => (
                           <SelectItem key={client.id} value={client.id}>

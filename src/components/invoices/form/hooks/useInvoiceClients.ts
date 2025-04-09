@@ -9,6 +9,7 @@ import { formSchema } from "../formSchema";
 export const useInvoiceClients = (form: UseFormReturn<z.infer<typeof formSchema>>) => {
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -22,6 +23,12 @@ export const useInvoiceClients = (form: UseFormReturn<z.infer<typeof formSchema>
 
         if (error) {
           console.error("Error fetching clients:", error);
+          
+          // Check if it's an authentication error
+          if (error.code === "PGRST301" || error.message.includes("JWT")) {
+            setAuthError(true);
+          }
+          
           toast.error("Error loading clients");
           return;
         }
@@ -77,5 +84,5 @@ export const useInvoiceClients = (form: UseFormReturn<z.infer<typeof formSchema>
     }
   };
 
-  return { clients, isLoading, handleClientChange };
+  return { clients, isLoading, handleClientChange, authError };
 };
