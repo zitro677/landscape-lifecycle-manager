@@ -13,6 +13,14 @@ export interface Client {
   updated_at?: string;
 }
 
+// Type for creating a new client
+export interface NewClientData {
+  name: string; // Name is required
+  email?: string;
+  address?: string;
+  phone?: string;
+}
+
 export const useClients = () => {
   const queryClient = useQueryClient();
 
@@ -54,10 +62,20 @@ export const useClients = () => {
 
   // Create a new client
   const createClient = useMutation({
-    mutationFn: async (client: Omit<Client, "id" | "created_at" | "updated_at">) => {
+    mutationFn: async (client: NewClientData) => {
+      // Get the user ID from the auth state
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User is not authenticated");
+      }
+
       const { data, error } = await supabase
         .from("clients")
-        .insert(client)
+        .insert({
+          ...client,
+          user_id: user.id // Add the user_id from the authenticated user
+        })
         .select()
         .single();
 
@@ -79,10 +97,10 @@ export const useClients = () => {
 
   // Update a client
   const updateClient = useMutation({
-    mutationFn: async ({ id, ...client }: Client) => {
+    mutationFn: async ({ id, ...clientData }: { id: string } & NewClientData) => {
       const { data, error } = await supabase
         .from("clients")
-        .update(client)
+        .update(clientData)
         .eq("id", id)
         .select()
         .single();

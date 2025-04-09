@@ -18,8 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import AnimatedPage from "../shared/AnimatedPage";
-import { useClients } from "./useClients";
+import { useClients, NewClientData } from "./useClients";
 
+// Schema now ensures name is required
 const clientSchema = z.object({
   name: z.string().min(1, "Client name is required"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
@@ -74,13 +75,21 @@ const ClientForm: React.FC = () => {
 
   const onSubmit = async (data: ClientFormValues) => {
     try {
+      // Ensure name is provided (already validated by zod)
+      const clientData: NewClientData = {
+        name: data.name,
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        address: data.address || undefined,
+      };
+
       if (isEditing && id) {
         await updateClient.mutateAsync({
           id,
-          ...data,
+          ...clientData,
         });
       } else {
-        await createClient.mutateAsync(data);
+        await createClient.mutateAsync(clientData);
       }
       navigate("/clients");
     } catch (error) {
