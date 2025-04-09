@@ -8,6 +8,7 @@ export type Invoice = Database["public"]["Tables"]["invoices"]["Row"] & {
     email?: string;
     address?: string;
   };
+  items?: InvoiceItem[];
 };
 
 export type InvoiceItem = Database["public"]["Tables"]["invoice_items"]["Row"];

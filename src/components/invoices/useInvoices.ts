@@ -17,7 +17,8 @@ export const useInvoices = () => {
             name,
             email,
             address
-          )
+          ),
+          items:invoice_items(*)
         `)
         .order("created_at", { ascending: false });
 
@@ -66,7 +67,7 @@ export const useInvoice = (id: string | undefined) => {
         throw error;
       }
 
-      return invoice as unknown as Invoice & { items: InvoiceItem[] };
+      return invoice as Invoice;
     },
     enabled: !!id,
   });
@@ -81,7 +82,7 @@ export const useCreateInvoice = () => {
       invoice,
       items,
     }: {
-      invoice: Omit<Invoice, "id" | "created_at" | "updated_at">;
+      invoice: Omit<Invoice, "id" | "created_at" | "updated_at" | "items">;
       items: Omit<InvoiceItem, "id" | "invoice_id" | "created_at" | "updated_at">[];
     }) => {
       // 1. Insert the invoice

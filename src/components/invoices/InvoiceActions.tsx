@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Mail, Eye, MoreHorizontal, CheckCircle, Edit } from "lucide-react";
+import { Download, Mail, Eye, MoreHorizontal, CheckCircle, Edit, Printer } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,7 @@ import InvoiceViewDialog from "./InvoiceViewDialog";
 import InvoicePdfGenerator from "./InvoicePdfGenerator";
 import InvoiceEmailService from "./InvoiceEmailService";
 import InvoiceStatusManager from "./InvoiceStatusManager";
+import InvoicePrintService from "./InvoicePrintService";
 
 interface InvoiceActionsProps {
   invoice: Invoice;
@@ -28,6 +29,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
   const pdfGenerator = InvoicePdfGenerator({ invoice });
   const emailService = InvoiceEmailService({ invoice });
   const statusManager = InvoiceStatusManager({ invoice });
+  const printService = InvoicePrintService({ invoice });
 
   const handleViewInvoice = () => {
     console.log("Viewing invoice:", invoice.id);
@@ -36,6 +38,10 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
 
   const handleDownloadPDF = () => {
     pdfGenerator.generatePDF();
+  };
+
+  const handlePrintInvoice = () => {
+    printService.printInvoice();
   };
 
   const handleSendEmail = () => {
@@ -71,6 +77,9 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
                 <CheckCircle className="h-4 w-4 mr-2" /> Mark as Paid
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem onClick={handlePrintInvoice}>
+              <Printer className="h-4 w-4 mr-2" /> Print
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleEditInvoice}>
               <Edit className="h-4 w-4 mr-2" /> Edit
             </DropdownMenuItem>
