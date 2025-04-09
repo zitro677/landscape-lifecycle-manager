@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -38,6 +39,8 @@ const ClientSection: React.FC<ClientSectionProps> = ({
   handleClientChange,
   isLoading,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -46,7 +49,17 @@ const ClientSection: React.FC<ClientSectionProps> = ({
     >
       <Card>
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Client Information</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Client Information</h3>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => navigate("/clients/new")}
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" /> New Client
+            </Button>
+          </div>
 
           <div className="mb-4">
             <FormField

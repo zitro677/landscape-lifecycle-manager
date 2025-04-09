@@ -18,6 +18,8 @@ import ProjectsPage from "./components/projects/ProjectsPage";
 import ProjectDetail from "./components/projects/ProjectDetail";
 import LoginPage from "./components/auth/LoginPage";
 import { AuthProvider } from "./components/auth/AuthProvider";
+import ClientsPage from "./components/clients/ClientsPage";
+import ClientForm from "./components/clients/ClientForm";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,9 @@ const AppRoutes = () => (
         <Route index element={<DashboardPage />} />
         <Route path="invoices" element={<InvoicesPage />} />
         <Route path="invoices/new" element={<InvoiceForm />} />
+        <Route path="clients" element={<ClientsPage />} />
+        <Route path="clients/new" element={<ClientForm />} />
+        <Route path="clients/edit/:id" element={<ClientForm />} />
         <Route path="proposals" element={<ProposalsPage />} />
         <Route path="proposals/new" element={<ProposalForm />} />
         <Route path="finances" element={<FinancesPage />} />
