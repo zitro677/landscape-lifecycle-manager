@@ -28,6 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { useProposals } from "./useProposals";
 
 const formSchema = z.object({
   client: z.string().min(2, {
@@ -63,6 +64,7 @@ const formSchema = z.object({
 
 const ProposalForm: React.FC = () => {
   const navigate = useNavigate();
+  const { createProposal, isPending } = useProposals();
   const today = format(new Date(), "yyyy-MM-dd");
   const defaultExpirationDate = format(
     new Date(new Date().setDate(new Date().getDate() + 30)),
@@ -119,11 +121,9 @@ const ProposalForm: React.FC = () => {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    toast({
-      title: "Proposal Created",
-      description: "Proposal has been successfully created.",
-    });
-
+    
+    createProposal(values);
+    
     // In a real app, we would save the proposal to the database here
     navigate("/proposals");
   }

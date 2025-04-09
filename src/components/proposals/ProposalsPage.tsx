@@ -20,55 +20,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-
-// Mock data
-const proposals = [
-  {
-    id: "PRO-2023-001",
-    client: "Johnson Family",
-    date: "2023-10-15",
-    amount: "$2,450.00",
-    status: "Approved",
-    expirationDate: "2023-11-15",
-  },
-  {
-    id: "PRO-2023-002",
-    client: "Oakridge Community Center",
-    date: "2023-11-01",
-    amount: "$8,750.00",
-    status: "Pending",
-    expirationDate: "2023-12-01",
-  },
-  {
-    id: "PRO-2023-003",
-    client: "Peterson Residence",
-    date: "2023-11-10",
-    amount: "$3,200.00",
-    status: "Draft",
-    expirationDate: "2023-12-10",
-  },
-  {
-    id: "PRO-2023-004",
-    client: "Sunset Hills Park",
-    date: "2023-10-05",
-    amount: "$12,300.00",
-    status: "Rejected",
-    expirationDate: "2023-11-05",
-  },
-  {
-    id: "PRO-2023-005",
-    client: "Martinez Garden",
-    date: "2023-11-20",
-    amount: "$4,750.00",
-    status: "Pending",
-    expirationDate: "2023-12-20",
-  },
-];
+import { useProposals } from "./useProposals";
+import { Proposal } from "./types";
 
 const ProposalsPage: React.FC = () => {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("newest");
+  
+  // Use the proposals hook to fetch real data
+  const { proposals, isLoading, isError } = useProposals();
 
   const filteredProposals = proposals.filter((proposal) => {
     if (statusFilter === "all") return true;
@@ -76,20 +37,25 @@ const ProposalsPage: React.FC = () => {
   });
 
   const sortedProposals = [...filteredProposals].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
+    const dateA = new Date(a.issue_date || a.created_at || "").getTime();
+    const dateB = new Date(b.issue_date || b.created_at || "").getTime();
     return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
   });
 
+  // Calculate total and pending amounts
+  const formatAmount = (amount: number | null | undefined) => {
+    return amount ? Number(amount) : 0;
+  };
+
   const totalAmount = proposals.reduce(
-    (sum, proposal) => sum + parseFloat(proposal.amount.replace("$", "").replace(",", "")),
+    (sum, proposal) => sum + formatAmount(proposal.amount),
     0
   );
 
   const pendingAmount = proposals
     .filter((proposal) => proposal.status === "Pending")
     .reduce(
-      (sum, proposal) => sum + parseFloat(proposal.amount.replace("$", "").replace(",", "")),
+      (sum, proposal) => sum + formatAmount(proposal.amount),
       0
     );
 
@@ -211,11 +177,15 @@ const ProposalsPage: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {sortedProposals.map((proposal, index) => (
-            <ProposalCard key={proposal.id} proposal={proposal} index={index} />
-          ))}
-
-          {sortedProposals.length === 0 && (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading proposals...</p>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12">
+              <p className="text-red-500">Error loading proposals. Please try again.</p>
+            </div>
+          ) : sortedProposals.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -223,6 +193,21 @@ const ProposalsPage: React.FC = () => {
             >
               <p className="text-muted-foreground">No proposals found.</p>
             </motion.div>
+          ) : (
+            sortedProposals.map((proposal, index) => (
+              <ProposalCard 
+                key={proposal.id} 
+                proposal={{
+                  id: proposal.id || `PROP-${index}`,
+                  client: proposal.client_name || proposal.clients?.name || "Unknown Client",
+                  date: proposal.issue_date || format(new Date(proposal.created_at || ""), "yyyy-MM-dd"),
+                  amount: proposal.amount ? `$${proposal.amount.toLocaleString()}` : "$0.00",
+                  status: proposal.status || "Draft",
+                  expirationDate: proposal.valid_until || "-"
+                }} 
+                index={index} 
+              />
+            ))
           )}
         </div>
       </div>
