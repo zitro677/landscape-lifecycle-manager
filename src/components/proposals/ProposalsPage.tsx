@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -22,13 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useProposals } from "./useProposals";
 import { Proposal } from "./types";
+import { format } from "date-fns";
 
 const ProposalsPage: React.FC = () => {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("newest");
   
-  // Use the proposals hook to fetch real data
   const { proposals, isLoading, isError } = useProposals();
 
   const filteredProposals = proposals.filter((proposal) => {
@@ -42,7 +41,6 @@ const ProposalsPage: React.FC = () => {
     return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
   });
 
-  // Calculate total and pending amounts
   const formatAmount = (amount: number | null | undefined) => {
     return amount ? Number(amount) : 0;
   };

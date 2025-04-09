@@ -1,4 +1,3 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -122,7 +121,24 @@ const ProposalForm: React.FC = () => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     
-    createProposal(values);
+    // Ensure all required fields are present before creating the proposal
+    const proposalData: ProposalFormData = {
+      client: values.client,
+      email: values.email,
+      address: values.address,
+      proposalDate: values.proposalDate,
+      expirationDate: values.expirationDate,
+      items: values.items.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice
+      })),
+      scope: values.scope,
+      timeline: values.timeline,
+      notes: values.notes || ""
+    };
+    
+    createProposal(proposalData);
     
     // In a real app, we would save the proposal to the database here
     navigate("/proposals");
