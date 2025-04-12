@@ -8,17 +8,13 @@ import { motion } from "framer-motion";
 import { Plus, Trash2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { proposalFormSchema } from "./formSchema";
+import { proposalFormSchema, ProposalItemType } from "./formSchema";
 
 type FormData = z.infer<typeof proposalFormSchema>;
 
 interface ItemsSectionProps {
   form: UseFormReturn<FormData>;
-  items: {
-    description: string;
-    quantity: number;
-    unitPrice: number;
-  }[];
+  items: ProposalItemType[];
   addItem: () => void;
   removeItem: (index: number) => void;
 }
