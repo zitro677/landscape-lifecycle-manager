@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -197,7 +198,7 @@ const ProposalsPage: React.FC = () => {
                 key={proposal.id} 
                 proposal={{
                   id: proposal.id || `PROP-${index}`,
-                  client: proposal.client_name || proposal.clients?.name || "Unknown Client",
+                  client: proposal.client_name || proposal.title?.replace("Proposal for ", "") || "Unknown Client",
                   date: proposal.issue_date || format(new Date(proposal.created_at || ""), "yyyy-MM-dd"),
                   amount: proposal.amount ? `$${proposal.amount.toLocaleString()}` : "$0.00",
                   status: proposal.status || "Draft",

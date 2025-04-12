@@ -28,7 +28,7 @@ export const useProposals = () => {
     // Format the proposals to match our expected structure
     return proposals.map(proposal => ({
       ...proposal,
-      client_name: proposal.clients?.name || ""
+      client_name: proposal.clients?.name || proposal.title.replace("Proposal for ", "") || ""
     }));
   };
 
@@ -46,6 +46,10 @@ export const useProposals = () => {
         0
       );
 
+      // Generate a readable proposal number
+      const timestamp = new Date().getTime().toString().slice(-6);
+      const proposalNumber = `PRO-${timestamp}`;
+
       // Format the proposal data for database insertion
       const proposalData = {
         user_id: session.user.id,
@@ -55,7 +59,9 @@ export const useProposals = () => {
         amount,
         issue_date: formData.proposalDate,
         valid_until: formData.expirationDate,
-        status: "Draft" as const
+        status: "Draft" as const,
+        // Store client name in the title so we can display it properly
+        client_name: formData.client
       };
 
       // Insert into proposals table

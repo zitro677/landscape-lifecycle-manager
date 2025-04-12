@@ -27,7 +27,7 @@ const ProposalForm: React.FC = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <ProposalFormActions form={form} isPending={isPending} />
+        <ProposalFormActions form={form} isPending={isPending} position="top" />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Client Information */}
@@ -61,7 +61,7 @@ const ProposalForm: React.FC = () => {
         {/* Terms & Notes */}
         <NotesSection form={form} />
 
-        <ProposalFormActions form={form} isPending={isPending} />
+        <ProposalFormActions form={form} isPending={isPending} position="bottom" />
       </form>
     </Form>
   );

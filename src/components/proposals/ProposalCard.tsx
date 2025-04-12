@@ -46,6 +46,11 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, index }) => {
     }
   };
 
+  // Generate a shorter, more readable ID format
+  const shortId = proposal.id.includes('-') 
+    ? `PRO-${proposal.id.split('-')[0].slice(-4)}`
+    : `PRO-${new Date().getFullYear()}-${index + 1}`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -68,7 +73,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, index }) => {
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 <span className="inline-flex items-center">
-                  ID: {proposal.id} • Created: {proposal.date}
+                  {shortId} • Created: {proposal.date}
                 </span>
               </div>
               <div className="text-sm text-muted-foreground mt-1">

@@ -12,13 +12,19 @@ type FormData = z.infer<typeof proposalFormSchema>;
 interface ProposalFormActionsProps {
   form: UseFormReturn<FormData>;
   isPending: boolean;
+  position: "top" | "bottom";
 }
 
-export const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({ form, isPending }) => {
+export const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({ 
+  form, 
+  isPending,
+  position 
+}) => {
   const navigate = useNavigate();
   
-  return (
-    <>
+  // Only show back button at the top, and full button set at the bottom
+  if (position === "top") {
+    return (
       <div className="flex justify-between items-center">
         <Button
           type="button"
@@ -28,24 +34,19 @@ export const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({ form, 
         >
           <ArrowLeft className="h-4 w-4" /> Back to Proposals
         </Button>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
-            Reset
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Saving..." : "Save Proposal"}
-          </Button>
-        </div>
       </div>
-      
-      <div className="flex justify-end gap-2 mt-8">
-        <Button type="button" variant="outline" onClick={() => navigate("/proposals")}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : "Save Proposal"}
-        </Button>
-      </div>
-    </>
+    );
+  }
+  
+  // Full button set at the bottom
+  return (
+    <div className="flex justify-end gap-2 mt-8">
+      <Button type="button" variant="outline" onClick={() => navigate("/proposals")}>
+        Cancel
+      </Button>
+      <Button type="submit" disabled={isPending}>
+        {isPending ? "Saving..." : "Save Proposal"}
+      </Button>
+    </div>
   );
 };
