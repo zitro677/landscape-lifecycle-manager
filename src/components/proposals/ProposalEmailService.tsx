@@ -30,17 +30,34 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
       // Create email content
       const subject = `Proposal: ${proposal.title || `Proposal #${proposal.id.substring(0, 8)}`}`;
       
-      // Build a more comprehensive email body
+      // Calculate tax and total
+      const subtotal = Number(proposal.amount || 0);
+      const tax = subtotal * 0.07; // 7% tax rate
+      const total = subtotal + tax;
+      
+      // Build a simplified email body (no address, timeline, items or notes)
       let body = `Dear ${proposal.client_name},\n\n`;
       body += `Please find attached our proposal for your review.\n\n`;
-      body += `Amount: ${formatCurrency(Number(proposal.amount || 0))}\n`;
+      
+      // Only add a brief summary from content if it exists
+      if (proposal.content) {
+        let scopeContent = proposal.content;
+        if (scopeContent.includes("Timeline:")) {
+          scopeContent = scopeContent.split("Timeline:")[0];
+        } else if (scopeContent.includes("Items:")) {
+          scopeContent = scopeContent.split("Items:")[0];
+        } else if (scopeContent.includes("Notes:")) {
+          scopeContent = scopeContent.split("Notes:")[0];
+        }
+        body += `Project Summary: ${scopeContent.trim()}\n\n`;
+      }
+      
+      // Add pricing with tax
+      body += `Subtotal: ${formatCurrency(subtotal)}\n`;
+      body += `Tax (7%): ${formatCurrency(tax)}\n`;
+      body += `Total Amount: ${formatCurrency(total)}\n\n`;
       body += `Issue Date: ${formatDate(proposal.issue_date)}\n`;
       body += `Valid until: ${formatDate(proposal.valid_until)}\n\n`;
-      
-      // Only add content if it exists
-      if (proposal.content) {
-        body += `${proposal.content}\n\n`;
-      }
       
       body += `Thank you for considering our services.\n\n`;
       body += `Best regards,\nYour Company`;

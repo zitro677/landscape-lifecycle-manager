@@ -45,9 +45,9 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       doc.text(`Status: ${proposal.status || "Draft"}`, pageWidth - margin, yPosition, { align: "right" });
       yPosition += 15;
       
-      // Add client information in a box
+      // Add client information in a box - only name (no address)
       doc.setFillColor(240, 240, 240);
-      doc.rect(margin, yPosition, contentWidth, 35, 'F');
+      doc.rect(margin, yPosition, contentWidth, 20, 'F');
       yPosition += 7;
       
       doc.setFontSize(12);
@@ -58,12 +58,6 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       
       doc.setFontSize(10);
       doc.text(`Name: ${proposal.client_name || "Client"}`, margin + 5, yPosition);
-      yPosition += 6;
-      
-      doc.text(`Email: ${proposal.clients?.email || "N/A"}`, margin + 5, yPosition);
-      yPosition += 6;
-      
-      doc.text(`Address: ${proposal.clients?.address || "N/A"}`, margin + 5, yPosition);
       yPosition += 15;
       
       // Proposal dates
@@ -71,101 +65,53 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       doc.text(`Valid Until: ${formatDate(proposal.valid_until)}`, pageWidth - margin, yPosition, { align: "right" });
       yPosition += 15;
       
-      // Project Scope
+      // Project scope summary (simplified)
       if (proposal.content) {
+        // Extract just the scope without going into timeline, items, notes
+        let scopeContent = proposal.content;
+        if (scopeContent.includes("Timeline:")) {
+          scopeContent = scopeContent.split("Timeline:")[0];
+        } else if (scopeContent.includes("Items:")) {
+          scopeContent = scopeContent.split("Items:")[0];
+        } else if (scopeContent.includes("Notes:")) {
+          scopeContent = scopeContent.split("Notes:")[0];
+        }
+        
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
-        doc.text("Project Scope:", margin, yPosition);
+        doc.text("Project Summary:", margin, yPosition);
         doc.setFont(undefined, 'normal');
         yPosition += 7;
         
         doc.setFontSize(10);
-        const scopeLines = doc.splitTextToSize(proposal.content, contentWidth);
+        const scopeLines = doc.splitTextToSize(scopeContent.trim(), contentWidth);
         doc.text(scopeLines, margin, yPosition);
-        yPosition += scopeLines.length * 5 + 10;
+        yPosition += scopeLines.length * 5 + 15;
       }
       
-      // Check if we need a new page for timeline
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = 20;
-      }
+      // Calculate tax (7%)
+      const subtotal = Number(proposal.amount || 0);
+      const tax = subtotal * 0.07; // 7% tax rate
+      const total = subtotal + tax;
       
-      // Timeline (if we have it)
-      if (proposal.content && proposal.content.includes("Timeline:")) {
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text("Project Timeline:", margin, yPosition);
-        doc.setFont(undefined, 'normal');
-        yPosition += 7;
-        
-        // Extract timeline section if available
-        const timelineContent = proposal.content.split("Timeline:")[1]?.split("Items:")[0] || "";
-        
-        doc.setFontSize(10);
-        const timelineLines = doc.splitTextToSize(timelineContent.trim(), contentWidth);
-        doc.text(timelineLines, margin, yPosition);
-        yPosition += timelineLines.length * 5 + 10;
-      }
+      // Display pricing with tax
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Pricing:", margin, yPosition);
+      doc.setFont(undefined, 'normal');
+      yPosition += 7;
       
-      // Check if we need a new page for items
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = 20;
-      }
+      doc.setFontSize(10);
+      doc.text(`Subtotal: ${formatCurrency(subtotal)}`, margin, yPosition);
+      yPosition += 6;
+      doc.text(`Tax (7%): ${formatCurrency(tax)}`, margin, yPosition);
+      yPosition += 6;
       
-      // Items & Services (if we have it)
-      if (proposal.content && proposal.content.includes("Items:")) {
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text("Items & Services:", margin, yPosition);
-        doc.setFont(undefined, 'normal');
-        yPosition += 7;
-        
-        // Try to parse the items section if available
-        let itemsContent = proposal.content.split("Items:")[1]?.split("Notes:")[0] || "";
-        
-        doc.setFontSize(10);
-        const itemsLines = doc.splitTextToSize(itemsContent.trim(), contentWidth);
-        doc.text(itemsLines, margin, yPosition);
-        yPosition += itemsLines.length * 5 + 10;
-        
-        // Total amount
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Total Amount: ${formatCurrency(Number(proposal.amount || 0))}`, pageWidth - margin, yPosition, { align: "right" });
-        doc.setFont(undefined, 'normal');
-        yPosition += 15;
-      } else {
-        // If no items section, just show the total
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Total Amount: ${formatCurrency(Number(proposal.amount || 0))}`, pageWidth - margin, yPosition, { align: "right" });
-        doc.setFont(undefined, 'normal');
-        yPosition += 15;
-      }
-      
-      // Check if we need a new page for terms
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      // Terms & Notes (if we have it)
-      if (proposal.content && proposal.content.includes("Notes:")) {
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text("Terms & Notes:", margin, yPosition);
-        doc.setFont(undefined, 'normal');
-        yPosition += 7;
-        
-        // Extract notes section if available
-        const notesContent = proposal.content.split("Notes:")[1] || "";
-        
-        doc.setFontSize(10);
-        const notesLines = doc.splitTextToSize(notesContent.trim(), contentWidth);
-        doc.text(notesLines, margin, yPosition);
-      }
+      // Total amount
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Total Amount: ${formatCurrency(total)}`, pageWidth - margin, yPosition, { align: "right" });
+      doc.setFont(undefined, 'normal');
       
       // Add footer on all pages
       const pageCount = doc.getNumberOfPages();
