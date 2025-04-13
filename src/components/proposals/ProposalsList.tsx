@@ -50,14 +50,7 @@ const ProposalsList: React.FC<ProposalsListProps> = ({
       {filteredAndSortedProposals.map((proposal, index) => (
         <ProposalCard 
           key={proposal.id} 
-          proposal={{
-            id: proposal.id || `PROP-${index}`,
-            client: proposal.client_name || proposal.title?.replace("Proposal for ", "") || "Unknown Client",
-            date: proposal.issue_date || format(new Date(proposal.created_at || ""), "yyyy-MM-dd"),
-            amount: proposal.amount ? `$${proposal.amount.toLocaleString()}` : "$0.00",
-            status: proposal.status || "Draft",
-            expirationDate: proposal.valid_until || "-"
-          }} 
+          proposal={proposal}
           index={index} 
         />
       ))}

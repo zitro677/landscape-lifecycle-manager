@@ -37,6 +37,7 @@ const AppRoutes = () => (
         <Route path="clients/edit/:id" element={<ClientForm />} />
         <Route path="proposals" element={<ProposalsPage />} />
         <Route path="proposals/new" element={<ProposalForm />} />
+        <Route path="proposals/edit/:id" element={<ProposalForm />} />
         <Route path="finances" element={<FinancesPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/:id" element={<ProjectDetail />} />

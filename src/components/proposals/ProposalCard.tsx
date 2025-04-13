@@ -1,19 +1,14 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Check, Clock, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Proposal } from "./types";
+import { ArrowUpRight, Check, Clock, X } from "lucide-react";
+import ProposalActions from "./ProposalActions";
 
 interface ProposalCardProps {
-  proposal: {
-    id: string;
-    client: string;
-    date: string;
-    amount: string;
-    status: string;
-    expirationDate: string;
-  };
+  proposal: Proposal;
   index: number;
 }
 
@@ -23,6 +18,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, index }) => {
       case "approved":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case "pending":
+      case "sent":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case "rejected":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
@@ -38,6 +34,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, index }) => {
       case "approved":
         return <Check className="h-3 w-3" />;
       case "pending":
+      case "sent":
         return <Clock className="h-3 w-3" />;
       case "rejected":
         return <X className="h-3 w-3" />;
@@ -58,33 +55,35 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, index }) => {
       transition={{ duration: 0.3, delay: index * 0.05 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      <Card className="overflow-hidden cursor-pointer card-shadow">
+      <Card className="overflow-hidden card-shadow">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold">{proposal.client}</h3>
-                <Badge className={getStatusColor(proposal.status)}>
+                <h3 className="font-semibold">{proposal.client_name}</h3>
+                <Badge className={getStatusColor(proposal.status || "Draft")}>
                   <span className="flex items-center gap-1">
-                    {getStatusIcon(proposal.status)}
-                    {proposal.status}
+                    {getStatusIcon(proposal.status || "Draft")}
+                    {proposal.status || "Draft"}
                   </span>
                 </Badge>
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 <span className="inline-flex items-center">
-                  {shortId} • Created: {proposal.date}
+                  {shortId} • Created: {proposal.issue_date || new Date(proposal.created_at || "").toLocaleDateString()}
                 </span>
               </div>
               <div className="text-sm text-muted-foreground mt-1">
-                <span>Expires: {proposal.expirationDate}</span>
+                <span>Expires: {proposal.valid_until || "-"}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3">
               <div className="text-right">
-                <div className="font-semibold">{proposal.amount}</div>
+                <div className="font-semibold">
+                  {proposal.amount ? `$${proposal.amount.toLocaleString()}` : "$0.00"}
+                </div>
               </div>
-              <ArrowUpRight className="h-5 w-5 text-primary" />
+              <ProposalActions proposal={proposal} />
             </div>
           </div>
         </CardContent>
