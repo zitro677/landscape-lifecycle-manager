@@ -3,7 +3,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import ProposalCard from "./ProposalCard";
 import { Proposal } from "./types";
-import { format } from "date-fns";
 
 interface ProposalsListProps {
   proposals: Proposal[];

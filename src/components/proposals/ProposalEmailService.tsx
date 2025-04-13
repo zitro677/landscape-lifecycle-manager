@@ -29,7 +29,21 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
     try {
       // Create email content
       const subject = `Proposal: ${proposal.title || `Proposal #${proposal.id.substring(0, 8)}`}`;
-      const body = `Dear ${proposal.client_name},\n\nPlease find attached our proposal for your review.\n\nAmount: ${formatCurrency(Number(proposal.amount || 0))}\nValid until: ${formatDate(proposal.valid_until)}\n\n${proposal.content || ''}\n\nThank you for considering our services.\n\nBest regards,\nYour Company`;
+      
+      // Build a more comprehensive email body
+      let body = `Dear ${proposal.client_name},\n\n`;
+      body += `Please find attached our proposal for your review.\n\n`;
+      body += `Amount: ${formatCurrency(Number(proposal.amount || 0))}\n`;
+      body += `Issue Date: ${formatDate(proposal.issue_date)}\n`;
+      body += `Valid until: ${formatDate(proposal.valid_until)}\n\n`;
+      
+      // Only add content if it exists
+      if (proposal.content) {
+        body += `${proposal.content}\n\n`;
+      }
+      
+      body += `Thank you for considering our services.\n\n`;
+      body += `Best regards,\nYour Company`;
       
       // Create and download the PDF
       const pdfGenerator = ProposalPdfGenerator({ proposal });
