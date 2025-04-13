@@ -35,21 +35,82 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
       const tax = subtotal * 0.07; // 7% tax rate
       const total = subtotal + tax;
       
-      // Build a simplified email body (no address, timeline, items or notes)
+      // Build a comprehensive email body
       let body = `Dear ${proposal.client_name},\n\n`;
       body += `Please find attached our proposal for your review.\n\n`;
       
-      // Only add a brief summary from content if it exists
+      // Add client address if available
+      if (proposal.clients?.address) {
+        body += `Delivery Address:\n${proposal.clients.address}\n\n`;
+      }
+      
+      // Parse content to extract sections
       if (proposal.content) {
-        let scopeContent = proposal.content;
-        if (scopeContent.includes("Timeline:")) {
-          scopeContent = scopeContent.split("Timeline:")[0];
-        } else if (scopeContent.includes("Items:")) {
-          scopeContent = scopeContent.split("Items:")[0];
-        } else if (scopeContent.includes("Notes:")) {
-          scopeContent = scopeContent.split("Notes:")[0];
+        let content = proposal.content;
+        let scopeContent = content;
+        let timelineContent = "";
+        let itemsContent = "";
+        let notesContent = "";
+        
+        if (content.includes("Timeline:")) {
+          const parts = content.split("Timeline:");
+          scopeContent = parts[0].trim();
+          const remainingContent = parts[1];
+          
+          if (remainingContent.includes("Items:")) {
+            const timelineParts = remainingContent.split("Items:");
+            timelineContent = timelineParts[0].trim();
+            const afterTimelineContent = timelineParts[1];
+            
+            if (afterTimelineContent.includes("Notes:")) {
+              const itemsParts = afterTimelineContent.split("Notes:");
+              itemsContent = itemsParts[0].trim();
+              notesContent = itemsParts[1].trim();
+            } else {
+              itemsContent = afterTimelineContent.trim();
+            }
+          } else if (remainingContent.includes("Notes:")) {
+            const timelineParts = remainingContent.split("Notes:");
+            timelineContent = timelineParts[0].trim();
+            notesContent = timelineParts[1].trim();
+          } else {
+            timelineContent = remainingContent.trim();
+          }
+        } else if (content.includes("Items:")) {
+          const parts = content.split("Items:");
+          scopeContent = parts[0].trim();
+          const afterScopeContent = parts[1];
+          
+          if (afterScopeContent.includes("Notes:")) {
+            const itemsParts = afterScopeContent.split("Notes:");
+            itemsContent = itemsParts[0].trim();
+            notesContent = itemsParts[1].trim();
+          } else {
+            itemsContent = afterScopeContent.trim();
+          }
+        } else if (content.includes("Notes:")) {
+          const parts = content.split("Notes:");
+          scopeContent = parts[0].trim();
+          notesContent = parts[1].trim();
         }
-        body += `Project Summary: ${scopeContent.trim()}\n\n`;
+        
+        // Add project scope
+        body += `Project Scope:\n${scopeContent}\n\n`;
+        
+        // Add timeline if available
+        if (timelineContent) {
+          body += `Project Timeline:\n${timelineContent}\n\n`;
+        }
+        
+        // Add items if available
+        if (itemsContent) {
+          body += `Items & Services:\n${itemsContent}\n\n`;
+        }
+        
+        // Add notes if available
+        if (notesContent) {
+          body += `Terms & Notes:\n${notesContent}\n\n`;
+        }
       }
       
       // Add pricing with tax

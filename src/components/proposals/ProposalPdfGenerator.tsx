@@ -45,9 +45,9 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       doc.text(`Status: ${proposal.status || "Draft"}`, pageWidth - margin, yPosition, { align: "right" });
       yPosition += 15;
       
-      // Add client information in a box - only name (no address)
+      // Add client information in a box with address
       doc.setFillColor(240, 240, 240);
-      doc.rect(margin, yPosition, contentWidth, 20, 'F');
+      doc.rect(margin, yPosition, contentWidth, 30, 'F');
       yPosition += 7;
       
       doc.setFontSize(12);
@@ -58,35 +58,137 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       
       doc.setFontSize(10);
       doc.text(`Name: ${proposal.client_name || "Client"}`, margin + 5, yPosition);
-      yPosition += 15;
+      yPosition += 5;
+      
+      // Add client email if available
+      if (proposal.clients?.email) {
+        doc.text(`Email: ${proposal.clients.email}`, margin + 5, yPosition);
+        yPosition += 5;
+      }
+      
+      // Add client address if available
+      if (proposal.clients?.address) {
+        doc.text(`Address: ${proposal.clients.address}`, margin + 5, yPosition);
+        yPosition += 5;
+      }
+      
+      yPosition += 10;
       
       // Proposal dates
       doc.text(`Issue Date: ${formatDate(proposal.issue_date)}`, margin, yPosition);
       doc.text(`Valid Until: ${formatDate(proposal.valid_until)}`, pageWidth - margin, yPosition, { align: "right" });
       yPosition += 15;
       
-      // Project scope summary (simplified)
+      // Project scope
       if (proposal.content) {
-        // Extract just the scope without going into timeline, items, notes
-        let scopeContent = proposal.content;
-        if (scopeContent.includes("Timeline:")) {
-          scopeContent = scopeContent.split("Timeline:")[0];
-        } else if (scopeContent.includes("Items:")) {
-          scopeContent = scopeContent.split("Items:")[0];
-        } else if (scopeContent.includes("Notes:")) {
-          scopeContent = scopeContent.split("Notes:")[0];
+        // Parse content to extract sections
+        let content = proposal.content;
+        let scopeContent = content;
+        let timelineContent = "";
+        let itemsContent = "";
+        let notesContent = "";
+        
+        if (content.includes("Timeline:")) {
+          const parts = content.split("Timeline:");
+          scopeContent = parts[0].trim();
+          const remainingContent = parts[1];
+          
+          if (remainingContent.includes("Items:")) {
+            const timelineParts = remainingContent.split("Items:");
+            timelineContent = timelineParts[0].trim();
+            const afterTimelineContent = timelineParts[1];
+            
+            if (afterTimelineContent.includes("Notes:")) {
+              const itemsParts = afterTimelineContent.split("Notes:");
+              itemsContent = itemsParts[0].trim();
+              notesContent = itemsParts[1].trim();
+            } else {
+              itemsContent = afterTimelineContent.trim();
+            }
+          } else if (remainingContent.includes("Notes:")) {
+            const timelineParts = remainingContent.split("Notes:");
+            timelineContent = timelineParts[0].trim();
+            notesContent = timelineParts[1].trim();
+          } else {
+            timelineContent = remainingContent.trim();
+          }
+        } else if (content.includes("Items:")) {
+          const parts = content.split("Items:");
+          scopeContent = parts[0].trim();
+          const afterScopeContent = parts[1];
+          
+          if (afterScopeContent.includes("Notes:")) {
+            const itemsParts = afterScopeContent.split("Notes:");
+            itemsContent = itemsParts[0].trim();
+            notesContent = itemsParts[1].trim();
+          } else {
+            itemsContent = afterScopeContent.trim();
+          }
+        } else if (content.includes("Notes:")) {
+          const parts = content.split("Notes:");
+          scopeContent = parts[0].trim();
+          notesContent = parts[1].trim();
         }
         
+        // Project Scope
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
-        doc.text("Project Summary:", margin, yPosition);
+        doc.text("Project Scope:", margin, yPosition);
         doc.setFont(undefined, 'normal');
         yPosition += 7;
         
         doc.setFontSize(10);
-        const scopeLines = doc.splitTextToSize(scopeContent.trim(), contentWidth);
+        const scopeLines = doc.splitTextToSize(scopeContent, contentWidth);
         doc.text(scopeLines, margin, yPosition);
-        yPosition += scopeLines.length * 5 + 15;
+        yPosition += scopeLines.length * 5 + 10;
+        
+        // Project Timeline (if available)
+        if (timelineContent) {
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("Project Timeline:", margin, yPosition);
+          doc.setFont(undefined, 'normal');
+          yPosition += 7;
+          
+          doc.setFontSize(10);
+          const timelineLines = doc.splitTextToSize(timelineContent, contentWidth);
+          doc.text(timelineLines, margin, yPosition);
+          yPosition += timelineLines.length * 5 + 10;
+        }
+        
+        // Items & Services (if available)
+        if (itemsContent) {
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("Items & Services:", margin, yPosition);
+          doc.setFont(undefined, 'normal');
+          yPosition += 7;
+          
+          doc.setFontSize(10);
+          const itemsLines = doc.splitTextToSize(itemsContent, contentWidth);
+          doc.text(itemsLines, margin, yPosition);
+          yPosition += itemsLines.length * 5 + 10;
+        }
+        
+        // Terms & Notes (if available)
+        if (notesContent) {
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("Terms & Notes:", margin, yPosition);
+          doc.setFont(undefined, 'normal');
+          yPosition += 7;
+          
+          doc.setFontSize(10);
+          const notesLines = doc.splitTextToSize(notesContent, contentWidth);
+          doc.text(notesLines, margin, yPosition);
+          yPosition += notesLines.length * 5 + 15;
+        }
+      }
+      
+      // Check if we need to add a new page for pricing
+      if (yPosition > doc.internal.pageSize.height - 60) {
+        doc.addPage();
+        yPosition = 20;
       }
       
       // Calculate tax (7%)
