@@ -15,7 +15,7 @@ const ProposalsPage: React.FC = () => {
 
   const filteredProposals = proposals.filter((proposal) => {
     if (statusFilter === "all") return true;
-    return proposal.status.toLowerCase() === statusFilter.toLowerCase();
+    return proposal.status?.toLowerCase() === statusFilter.toLowerCase();
   });
 
   const sortedProposals = [...filteredProposals].sort((a, b) => {

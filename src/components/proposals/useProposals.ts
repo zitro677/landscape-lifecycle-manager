@@ -28,7 +28,8 @@ export const useProposals = () => {
     // Format the proposals to match our expected structure
     return proposals.map(proposal => ({
       ...proposal,
-      client_name: proposal.clients?.name || proposal.title.replace("Proposal for ", "") || ""
+      // Use optional chaining to safely access client name, with fallback values
+      client_name: proposal.clients?.name || proposal.title?.replace("Proposal for ", "") || ""
     }));
   };
 
@@ -60,8 +61,6 @@ export const useProposals = () => {
         issue_date: formData.proposalDate,
         valid_until: formData.expirationDate,
         status: "Draft" as const,
-        // Store client name in the title so we can display it properly
-        client_name: formData.client
       };
 
       // Insert into proposals table
