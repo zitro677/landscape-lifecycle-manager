@@ -33,61 +33,86 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       const pageWidth = doc.internal.pageSize.width;
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
-      
-      // Add title
+
+      // Header section with key information
       doc.setFontSize(20);
       doc.text("PROPOSAL", pageWidth / 2, yPosition, { align: "center" });
       yPosition += 10;
-      
-      // Add proposal identification
-      doc.setFontSize(12);
-      doc.text(`Proposal ID: ${proposal.id.substring(0, 8)}`, margin, yPosition);
-      doc.text(`Status: ${proposal.status || "Draft"}`, pageWidth - margin, yPosition, { align: "right" });
-      yPosition += 15;
-      
-      // Add client information in a box with address
-      doc.setFillColor(240, 240, 240);
-      doc.rect(margin, yPosition, contentWidth, 30, 'F');
-      yPosition += 7;
-      
+
+      // Key Information Box
+      doc.setDrawColor(200, 200, 200);
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, yPosition, contentWidth, 60, 'FD');
+      yPosition += 10;
+
+      // Client Information (Left side)
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
       doc.text("Client Information:", margin + 5, yPosition);
       doc.setFont(undefined, 'normal');
-      yPosition += 7;
-      
       doc.setFontSize(10);
-      doc.text(`Name: ${proposal.client_name || "Client"}`, margin + 5, yPosition);
+      yPosition += 7;
+      doc.text(`${proposal.client_name || "Client"}`, margin + 5, yPosition);
       yPosition += 5;
-      
-      // Add client email if available
       if (proposal.clients?.email) {
-        doc.text(`Email: ${proposal.clients.email}`, margin + 5, yPosition);
+        doc.text(`${proposal.clients.email}`, margin + 5, yPosition);
         yPosition += 5;
       }
-      
-      // Add client address if available
       if (proposal.clients?.address) {
-        doc.text(`Address: ${proposal.clients.address}`, margin + 5, yPosition);
-        yPosition += 5;
+        doc.text(`${proposal.clients.address}`, margin + 5, yPosition);
       }
-      
+
+      // Proposal Details (Right side)
+      let rightColumn = pageWidth / 2;
+      let rightYPosition = yPosition - 17;
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Proposal Details:", rightColumn, rightYPosition);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      rightYPosition += 7;
+      doc.text(`Issue Date: ${formatDate(proposal.issue_date)}`, rightColumn, rightYPosition);
+      rightYPosition += 5;
+      doc.text(`Valid Until: ${formatDate(proposal.valid_until)}`, rightColumn, rightYPosition);
+      rightYPosition += 5;
+      doc.text(`Status: ${proposal.status || "Draft"}`, rightColumn, rightYPosition);
+
+      // Reset position after the box
+      yPosition += 45;
+
+      // Calculate pricing
+      const subtotal = Number(proposal.amount || 0);
+      const tax = subtotal * 0.07; // 7% tax rate
+      const total = subtotal + tax;
+
+      // Top Summary Box
+      doc.setDrawColor(200, 200, 200);
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, yPosition, contentWidth, 30, 'FD');
       yPosition += 10;
-      
-      // Proposal dates
-      doc.text(`Issue Date: ${formatDate(proposal.issue_date)}`, margin, yPosition);
-      doc.text(`Valid Until: ${formatDate(proposal.valid_until)}`, pageWidth - margin, yPosition, { align: "right" });
-      yPosition += 15;
-      
-      // Project scope
+
+      // Display total amount prominently
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Total Amount:", margin + 5, yPosition);
+      doc.text(formatCurrency(total), pageWidth - margin - 5, yPosition, { align: "right" });
+      yPosition += 7;
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Subtotal: ${formatCurrency(subtotal)}`, margin + 5, yPosition);
+      doc.text(`Tax (7%): ${formatCurrency(tax)}`, pageWidth - margin - 5, yPosition, { align: "right" });
+
+      yPosition += 25;
+
+      // Additional Sections
       if (proposal.content) {
-        // Parse content to extract sections
+        // Parse content sections
         let content = proposal.content;
         let scopeContent = content;
         let timelineContent = "";
         let itemsContent = "";
         let notesContent = "";
-        
+
         if (content.includes("Timeline:")) {
           const parts = content.split("Timeline:");
           scopeContent = parts[0].trim();
@@ -112,126 +137,89 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
           } else {
             timelineContent = remainingContent.trim();
           }
-        } else if (content.includes("Items:")) {
-          const parts = content.split("Items:");
-          scopeContent = parts[0].trim();
-          const afterScopeContent = parts[1];
-          
-          if (afterScopeContent.includes("Notes:")) {
-            const itemsParts = afterScopeContent.split("Notes:");
-            itemsContent = itemsParts[0].trim();
-            notesContent = itemsParts[1].trim();
-          } else {
-            itemsContent = afterScopeContent.trim();
-          }
-        } else if (content.includes("Notes:")) {
-          const parts = content.split("Notes:");
-          scopeContent = parts[0].trim();
-          notesContent = parts[1].trim();
         }
-        
-        // Project Scope
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text("Project Scope:", margin, yPosition);
-        doc.setFont(undefined, 'normal');
-        yPosition += 7;
-        
-        doc.setFontSize(10);
-        const scopeLines = doc.splitTextToSize(scopeContent, contentWidth);
-        doc.text(scopeLines, margin, yPosition);
-        yPosition += scopeLines.length * 5 + 10;
-        
-        // Project Timeline (if available)
-        if (timelineContent) {
+
+        // Project Scope Section
+        if (scopeContent) {
           doc.setFontSize(12);
           doc.setFont(undefined, 'bold');
-          doc.text("Project Timeline:", margin, yPosition);
-          doc.setFont(undefined, 'normal');
+          doc.text("Project Scope", margin, yPosition);
           yPosition += 7;
-          
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(10);
+          const scopeLines = doc.splitTextToSize(scopeContent, contentWidth);
+          doc.text(scopeLines, margin, yPosition);
+          yPosition += scopeLines.length * 5 + 10;
+        }
+
+        // Timeline Section
+        if (timelineContent) {
+          if (yPosition > doc.internal.pageSize.height - 60) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("Project Timeline", margin, yPosition);
+          yPosition += 7;
+          doc.setFont(undefined, 'normal');
           doc.setFontSize(10);
           const timelineLines = doc.splitTextToSize(timelineContent, contentWidth);
           doc.text(timelineLines, margin, yPosition);
           yPosition += timelineLines.length * 5 + 10;
         }
-        
-        // Items & Services (if available)
+
+        // Items & Services Section
         if (itemsContent) {
+          if (yPosition > doc.internal.pageSize.height - 60) {
+            doc.addPage();
+            yPosition = 20;
+          }
           doc.setFontSize(12);
           doc.setFont(undefined, 'bold');
-          doc.text("Items & Services:", margin, yPosition);
-          doc.setFont(undefined, 'normal');
+          doc.text("Items & Services", margin, yPosition);
           yPosition += 7;
-          
+          doc.setFont(undefined, 'normal');
           doc.setFontSize(10);
           const itemsLines = doc.splitTextToSize(itemsContent, contentWidth);
           doc.text(itemsLines, margin, yPosition);
           yPosition += itemsLines.length * 5 + 10;
         }
-        
-        // Terms & Notes (if available)
+
+        // Terms & Notes Section
         if (notesContent) {
+          if (yPosition > doc.internal.pageSize.height - 60) {
+            doc.addPage();
+            yPosition = 20;
+          }
           doc.setFontSize(12);
           doc.setFont(undefined, 'bold');
-          doc.text("Terms & Notes:", margin, yPosition);
-          doc.setFont(undefined, 'normal');
+          doc.text("Terms & Notes", margin, yPosition);
           yPosition += 7;
-          
+          doc.setFont(undefined, 'normal');
           doc.setFontSize(10);
           const notesLines = doc.splitTextToSize(notesContent, contentWidth);
           doc.text(notesLines, margin, yPosition);
-          yPosition += notesLines.length * 5 + 15;
+          yPosition += notesLines.length * 5 + 10;
         }
       }
-      
-      // Check if we need to add a new page for pricing
-      if (yPosition > doc.internal.pageSize.height - 60) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      // Calculate tax (7%)
-      const subtotal = Number(proposal.amount || 0);
-      const tax = subtotal * 0.07; // 7% tax rate
-      const total = subtotal + tax;
-      
-      // Display pricing with tax
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text("Pricing:", margin, yPosition);
-      doc.setFont(undefined, 'normal');
-      yPosition += 7;
-      
-      doc.setFontSize(10);
-      doc.text(`Subtotal: ${formatCurrency(subtotal)}`, margin, yPosition);
-      yPosition += 6;
-      doc.text(`Tax (7%): ${formatCurrency(tax)}`, margin, yPosition);
-      yPosition += 6;
-      
-      // Total amount
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Total Amount: ${formatCurrency(total)}`, pageWidth - margin, yPosition, { align: "right" });
-      doc.setFont(undefined, 'normal');
-      
-      // Add footer on all pages
+
+      // Add footer with page numbers
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.text(
-          `Proposal generated on ${format(new Date(), 'MMM dd, yyyy')} - Page ${i} of ${pageCount}`,
-          pageWidth / 2, 
-          doc.internal.pageSize.height - 10, 
+          `Generated on ${format(new Date(), 'MMM dd, yyyy')} - Page ${i} of ${pageCount}`,
+          pageWidth / 2,
+          doc.internal.pageSize.height - 10,
           { align: "center" }
         );
       }
-      
+
       // Save the PDF
       doc.save(`Proposal_${proposal.id.substring(0, 8)}.pdf`);
       toast.success("PDF generated successfully");
-      
       return doc;
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -244,3 +232,4 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
 };
 
 export default ProposalPdfGenerator;
+

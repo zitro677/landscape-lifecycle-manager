@@ -27,25 +27,47 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
 
   const sendEmail = () => {
     try {
-      // Create email content
+      // Create email subject
       const subject = `Proposal: ${proposal.title || `Proposal #${proposal.id.substring(0, 8)}`}`;
       
-      // Calculate tax and total
+      // Calculate pricing
       const subtotal = Number(proposal.amount || 0);
       const tax = subtotal * 0.07; // 7% tax rate
       const total = subtotal + tax;
       
-      // Build a comprehensive email body
+      // Build email body with key information first
       let body = `Dear ${proposal.client_name},\n\n`;
-      body += `Please find attached our proposal for your review.\n\n`;
+      body += `Please find our proposal for your review.\n\n`;
       
-      // Add client address if available
-      if (proposal.clients?.address) {
-        body += `Delivery Address:\n${proposal.clients.address}\n\n`;
+      // Key Information Section
+      body += `CLIENT INFORMATION\n`;
+      body += `----------------\n`;
+      body += `Name: ${proposal.client_name}\n`;
+      if (proposal.clients?.email) {
+        body += `Email: ${proposal.clients.email}\n`;
       }
+      if (proposal.clients?.address) {
+        body += `Address: ${proposal.clients.address}\n`;
+      }
+      body += `\n`;
       
-      // Parse content to extract sections
+      // Proposal Details
+      body += `PROPOSAL DETAILS\n`;
+      body += `----------------\n`;
+      body += `Issue Date: ${formatDate(proposal.issue_date)}\n`;
+      body += `Valid Until: ${formatDate(proposal.valid_until)}\n`;
+      body += `Status: ${proposal.status || "Draft"}\n\n`;
+      
+      // Pricing Summary
+      body += `PRICING SUMMARY\n`;
+      body += `---------------\n`;
+      body += `Subtotal: ${formatCurrency(subtotal)}\n`;
+      body += `Tax (7%): ${formatCurrency(tax)}\n`;
+      body += `Total Amount: ${formatCurrency(total)}\n\n`;
+      
+      // Additional Sections from content
       if (proposal.content) {
+        // Parse sections from content
         let content = proposal.content;
         let scopeContent = content;
         let timelineContent = "";
@@ -76,49 +98,34 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
           } else {
             timelineContent = remainingContent.trim();
           }
-        } else if (content.includes("Items:")) {
-          const parts = content.split("Items:");
-          scopeContent = parts[0].trim();
-          const afterScopeContent = parts[1];
-          
-          if (afterScopeContent.includes("Notes:")) {
-            const itemsParts = afterScopeContent.split("Notes:");
-            itemsContent = itemsParts[0].trim();
-            notesContent = itemsParts[1].trim();
-          } else {
-            itemsContent = afterScopeContent.trim();
-          }
-        } else if (content.includes("Notes:")) {
-          const parts = content.split("Notes:");
-          scopeContent = parts[0].trim();
-          notesContent = parts[1].trim();
         }
         
-        // Add project scope
-        body += `Project Scope:\n${scopeContent}\n\n`;
+        // Add Project Scope
+        body += `PROJECT SCOPE\n`;
+        body += `-------------\n`;
+        body += `${scopeContent}\n\n`;
         
-        // Add timeline if available
+        // Add Timeline if available
         if (timelineContent) {
-          body += `Project Timeline:\n${timelineContent}\n\n`;
+          body += `PROJECT TIMELINE\n`;
+          body += `----------------\n`;
+          body += `${timelineContent}\n\n`;
         }
         
-        // Add items if available
+        // Add Items if available
         if (itemsContent) {
-          body += `Items & Services:\n${itemsContent}\n\n`;
+          body += `ITEMS & SERVICES\n`;
+          body += `----------------\n`;
+          body += `${itemsContent}\n\n`;
         }
         
-        // Add notes if available
+        // Add Notes if available
         if (notesContent) {
-          body += `Terms & Notes:\n${notesContent}\n\n`;
+          body += `TERMS & NOTES\n`;
+          body += `-------------\n`;
+          body += `${notesContent}\n\n`;
         }
       }
-      
-      // Add pricing with tax
-      body += `Subtotal: ${formatCurrency(subtotal)}\n`;
-      body += `Tax (7%): ${formatCurrency(tax)}\n`;
-      body += `Total Amount: ${formatCurrency(total)}\n\n`;
-      body += `Issue Date: ${formatDate(proposal.issue_date)}\n`;
-      body += `Valid until: ${formatDate(proposal.valid_until)}\n\n`;
       
       body += `Thank you for considering our services.\n\n`;
       body += `Best regards,\nYour Company`;
@@ -145,3 +152,4 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
 };
 
 export default ProposalEmailService;
+
