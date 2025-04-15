@@ -65,7 +65,8 @@ export const ProposalDetailsSection: React.FC<ProposalDetailsSectionProps> = ({ 
                 <SelectContent>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="pending">Pending Approval</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>

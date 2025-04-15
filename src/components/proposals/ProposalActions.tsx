@@ -72,17 +72,17 @@ const ProposalActions: React.FC<ProposalActionsProps> = ({ proposal }) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {proposal.status !== "Approved" && (
+            {proposal.status !== "approved" && (
               <DropdownMenuItem onClick={statusManager.markAsApproved}>
                 <CheckCircle className="h-4 w-4 mr-2" /> Mark as Approved
               </DropdownMenuItem>
             )}
-            {proposal.status !== "Rejected" && (
+            {proposal.status !== "rejected" && (
               <DropdownMenuItem onClick={statusManager.markAsRejected}>
                 <X className="h-4 w-4 mr-2" /> Mark as Rejected
               </DropdownMenuItem>
             )}
-            {proposal.status !== "Sent" && (
+            {proposal.status !== "sent" && (
               <DropdownMenuItem onClick={statusManager.markAsSent}>
                 <Mail className="h-4 w-4 mr-2" /> Mark as Sent
               </DropdownMenuItem>

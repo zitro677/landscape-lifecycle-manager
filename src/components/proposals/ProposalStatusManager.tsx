@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Proposal } from "./types";
+import { Proposal, ProposalStatus } from "./types";
 import { toast } from "sonner";
 
 interface ProposalStatusManagerProps {
@@ -12,18 +12,13 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const updateProposalStatus = async (status: string) => {
+  const updateProposalStatus = async (status: ProposalStatus) => {
     console.log("Updating proposal status to:", status);
     
-    // Check the database schema and use valid status values
-    // The error suggests there's a check constraint on the status column
-    const validStatus = status === "Approved" ? "approved" : 
-                       status === "Rejected" ? "rejected" : 
-                       status === "Sent" ? "sent" : "draft";
-    
+    // Ensure we're using lowercase status that matches the database constraint
     const { error } = await supabase
       .from("proposals")
-      .update({ status: validStatus })
+      .update({ status })
       .eq("id", proposal.id);
 
     if (error) {
@@ -31,7 +26,7 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
       throw error;
     }
     
-    return { ...proposal, status: validStatus };
+    return { ...proposal, status };
   };
 
   const deleteProposal = async () => {
@@ -70,19 +65,19 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   });
 
   const markAsApproved = () => {
-    statusMutation.mutate("Approved", {
+    statusMutation.mutate("approved", {
       onSuccess: () => toast.success("Proposal marked as approved")
     });
   };
 
   const markAsRejected = () => {
-    statusMutation.mutate("Rejected", {
+    statusMutation.mutate("rejected", {
       onSuccess: () => toast.success("Proposal marked as rejected")
     });
   };
 
   const markAsSent = () => {
-    statusMutation.mutate("Sent", {
+    statusMutation.mutate("sent", {
       onSuccess: () => toast.success("Proposal marked as sent")
     });
   };
