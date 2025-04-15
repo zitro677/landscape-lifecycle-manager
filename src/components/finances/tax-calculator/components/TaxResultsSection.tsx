@@ -17,6 +17,17 @@ interface TaxResultsSectionProps {
 }
 
 export const TaxResultsSection: React.FC<TaxResultsSectionProps> = ({ taxResults }) => {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      compactDisplay: 'short',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1
+    }).format(value);
+  };
+
   const taxBreakdown = [
     {
       name: "Tax Paid",
@@ -36,44 +47,26 @@ export const TaxResultsSection: React.FC<TaxResultsSectionProps> = ({ taxResults
         <CardTitle>Tax Calculation Results</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label className="text-muted-foreground">Total Income</Label>
-          <p className="text-xl font-semibold truncate" title={`$${taxResults.totalIncome.toLocaleString()}`}>
-            ${taxResults.totalIncome.toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <Label className="text-muted-foreground">Total Deductions</Label>
-          <p className="text-xl font-semibold text-green-600 dark:text-green-400 truncate" title={`$${taxResults.totalDeductions.toLocaleString()}`}>
-            ${taxResults.totalDeductions.toLocaleString()}
-          </p>
-        </div>
+        {[
+          { label: "Total Income", value: taxResults.totalIncome },
+          { label: "Total Deductions", value: taxResults.totalDeductions, className: "text-green-600 dark:text-green-400" },
+          { label: "Taxable Income", value: taxResults.taxableIncome },
+          { label: "Estimated Tax", value: taxResults.estimatedTax, className: "text-red-600 dark:text-red-400" },
+          { label: "Effective Tax Rate", value: taxResults.effectiveTaxRate, isPercent: true },
+          { label: "After-Tax Income", value: taxResults.totalIncome - taxResults.estimatedTax, isBold: true }
+        ].map(({ label, value, className, isPercent, isBold }) => (
+          <div key={label}>
+            <Label className="text-muted-foreground">{label}</Label>
+            <p 
+              className={`text-xl ${className || ''} ${isBold ? 'font-bold' : 'font-semibold'} truncate`} 
+              title={isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
+            >
+              {isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
+            </p>
+          </div>
+        ))}
+        
         <Separator />
-        <div>
-          <Label className="text-muted-foreground">Taxable Income</Label>
-          <p className="text-xl font-semibold truncate" title={`$${taxResults.taxableIncome.toLocaleString()}`}>
-            ${taxResults.taxableIncome.toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <Label className="text-muted-foreground">Estimated Tax</Label>
-          <p className="text-xl font-semibold text-red-600 dark:text-red-400 truncate" title={`$${taxResults.estimatedTax.toLocaleString()}`}>
-            ${taxResults.estimatedTax.toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <Label className="text-muted-foreground">Effective Tax Rate</Label>
-          <p className="text-xl font-semibold truncate" title={`${taxResults.effectiveTaxRate.toFixed(1)}%`}>
-            {taxResults.effectiveTaxRate.toFixed(1)}%
-          </p>
-        </div>
-        <Separator />
-        <div>
-          <Label className="text-muted-foreground">After-Tax Income</Label>
-          <p className="text-xl font-bold truncate" title={`$${(taxResults.totalIncome - taxResults.estimatedTax).toLocaleString()}`}>
-            ${(taxResults.totalIncome - taxResults.estimatedTax).toLocaleString()}
-          </p>
-        </div>
 
         <div className="h-[200px] mt-4">
           <ResponsiveContainer width="100%" height="100%">
@@ -93,7 +86,7 @@ export const TaxResultsSection: React.FC<TaxResultsSectionProps> = ({ taxResults
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => [`$${value.toLocaleString()}`, undefined]}
+                formatter={(value) => [`${formatCurrency(value)}`, undefined]}
                 contentStyle={{
                   backgroundColor: "rgba(255, 255, 255, 0.8)",
                   backdropFilter: "blur(8px)",
@@ -109,3 +102,4 @@ export const TaxResultsSection: React.FC<TaxResultsSectionProps> = ({ taxResults
     </Card>
   );
 };
+
