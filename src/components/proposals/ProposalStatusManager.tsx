@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,13 +13,25 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateProposalStatus = async (status: string) => {
+    console.log("Updating proposal status to:", status);
+    
+    // Check the database schema and use valid status values
+    // The error suggests there's a check constraint on the status column
+    const validStatus = status === "Approved" ? "approved" : 
+                       status === "Rejected" ? "rejected" : 
+                       status === "Sent" ? "sent" : "draft";
+    
     const { error } = await supabase
       .from("proposals")
-      .update({ status })
+      .update({ status: validStatus })
       .eq("id", proposal.id);
 
-    if (error) throw error;
-    return { ...proposal, status };
+    if (error) {
+      console.error("Error updating proposal status:", error);
+      throw error;
+    }
+    
+    return { ...proposal, status: validStatus };
   };
 
   const deleteProposal = async () => {
@@ -53,6 +64,7 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
     },
     onError: (error: any) => {
+      console.error("Status update error:", error);
       toast.error(`Failed to update status: ${error.message}`);
     }
   });
