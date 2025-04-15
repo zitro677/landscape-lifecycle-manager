@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +45,7 @@ const TaxCalculator: React.FC = () => {
     estimatedTax: 0,
     effectiveTaxRate: 0,
   });
+  const [yearFilter, setYearFilter] = useState<string>("2025");
 
   useEffect(() => {
     const totalExpenses = Object.values(expenses).reduce(
@@ -63,7 +63,7 @@ const TaxCalculator: React.FC = () => {
       estimatedTax,
       effectiveTaxRate,
     });
-  }, [income, expenses, taxRate, filingStatus]);
+  }, [income, expenses, taxRate, filingStatus, yearFilter]);
 
   const handleExpenseChange = (category: string, value: string) => {
     setExpenses({
@@ -148,18 +148,19 @@ const TaxCalculator: React.FC = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="tax-rate">
-                    Estimated Tax Rate: {taxRate}%
-                  </Label>
-                  <Slider
-                    id="tax-rate"
-                    min={0}
-                    max={50}
-                    step={1}
-                    value={[taxRate]}
-                    onValueChange={(value) => setTaxRate(value[0])}
-                    className="mt-4"
-                  />
+                  <Label htmlFor="tax-rate">Tax Rate: {taxRate}%</Label>
+                  <Select
+                    value={yearFilter}
+                    onValueChange={setYearFilter}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024">2024</SelectItem>
+                      <SelectItem value="2025">2025</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -316,7 +317,7 @@ const TaxCalculator: React.FC = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-muted-foreground">Total Income</Label>
-                <p className="text-2xl font-semibold">
+                <p className="text-xl font-semibold truncate" title={`$${taxResults.totalIncome.toLocaleString()}`}>
                   ${taxResults.totalIncome.toLocaleString()}
                 </p>
               </div>
@@ -324,20 +325,20 @@ const TaxCalculator: React.FC = () => {
                 <Label className="text-muted-foreground">
                   Total Deductions
                 </Label>
-                <p className="text-2xl font-semibold text-green-600 dark:text-green-400">
+                <p className="text-xl font-semibold text-green-600 dark:text-green-400 truncate" title={`$${taxResults.totalDeductions.toLocaleString()}`}>
                   ${taxResults.totalDeductions.toLocaleString()}
                 </p>
               </div>
               <Separator />
               <div>
                 <Label className="text-muted-foreground">Taxable Income</Label>
-                <p className="text-2xl font-semibold">
+                <p className="text-xl font-semibold truncate" title={`$${taxResults.taxableIncome.toLocaleString()}`}>
                   ${taxResults.taxableIncome.toLocaleString()}
                 </p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Estimated Tax</Label>
-                <p className="text-2xl font-semibold text-red-600 dark:text-red-400">
+                <p className="text-xl font-semibold text-red-600 dark:text-red-400 truncate" title={`$${taxResults.estimatedTax.toLocaleString()}`}>
                   ${taxResults.estimatedTax.toLocaleString()}
                 </p>
               </div>
@@ -345,14 +346,14 @@ const TaxCalculator: React.FC = () => {
                 <Label className="text-muted-foreground">
                   Effective Tax Rate
                 </Label>
-                <p className="text-2xl font-semibold">
+                <p className="text-xl font-semibold truncate" title={`${taxResults.effectiveTaxRate.toFixed(1)}%`}>
                   {taxResults.effectiveTaxRate.toFixed(1)}%
                 </p>
               </div>
               <Separator />
               <div>
                 <Label className="text-muted-foreground">After-Tax Income</Label>
-                <p className="text-2xl font-bold">
+                <p className="text-xl font-bold truncate" title={`$${(taxResults.totalIncome - taxResults.estimatedTax).toLocaleString()}`}>
                   $
                   {(
                     taxResults.totalIncome - taxResults.estimatedTax
@@ -442,7 +443,9 @@ const TaxCalculator: React.FC = () => {
       </div>
 
       <div className="flex justify-end">
-        <Button className="w-full sm:w-auto">Generate Tax Report</Button>
+        <Button className="w-full sm:w-auto">
+          Generate Tax Report for {yearFilter}
+        </Button>
       </div>
     </motion.div>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedPage from "../shared/AnimatedPage";
@@ -32,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Mock data for finances
 const monthlyIncomeData = [
   { name: "Jan", income: 18500, expenses: 12000 },
   { name: "Feb", income: 20100, expenses: 13500 },
@@ -71,7 +69,7 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"
 
 const FinancesPage: React.FC = () => {
   const [timeFilter, setTimeFilter] = useState<string>("year");
-  const [yearFilter, setYearFilter] = useState<string>("2023");
+  const [yearFilter, setYearFilter] = useState<string>("2025");
 
   const totalIncome = monthlyIncomeData.reduce((sum, item) => sum + item.income, 0);
   const totalExpenses = monthlyIncomeData.reduce((sum, item) => sum + item.expenses, 0);
@@ -118,6 +116,8 @@ const FinancesPage: React.FC = () => {
                 <SelectItem value="2021">2021</SelectItem>
                 <SelectItem value="2022">2022</SelectItem>
                 <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
               </SelectContent>
             </Select>
           </motion.div>
@@ -131,7 +131,9 @@ const FinancesPage: React.FC = () => {
             className="glass-card rounded-lg p-6"
           >
             <h3 className="text-sm font-medium text-muted-foreground">Total Income</h3>
-            <p className="text-3xl font-bold mt-2">${totalIncome.toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-2 truncate" title={`$${totalIncome.toLocaleString()}`}>
+              ${totalIncome.toLocaleString()}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">For {yearFilter}</p>
           </motion.div>
 
@@ -142,7 +144,9 @@ const FinancesPage: React.FC = () => {
             className="glass-card rounded-lg p-6"
           >
             <h3 className="text-sm font-medium text-muted-foreground">Total Expenses</h3>
-            <p className="text-3xl font-bold mt-2">${totalExpenses.toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-2 truncate" title={`$${totalExpenses.toLocaleString()}`}>
+              ${totalExpenses.toLocaleString()}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">For {yearFilter}</p>
           </motion.div>
 
@@ -153,7 +157,9 @@ const FinancesPage: React.FC = () => {
             className="glass-card rounded-lg p-6"
           >
             <h3 className="text-sm font-medium text-muted-foreground">Net Income</h3>
-            <p className="text-3xl font-bold mt-2">${netIncome.toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-2 truncate" title={`$${netIncome.toLocaleString()}`}>
+              ${netIncome.toLocaleString()}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">For {yearFilter}</p>
           </motion.div>
 
@@ -164,7 +170,9 @@ const FinancesPage: React.FC = () => {
             className="glass-card rounded-lg p-6"
           >
             <h3 className="text-sm font-medium text-muted-foreground">Profit Margin</h3>
-            <p className="text-3xl font-bold mt-2">{profitMargin}%</p>
+            <p className="text-2xl font-bold mt-2 truncate" title={`${profitMargin}%`}>
+              {profitMargin}%
+            </p>
             <p className="text-xs text-muted-foreground mt-1">For {yearFilter}</p>
           </motion.div>
         </div>
