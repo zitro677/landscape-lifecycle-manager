@@ -60,7 +60,7 @@ export const useProposals = () => {
         amount,
         issue_date: formData.proposalDate,
         valid_until: formData.expirationDate,
-        status: "Draft", // Capitalized first letter to match database constraint
+        status: "Draft", // Exact value expected by the database
       };
 
       // Insert into proposals table

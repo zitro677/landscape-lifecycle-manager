@@ -16,14 +16,12 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   const updateProposalStatus = async (status: ProposalStatus) => {
     console.log("Updating proposal status to:", status);
     
-    // Database expects exactly "Draft", "Sent", "Approved", "Rejected" - capitalized first letter
-    const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1);
-    
-    console.log("Using formatted status:", formattedStatus);
+    // No need to format - we're now using the exact status values the database expects
+    console.log("Using status:", status);
     
     const { error } = await supabase
       .from("proposals")
-      .update({ status: formattedStatus })
+      .update({ status })
       .eq("id", proposal.id);
 
     if (error) {
@@ -31,7 +29,7 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
       throw error;
     }
     
-    return { ...proposal, status: formattedStatus };
+    return { ...proposal, status };
   };
 
   const deleteProposal = async () => {
@@ -71,15 +69,15 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   });
 
   const markAsApproved = () => {
-    statusMutation.mutate("approved");
+    statusMutation.mutate("Approved");
   };
 
   const markAsRejected = () => {
-    statusMutation.mutate("rejected");
+    statusMutation.mutate("Rejected");
   };
 
   const markAsSent = () => {
-    statusMutation.mutate("sent");
+    statusMutation.mutate("Sent");
   };
 
   const deleteProposalHandler = () => {

@@ -11,7 +11,7 @@ export type Proposal = Database["public"]["Tables"]["proposals"]["Row"] & {
 };
 
 // Updated to match exactly what the database accepts
-export type ProposalStatus = "draft" | "sent" | "approved" | "rejected";
+export type ProposalStatus = "Draft" | "Sent" | "Approved" | "Rejected";
 
 export type ProposalFormData = {
   client: string;
