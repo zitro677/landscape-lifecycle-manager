@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Mail, X, FileText, CalendarDays, List, File } from "lucide-react";
@@ -27,12 +28,21 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
   onDownloadPDF,
   onSendEmail,
 }) => {
-  const [sections, setSections] = useState(() => parseProposalContent(proposal.content));
+  const [sections, setSections] = useState<Record<string, string>>({
+    "Project Scope": "",
+    "Project Timeline": "",
+    "Items & Services": "",
+    "Terms & Notes": ""
+  });
   
   // Update sections whenever proposal changes
   useEffect(() => {
     console.log("Proposal content:", proposal.content);
-    setSections(parseProposalContent(proposal.content));
+    if (proposal.content) {
+      const parsedSections = parseProposalContent(proposal.content);
+      console.log("Parsed sections in dialog:", parsedSections);
+      setSections(parsedSections);
+    }
   }, [proposal.content]);
 
   return (
@@ -48,6 +58,9 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
+        <DialogDescription className="sr-only">
+          View proposal details
+        </DialogDescription>
 
         <div className="space-y-6 py-4">
           {/* Header Information */}

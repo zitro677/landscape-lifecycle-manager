@@ -26,6 +26,8 @@ export const parseProposalContent = (content?: string) => {
     "Terms & Notes": ""
   };
   
+  console.log("Parsing content:", content);
+  
   // Initialize with empty sections
   const sections: Record<string, string> = {
     "Project Scope": "",
@@ -34,62 +36,47 @@ export const parseProposalContent = (content?: string) => {
     "Terms & Notes": ""
   };
   
-  // Check if content contains section markers
-  const hasTimeline = content.includes("Timeline:");
-  const hasItems = content.includes("Items:");
-  const hasNotes = content.includes("Notes:");
-  
-  // If no markers, put all content in Project Scope
-  if (!hasTimeline && !hasItems && !hasNotes) {
+  // Simple case: if content doesn't have markers, put all in Project Scope
+  if (!content.includes("Timeline:") && 
+      !content.includes("Items:") && 
+      !content.includes("Notes:")) {
     sections["Project Scope"] = content.trim();
     return sections;
   }
   
-  // Extract sections based on markers
-  let remainingContent = content;
+  // Use regex to match sections more reliably
+  const timelineMatch = content.match(/Timeline:(.*?)(?=Items:|Notes:|$)/s);
+  const itemsMatch = content.match(/Items:(.*?)(?=Notes:|$)/s);
+  const notesMatch = content.match(/Notes:(.*?)$/s);
   
-  // Extract Project Scope (everything before Timeline: or Items: or Notes:)
+  // Extract scope (everything before Timeline: or Items: or Notes:)
   let scopeEndIndex = content.length;
-  if (hasTimeline) {
+  if (content.includes("Timeline:")) {
     scopeEndIndex = Math.min(scopeEndIndex, content.indexOf("Timeline:"));
   }
-  if (hasItems) {
+  if (content.includes("Items:")) {
     scopeEndIndex = Math.min(scopeEndIndex, content.indexOf("Items:"));
   }
-  if (hasNotes) {
+  if (content.includes("Notes:")) {
     scopeEndIndex = Math.min(scopeEndIndex, content.indexOf("Notes:"));
   }
   
   sections["Project Scope"] = content.substring(0, scopeEndIndex).trim();
   
-  // Extract Timeline
-  if (hasTimeline) {
-    const timelineStartIndex = content.indexOf("Timeline:") + "Timeline:".length;
-    let timelineEndIndex = content.length;
-    if (hasItems) {
-      timelineEndIndex = Math.min(timelineEndIndex, content.indexOf("Items:"));
-    }
-    if (hasNotes) {
-      timelineEndIndex = Math.min(timelineEndIndex, content.indexOf("Notes:"));
-    }
-    sections["Project Timeline"] = content.substring(timelineStartIndex, timelineEndIndex).trim();
+  // Extract other sections using regex matches
+  if (timelineMatch && timelineMatch[1]) {
+    sections["Project Timeline"] = timelineMatch[1].trim();
   }
   
-  // Extract Items
-  if (hasItems) {
-    const itemsStartIndex = content.indexOf("Items:") + "Items:".length;
-    let itemsEndIndex = content.length;
-    if (hasNotes) {
-      itemsEndIndex = Math.min(itemsEndIndex, content.indexOf("Notes:"));
-    }
-    sections["Items & Services"] = content.substring(itemsStartIndex, itemsEndIndex).trim();
+  if (itemsMatch && itemsMatch[1]) {
+    sections["Items & Services"] = itemsMatch[1].trim();
   }
   
-  // Extract Notes
-  if (hasNotes) {
-    const notesStartIndex = content.indexOf("Notes:") + "Notes:".length;
-    sections["Terms & Notes"] = content.substring(notesStartIndex).trim();
+  if (notesMatch && notesMatch[1]) {
+    sections["Terms & Notes"] = notesMatch[1].trim();
   }
+  
+  console.log("Parsed sections:", sections);
   
   return sections;
 };
