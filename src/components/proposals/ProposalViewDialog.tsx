@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, Mail, X } from "lucide-react";
 import { Proposal } from "./types";
-import { format } from "date-fns";
+import { formatDate, formatCurrency, parseProposalContent } from "./utils/formatters";
 
 interface ProposalViewDialogProps {
   proposal: Proposal;
@@ -27,65 +27,8 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
   onDownloadPDF,
   onSendEmail,
 }) => {
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "MMM dd, yyyy");
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  const formatCurrency = (amount?: number) => {
-    if (amount === undefined || amount === null) return "$0.00";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
   // Parse the content into sections
-  const parseContent = (content?: string) => {
-    if (!content) return {};
-    
-    const sections: Record<string, string> = {};
-    
-    // Use regex to extract sections
-    const scopePattern = /(.*?)(Timeline:|$)/s;
-    const timelinePattern = /Timeline:(.*?)(Items:|$)/s;
-    const itemsPattern = /Items:(.*?)(Notes:|$)/s;
-    const notesPattern = /Notes:(.*?)$/s;
-    
-    // Extract Project Scope
-    const scopeMatch = content.match(scopePattern);
-    if (scopeMatch && scopeMatch[1]) {
-      sections["Project Scope"] = scopeMatch[1].trim();
-    } else {
-      sections["Project Scope"] = content.trim(); // Default all content to scope if no markers
-    }
-    
-    // Extract Timeline
-    const timelineMatch = content.match(timelinePattern);
-    if (timelineMatch && timelineMatch[1]) {
-      sections["Project Timeline"] = timelineMatch[1].trim();
-    }
-    
-    // Extract Items
-    const itemsMatch = content.match(itemsPattern);
-    if (itemsMatch && itemsMatch[1]) {
-      sections["Items & Services"] = itemsMatch[1].trim();
-    }
-    
-    // Extract Notes
-    const notesMatch = content.match(notesPattern);
-    if (notesMatch && notesMatch[1]) {
-      sections["Terms & Notes"] = notesMatch[1].trim();
-    }
-    
-    return sections;
-  };
-
-  const contentSections = parseContent(proposal.content);
+  const contentSections = parseProposalContent(proposal.content);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

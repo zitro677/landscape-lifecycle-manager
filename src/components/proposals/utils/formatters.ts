@@ -33,36 +33,74 @@ export const parseProposalContent = (content?: string) => {
     "Terms & Notes": ""
   };
   
-  // Use regex to extract sections
-  const scopePattern = /(.*?)(Timeline:|$)/s;
-  const timelinePattern = /Timeline:(.*?)(Items:|$)/s;
-  const itemsPattern = /Items:(.*?)(Notes:|$)/s;
-  const notesPattern = /Notes:(.*?)$/s;
+  // Check if content contains section markers
+  const hasTimeline = content.includes("Timeline:");
+  const hasItems = content.includes("Items:");
+  const hasNotes = content.includes("Notes:");
   
-  // Extract Project Scope
-  const scopeMatch = content.match(scopePattern);
-  if (scopeMatch && scopeMatch[1]) {
-    sections["Project Scope"] = scopeMatch[1].trim();
-  } else {
+  if (!hasTimeline && !hasItems && !hasNotes) {
+    // If no markers, put all content in Project Scope
     sections["Project Scope"] = content.trim();
+    return sections;
   }
   
-  // Extract Timeline
-  const timelineMatch = content.match(timelinePattern);
-  if (timelineMatch && timelineMatch[1]) {
-    sections["Project Timeline"] = timelineMatch[1].trim();
-  }
-  
-  // Extract Items
-  const itemsMatch = content.match(itemsPattern);
-  if (itemsMatch && itemsMatch[1]) {
-    sections["Items & Services"] = itemsMatch[1].trim();
-  }
-  
-  // Extract Notes
-  const notesMatch = content.match(notesPattern);
-  if (notesMatch && notesMatch[1]) {
-    sections["Terms & Notes"] = notesMatch[1].trim();
+  // Extract Project Scope (everything before Timeline:)
+  let scopeContent = content;
+  if (hasTimeline) {
+    const parts = content.split("Timeline:");
+    scopeContent = parts[0];
+    sections["Project Scope"] = scopeContent.trim();
+    
+    // Extract Timeline (content between Timeline: and Items:)
+    let timelineContent = parts[1];
+    if (hasItems) {
+      const timelineParts = timelineContent.split("Items:");
+      timelineContent = timelineParts[0];
+      sections["Project Timeline"] = timelineContent.trim();
+      
+      // Extract Items (content between Items: and Notes:)
+      let itemsContent = timelineParts[1];
+      if (hasNotes) {
+        const itemsParts = itemsContent.split("Notes:");
+        itemsContent = itemsParts[0];
+        sections["Items & Services"] = itemsContent.trim();
+        
+        // Extract Notes (everything after Notes:)
+        sections["Terms & Notes"] = itemsParts[1].trim();
+      } else {
+        sections["Items & Services"] = itemsContent.trim();
+      }
+    } else if (hasNotes) {
+      // If we have Timeline: and Notes: but no Items:
+      const timelineParts = timelineContent.split("Notes:");
+      timelineContent = timelineParts[0];
+      sections["Project Timeline"] = timelineContent.trim();
+      sections["Terms & Notes"] = timelineParts[1].trim();
+    } else {
+      // Just Timeline:
+      sections["Project Timeline"] = timelineContent.trim();
+    }
+  } else if (hasItems) {
+    // No Timeline: but has Items:
+    const parts = content.split("Items:");
+    scopeContent = parts[0];
+    sections["Project Scope"] = scopeContent.trim();
+    
+    let itemsContent = parts[1];
+    if (hasNotes) {
+      const itemsParts = itemsContent.split("Notes:");
+      itemsContent = itemsParts[0];
+      sections["Items & Services"] = itemsContent.trim();
+      sections["Terms & Notes"] = itemsParts[1].trim();
+    } else {
+      sections["Items & Services"] = itemsContent.trim();
+    }
+  } else if (hasNotes) {
+    // Only has Notes:
+    const parts = content.split("Notes:");
+    scopeContent = parts[0];
+    sections["Project Scope"] = scopeContent.trim();
+    sections["Terms & Notes"] = parts[1].trim();
   }
   
   return sections;
