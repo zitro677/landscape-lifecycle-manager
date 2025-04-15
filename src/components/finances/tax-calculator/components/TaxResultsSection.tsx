@@ -86,7 +86,11 @@ export const TaxResultsSection: React.FC<TaxResultsSectionProps> = ({ taxResults
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => [`${formatCurrency(value)}`, undefined]}
+                formatter={(value: any) => {
+                  // Ensure value is treated as a number
+                  const numValue = typeof value === 'number' ? value : parseFloat(value);
+                  return [formatCurrency(numValue), undefined];
+                }}
                 contentStyle={{
                   backgroundColor: "rgba(255, 255, 255, 0.8)",
                   backdropFilter: "blur(8px)",
@@ -102,4 +106,3 @@ export const TaxResultsSection: React.FC<TaxResultsSectionProps> = ({ taxResults
     </Card>
   );
 };
-
