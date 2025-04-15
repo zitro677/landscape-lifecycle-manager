@@ -8,11 +8,12 @@ export const useProposals = () => {
   const queryClient = useQueryClient();
   
   const fetchProposals = async (): Promise<Proposal[]> => {
+    // Use the specific relationship name as mentioned in the error hint
     const { data: proposals, error } = await supabase
       .from("proposals")
       .select(`
         *,
-        clients (
+        clients!fk_proposals_client_id (
           name,
           email,
           address

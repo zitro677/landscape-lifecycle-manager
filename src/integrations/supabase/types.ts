@@ -326,7 +326,7 @@ export type Database = {
           id: string
           proposal_id: string
           quantity: number | null
-          type: string
+          type: Database["public"]["Enums"]["proposal_item_type"]
           unit_price: number | null
           updated_at: string | null
         }
@@ -336,7 +336,7 @@ export type Database = {
           id?: string
           proposal_id: string
           quantity?: number | null
-          type: string
+          type: Database["public"]["Enums"]["proposal_item_type"]
           unit_price?: number | null
           updated_at?: string | null
         }
@@ -346,13 +346,13 @@ export type Database = {
           id?: string
           proposal_id?: string
           quantity?: number | null
-          type?: string
+          type?: Database["public"]["Enums"]["proposal_item_type"]
           unit_price?: number | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "proposal_items_proposal_id_fkey"
+            foreignKeyName: "fk_proposal_items_proposal_id"
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
@@ -404,6 +404,20 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_proposals_client_id"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_proposals_project_id"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "proposals_client_id_fkey"
             columns: ["client_id"]
@@ -527,7 +541,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      proposal_item_type: "scope" | "timeline" | "item" | "note"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -642,6 +656,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      proposal_item_type: ["scope", "timeline", "item", "note"],
+    },
   },
 } as const
