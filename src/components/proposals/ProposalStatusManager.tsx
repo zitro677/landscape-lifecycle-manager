@@ -16,10 +16,15 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   const updateProposalStatus = async (status: ProposalStatus) => {
     console.log("Updating proposal status to:", status);
     
-    // Directly use the status value (already lowercase from our types)
+    // Convert status to match the exact format expected by the database
+    // Database likely expects "Draft", "Sent", "Approved", "Rejected" with capital first letter
+    const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    
+    console.log("Using formatted status:", formattedStatus);
+    
     const { error } = await supabase
       .from("proposals")
-      .update({ status })
+      .update({ status: formattedStatus })
       .eq("id", proposal.id);
 
     if (error) {
@@ -27,7 +32,7 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
       throw error;
     }
     
-    return { ...proposal, status };
+    return { ...proposal, status: formattedStatus };
   };
 
   const deleteProposal = async () => {
@@ -58,6 +63,7 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
     mutationFn: updateProposalStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
+      toast.success("Proposal status updated successfully");
     },
     onError: (error: any) => {
       console.error("Status update error:", error);

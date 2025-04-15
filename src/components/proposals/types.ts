@@ -10,7 +10,7 @@ export type Proposal = Database["public"]["Tables"]["proposals"]["Row"] & {
   };
 };
 
-// Updated to use lowercase status values to match database constraint
+// Updated to use properly capitalized status values to match database constraint
 export type ProposalStatus = "draft" | "sent" | "approved" | "rejected";
 
 export type ProposalFormData = {
