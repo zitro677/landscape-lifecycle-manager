@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,13 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
   onDownloadPDF,
   onSendEmail,
 }) => {
-  const sections = parseProposalContent(proposal.content);
+  const [sections, setSections] = useState(() => parseProposalContent(proposal.content));
+  
+  // Update sections whenever proposal changes
+  useEffect(() => {
+    console.log("Proposal content:", proposal.content);
+    setSections(parseProposalContent(proposal.content));
+  }, [proposal.content]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

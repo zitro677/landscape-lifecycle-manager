@@ -26,6 +26,7 @@ export const parseProposalContent = (content?: string) => {
     "Terms & Notes": ""
   };
   
+  // Initialize with empty sections
   const sections: Record<string, string> = {
     "Project Scope": "",
     "Project Timeline": "",
@@ -38,69 +39,56 @@ export const parseProposalContent = (content?: string) => {
   const hasItems = content.includes("Items:");
   const hasNotes = content.includes("Notes:");
   
+  // If no markers, put all content in Project Scope
   if (!hasTimeline && !hasItems && !hasNotes) {
-    // If no markers, put all content in Project Scope
     sections["Project Scope"] = content.trim();
     return sections;
   }
   
-  // Extract Project Scope (everything before Timeline:)
-  let scopeContent = content;
+  // Extract sections based on markers
+  let remainingContent = content;
+  
+  // Extract Project Scope (everything before Timeline: or Items: or Notes:)
+  let scopeEndIndex = content.length;
   if (hasTimeline) {
-    const parts = content.split("Timeline:");
-    scopeContent = parts[0];
-    sections["Project Scope"] = scopeContent.trim();
-    
-    // Extract Timeline (content between Timeline: and Items:)
-    let timelineContent = parts[1];
+    scopeEndIndex = Math.min(scopeEndIndex, content.indexOf("Timeline:"));
+  }
+  if (hasItems) {
+    scopeEndIndex = Math.min(scopeEndIndex, content.indexOf("Items:"));
+  }
+  if (hasNotes) {
+    scopeEndIndex = Math.min(scopeEndIndex, content.indexOf("Notes:"));
+  }
+  
+  sections["Project Scope"] = content.substring(0, scopeEndIndex).trim();
+  
+  // Extract Timeline
+  if (hasTimeline) {
+    const timelineStartIndex = content.indexOf("Timeline:") + "Timeline:".length;
+    let timelineEndIndex = content.length;
     if (hasItems) {
-      const timelineParts = timelineContent.split("Items:");
-      timelineContent = timelineParts[0];
-      sections["Project Timeline"] = timelineContent.trim();
-      
-      // Extract Items (content between Items: and Notes:)
-      let itemsContent = timelineParts[1];
-      if (hasNotes) {
-        const itemsParts = itemsContent.split("Notes:");
-        itemsContent = itemsParts[0];
-        sections["Items & Services"] = itemsContent.trim();
-        
-        // Extract Notes (everything after Notes:)
-        sections["Terms & Notes"] = itemsParts[1].trim();
-      } else {
-        sections["Items & Services"] = itemsContent.trim();
-      }
-    } else if (hasNotes) {
-      // If we have Timeline: and Notes: but no Items:
-      const timelineParts = timelineContent.split("Notes:");
-      timelineContent = timelineParts[0];
-      sections["Project Timeline"] = timelineContent.trim();
-      sections["Terms & Notes"] = timelineParts[1].trim();
-    } else {
-      // Just Timeline:
-      sections["Project Timeline"] = timelineContent.trim();
+      timelineEndIndex = Math.min(timelineEndIndex, content.indexOf("Items:"));
     }
-  } else if (hasItems) {
-    // No Timeline: but has Items:
-    const parts = content.split("Items:");
-    scopeContent = parts[0];
-    sections["Project Scope"] = scopeContent.trim();
-    
-    let itemsContent = parts[1];
     if (hasNotes) {
-      const itemsParts = itemsContent.split("Notes:");
-      itemsContent = itemsParts[0];
-      sections["Items & Services"] = itemsContent.trim();
-      sections["Terms & Notes"] = itemsParts[1].trim();
-    } else {
-      sections["Items & Services"] = itemsContent.trim();
+      timelineEndIndex = Math.min(timelineEndIndex, content.indexOf("Notes:"));
     }
-  } else if (hasNotes) {
-    // Only has Notes:
-    const parts = content.split("Notes:");
-    scopeContent = parts[0];
-    sections["Project Scope"] = scopeContent.trim();
-    sections["Terms & Notes"] = parts[1].trim();
+    sections["Project Timeline"] = content.substring(timelineStartIndex, timelineEndIndex).trim();
+  }
+  
+  // Extract Items
+  if (hasItems) {
+    const itemsStartIndex = content.indexOf("Items:") + "Items:".length;
+    let itemsEndIndex = content.length;
+    if (hasNotes) {
+      itemsEndIndex = Math.min(itemsEndIndex, content.indexOf("Notes:"));
+    }
+    sections["Items & Services"] = content.substring(itemsStartIndex, itemsEndIndex).trim();
+  }
+  
+  // Extract Notes
+  if (hasNotes) {
+    const notesStartIndex = content.indexOf("Notes:") + "Notes:".length;
+    sections["Terms & Notes"] = content.substring(notesStartIndex).trim();
   }
   
   return sections;
