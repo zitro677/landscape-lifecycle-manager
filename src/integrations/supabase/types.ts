@@ -319,6 +319,47 @@ export type Database = {
           },
         ]
       }
+      proposal_items: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          proposal_id: string
+          quantity: number | null
+          type: string
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          proposal_id: string
+          quantity?: number | null
+          type: string
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          proposal_id?: string
+          quantity?: number | null
+          type?: string
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposals: {
         Row: {
           amount: number | null

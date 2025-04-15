@@ -2,7 +2,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { useState } from "react";
 import { z } from "zod";
 import { proposalFormSchema, ProposalItemType } from "./formSchema";
 import { ProposalFormData } from "../types";
@@ -67,10 +66,7 @@ export const useProposalForm = () => {
     }
   };
 
-  const onSubmit = (values: z.infer<typeof proposalFormSchema>) => {
-    console.log(values);
-    
-    // Ensure all required fields are present before creating the proposal
+  const onSubmit = async (values: z.infer<typeof proposalFormSchema>) => {
     const proposalData: ProposalFormData = {
       client: values.client,
       email: values.email,
@@ -84,12 +80,10 @@ export const useProposalForm = () => {
       })),
       scope: values.scope,
       timeline: values.timeline,
-      notes: values.notes || ""
+      notes: values.notes
     };
     
-    createProposal(proposalData);
-    
-    // In a real app, we would save the proposal to the database here
+    await createProposal(proposalData);
     navigate("/proposals");
   };
 
@@ -105,3 +99,4 @@ export const useProposalForm = () => {
     isPending
   };
 };
+

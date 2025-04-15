@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Proposal, ProposalFormData } from "./types";
 
 export const useProposals = () => {
@@ -28,7 +28,6 @@ export const useProposals = () => {
     // Format the proposals to match our expected structure
     return proposals.map(proposal => ({
       ...proposal,
-      // Use optional chaining to safely access client name, with fallback values
       client_name: proposal.clients?.name || proposal.title?.replace("Proposal for ", "") || ""
     }));
   };
@@ -54,34 +53,63 @@ export const useProposals = () => {
       // Format the proposal data for database insertion
       const proposalData = {
         user_id: session.user.id,
-        client_id: null, // This would be set if we had a client ID
         title: `Proposal for ${formData.client}`,
         content: formData.scope,
         amount,
         issue_date: formData.proposalDate,
         valid_until: formData.expirationDate,
-        status: "Draft", // Exact value expected by the database
+        status: "Draft",
       };
 
-      // Insert into proposals table
+      // Insert proposal
       const { data: proposal, error: proposalError } = await supabase
         .from("proposals")
         .insert(proposalData)
         .select()
         .single();
 
-      if (proposalError) {
-        throw proposalError;
-      }
+      if (proposalError) throw proposalError;
+
+      // Insert proposal items
+      const itemsToInsert = [
+        // Scope
+        {
+          proposal_id: proposal.id,
+          type: 'scope',
+          description: formData.scope,
+        },
+        // Timeline
+        {
+          proposal_id: proposal.id,
+          type: 'timeline',
+          description: formData.timeline,
+        },
+        // Notes
+        {
+          proposal_id: proposal.id,
+          type: 'note',
+          description: formData.notes,
+        },
+        // Items & Services
+        ...formData.items.map(item => ({
+          proposal_id: proposal.id,
+          type: 'item',
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+        })),
+      ];
+
+      const { error: itemsError } = await supabase
+        .from('proposal_items')
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
 
       return proposal;
     } catch (error: any) {
       console.error("Error creating proposal:", error);
-      toast({
-        title: "Error creating proposal",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
+      toast("Error creating proposal: " + error.message);
       throw error;
     }
   };
@@ -97,17 +125,10 @@ export const useProposals = () => {
     mutationFn: createProposal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
-      toast({
-        title: "Proposal Created",
-        description: "Your proposal has been successfully created.",
-      });
+      toast("Proposal created successfully");
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create proposal",
-        variant: "destructive",
-      });
+      toast("Error creating proposal: " + (error.message || "An unexpected error occurred"));
     }
   });
 
