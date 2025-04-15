@@ -41,15 +41,17 @@ const FinancialStats: React.FC<FinancialStatsProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay }}
-          className="glass-card rounded-lg p-6"
+          className="glass-card rounded-lg p-4"
         >
-          <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
-          <p 
-            className="text-2xl font-bold mt-2 truncate" 
-            title={isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
-          >
-            {isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
-          </p>
+          <h3 className="text-sm font-medium text-muted-foreground mb-1">{label}</h3>
+          <div className="overflow-hidden">
+            <p 
+              className="text-xl xl:text-2xl font-bold truncate" 
+              title={isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
+            >
+              {isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground mt-1">For {yearFilter}</p>
         </motion.div>
       ))}
