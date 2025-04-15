@@ -33,7 +33,7 @@ const Layout: React.FC = () => {
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+      <Header onMenuClick={toggleSidebar} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isSidebarOpen={isSidebarOpen} closeSidebar={closeSidebar} />
         <main className="flex-1 overflow-y-auto bg-background">

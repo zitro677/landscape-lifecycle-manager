@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";

@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import Logo from "@/components/shared/Logo";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -14,7 +13,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
           <Menu className="h-6 w-6" />
         </Button>
-        <Logo size="sm" className="mr-4" />
         <div className="flex-1" />
       </div>
     </header>
