@@ -25,6 +25,47 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
     }
   };
 
+  // Parse the content into sections
+  const parseContent = (content?: string) => {
+    if (!content) return {};
+    
+    const sections: Record<string, string> = {};
+    
+    // Use regex to extract sections
+    const scopePattern = /(.*?)(Timeline:|$)/s;
+    const timelinePattern = /Timeline:(.*?)(Items:|$)/s;
+    const itemsPattern = /Items:(.*?)(Notes:|$)/s;
+    const notesPattern = /Notes:(.*?)$/s;
+    
+    // Extract Project Scope
+    const scopeMatch = content.match(scopePattern);
+    if (scopeMatch && scopeMatch[1]) {
+      sections["Project Scope"] = scopeMatch[1].trim();
+    } else {
+      sections["Project Scope"] = content.trim();
+    }
+    
+    // Extract Timeline
+    const timelineMatch = content.match(timelinePattern);
+    if (timelineMatch && timelineMatch[1]) {
+      sections["Project Timeline"] = timelineMatch[1].trim();
+    }
+    
+    // Extract Items
+    const itemsMatch = content.match(itemsPattern);
+    if (itemsMatch && itemsMatch[1]) {
+      sections["Items & Services"] = itemsMatch[1].trim();
+    }
+    
+    // Extract Notes
+    const notesMatch = content.match(notesPattern);
+    if (notesMatch && notesMatch[1]) {
+      sections["Terms & Notes"] = notesMatch[1].trim();
+    }
+    
+    return sections;
+  };
+
   const sendEmail = () => {
     try {
       // Create email subject
@@ -65,65 +106,33 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
       body += `Tax (7%): ${formatCurrency(tax)}\n`;
       body += `Total Amount: ${formatCurrency(total)}\n\n`;
       
-      // Additional Sections from content
+      // Add content sections
       if (proposal.content) {
-        // Parse sections from content
-        let content = proposal.content;
-        let scopeContent = content;
-        let timelineContent = "";
-        let itemsContent = "";
-        let notesContent = "";
+        const contentSections = parseContent(proposal.content);
         
-        if (content.includes("Timeline:")) {
-          const parts = content.split("Timeline:");
-          scopeContent = parts[0].trim();
-          const remainingContent = parts[1];
-          
-          if (remainingContent.includes("Items:")) {
-            const timelineParts = remainingContent.split("Items:");
-            timelineContent = timelineParts[0].trim();
-            const afterTimelineContent = timelineParts[1];
-            
-            if (afterTimelineContent.includes("Notes:")) {
-              const itemsParts = afterTimelineContent.split("Notes:");
-              itemsContent = itemsParts[0].trim();
-              notesContent = itemsParts[1].trim();
-            } else {
-              itemsContent = afterTimelineContent.trim();
-            }
-          } else if (remainingContent.includes("Notes:")) {
-            const timelineParts = remainingContent.split("Notes:");
-            timelineContent = timelineParts[0].trim();
-            notesContent = timelineParts[1].trim();
-          } else {
-            timelineContent = remainingContent.trim();
-          }
+        // Add sections in order
+        if (contentSections["Project Scope"]) {
+          body += `PROJECT SCOPE\n`;
+          body += `-------------\n`;
+          body += `${contentSections["Project Scope"]}\n\n`;
         }
         
-        // Add Project Scope
-        body += `PROJECT SCOPE\n`;
-        body += `-------------\n`;
-        body += `${scopeContent}\n\n`;
-        
-        // Add Timeline if available
-        if (timelineContent) {
+        if (contentSections["Project Timeline"]) {
           body += `PROJECT TIMELINE\n`;
           body += `----------------\n`;
-          body += `${timelineContent}\n\n`;
+          body += `${contentSections["Project Timeline"]}\n\n`;
         }
         
-        // Add Items if available
-        if (itemsContent) {
+        if (contentSections["Items & Services"]) {
           body += `ITEMS & SERVICES\n`;
           body += `----------------\n`;
-          body += `${itemsContent}\n\n`;
+          body += `${contentSections["Items & Services"]}\n\n`;
         }
         
-        // Add Notes if available
-        if (notesContent) {
+        if (contentSections["Terms & Notes"]) {
           body += `TERMS & NOTES\n`;
           body += `-------------\n`;
-          body += `${notesContent}\n\n`;
+          body += `${contentSections["Terms & Notes"]}\n\n`;
         }
       }
       
@@ -152,4 +161,3 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
 };
 
 export default ProposalEmailService;
-

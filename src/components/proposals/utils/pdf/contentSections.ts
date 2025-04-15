@@ -48,42 +48,38 @@ const parseContent = (content: string) => {
 
   if (!content) return sections;
 
-  // Parse content into sections
-  let currentContent = content;
+  // Parse content into sections based on form field structure
+  // This matches how the data is structured in ProposalForm.tsx
+  const scopePattern = /(.*?)(Timeline:|$)/s;
+  const timelinePattern = /Timeline:(.*?)(Items:|$)/s;
+  const itemsPattern = /Items:(.*?)(Notes:|$)/s;
+  const notesPattern = /Notes:(.*?)$/s;
 
-  // Extract Project Scope (everything before Timeline)
-  if (currentContent.includes("Timeline:")) {
-    const [scope, rest] = currentContent.split("Timeline:");
-    sections["Project Scope"] = scope.trim();
-    currentContent = rest;
-
-    // Extract Timeline (everything before Items)
-    if (currentContent.includes("Items:")) {
-      const [timeline, rest] = currentContent.split("Items:");
-      sections["Project Timeline"] = timeline.trim();
-      currentContent = rest;
-
-      // Extract Items and Notes
-      if (currentContent.includes("Notes:")) {
-        const [items, notes] = currentContent.split("Notes:");
-        sections["Items & Services"] = items.trim();
-        sections["Terms & Notes"] = notes.trim();
-      } else {
-        sections["Items & Services"] = currentContent.trim();
-      }
-    } else if (currentContent.includes("Notes:")) {
-      // Handle case where there are no Items but there are Notes
-      const [timeline, notes] = currentContent.split("Notes:");
-      sections["Project Timeline"] = timeline.trim();
-      sections["Terms & Notes"] = notes.trim();
-    } else {
-      sections["Project Timeline"] = currentContent.trim();
-    }
+  // Extract Project Scope
+  const scopeMatch = content.match(scopePattern);
+  if (scopeMatch && scopeMatch[1]) {
+    sections["Project Scope"] = scopeMatch[1].trim();
   } else {
-    // If no sections found, put everything in Project Scope
-    sections["Project Scope"] = currentContent.trim();
+    sections["Project Scope"] = content.trim(); // Default all content to scope if no markers
+  }
+
+  // Extract Timeline
+  const timelineMatch = content.match(timelinePattern);
+  if (timelineMatch && timelineMatch[1]) {
+    sections["Project Timeline"] = timelineMatch[1].trim();
+  }
+
+  // Extract Items
+  const itemsMatch = content.match(itemsPattern);
+  if (itemsMatch && itemsMatch[1]) {
+    sections["Items & Services"] = itemsMatch[1].trim();
+  }
+
+  // Extract Notes
+  const notesMatch = content.match(notesPattern);
+  if (notesMatch && notesMatch[1]) {
+    sections["Terms & Notes"] = notesMatch[1].trim();
   }
 
   return sections;
 };
-

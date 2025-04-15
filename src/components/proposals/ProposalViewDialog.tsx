@@ -44,6 +44,49 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
     }).format(amount);
   };
 
+  // Parse the content into sections
+  const parseContent = (content?: string) => {
+    if (!content) return {};
+    
+    const sections: Record<string, string> = {};
+    
+    // Use regex to extract sections
+    const scopePattern = /(.*?)(Timeline:|$)/s;
+    const timelinePattern = /Timeline:(.*?)(Items:|$)/s;
+    const itemsPattern = /Items:(.*?)(Notes:|$)/s;
+    const notesPattern = /Notes:(.*?)$/s;
+    
+    // Extract Project Scope
+    const scopeMatch = content.match(scopePattern);
+    if (scopeMatch && scopeMatch[1]) {
+      sections["Project Scope"] = scopeMatch[1].trim();
+    } else {
+      sections["Project Scope"] = content.trim(); // Default all content to scope if no markers
+    }
+    
+    // Extract Timeline
+    const timelineMatch = content.match(timelinePattern);
+    if (timelineMatch && timelineMatch[1]) {
+      sections["Project Timeline"] = timelineMatch[1].trim();
+    }
+    
+    // Extract Items
+    const itemsMatch = content.match(itemsPattern);
+    if (itemsMatch && itemsMatch[1]) {
+      sections["Items & Services"] = itemsMatch[1].trim();
+    }
+    
+    // Extract Notes
+    const notesMatch = content.match(notesPattern);
+    if (notesMatch && notesMatch[1]) {
+      sections["Terms & Notes"] = notesMatch[1].trim();
+    }
+    
+    return sections;
+  };
+
+  const contentSections = parseContent(proposal.content);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -82,13 +125,17 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
             <p>{proposal.clients?.address || ""}</p>
           </div>
 
-          {/* Proposal Content */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">Proposal Details</h3>
-            <div className="p-4 border rounded-md whitespace-pre-wrap">
-              {proposal.content || "No content provided"}
-            </div>
-          </div>
+          {/* Proposal Content Sections */}
+          {Object.entries(contentSections).map(([title, content]) => (
+            content ? (
+              <div key={title} className="space-y-2">
+                <h3 className="text-sm font-medium">{title}</h3>
+                <div className="p-4 border rounded-md whitespace-pre-wrap">
+                  {content}
+                </div>
+              </div>
+            ) : null
+          ))}
 
           {/* Amount */}
           <div className="flex justify-between font-medium text-lg">
