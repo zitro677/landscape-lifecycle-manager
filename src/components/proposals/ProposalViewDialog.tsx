@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Mail, X } from "lucide-react";
+import { Download, Mail, X, FileText, CalendarDays, List, FileChart } from "lucide-react";
 import { Proposal } from "./types";
 import { formatDate, formatCurrency, parseProposalContent } from "./utils/formatters";
 
@@ -27,12 +27,11 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
   onDownloadPDF,
   onSendEmail,
 }) => {
-  // Parse the content into sections
-  const contentSections = parseProposalContent(proposal.content);
+  const sections = parseProposalContent(proposal.content);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>Proposal {proposal.id?.substring(0, 8)}</DialogTitle>
           <Button
@@ -45,7 +44,7 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Header */}
+          {/* Header Information */}
           <div className="flex flex-col md:flex-row justify-between">
             <div>
               <h2 className="text-xl font-bold">{proposal.title || "Proposal"}</h2>
@@ -68,17 +67,49 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
             <p>{proposal.clients?.address || ""}</p>
           </div>
 
-          {/* Proposal Content Sections */}
-          {Object.entries(contentSections).map(([title, content]) => (
-            content ? (
-              <div key={title} className="space-y-2">
-                <h3 className="text-sm font-medium">{title}</h3>
-                <div className="p-4 border rounded-md whitespace-pre-wrap">
-                  {content}
-                </div>
-              </div>
-            ) : null
-          ))}
+          {/* Project Scope */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <h3 className="text-sm font-medium">Project Scope</h3>
+            </div>
+            <div className="p-4 border rounded-md whitespace-pre-wrap">
+              {sections["Project Scope"] || "No scope defined"}
+            </div>
+          </div>
+
+          {/* Project Timeline */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4" />
+              <h3 className="text-sm font-medium">Project Timeline</h3>
+            </div>
+            <div className="p-4 border rounded-md whitespace-pre-wrap">
+              {sections["Project Timeline"] || "No timeline specified"}
+            </div>
+          </div>
+
+          {/* Items & Services */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              <h3 className="text-sm font-medium">Items & Services</h3>
+            </div>
+            <div className="p-4 border rounded-md whitespace-pre-wrap">
+              {sections["Items & Services"] || "No items specified"}
+            </div>
+          </div>
+
+          {/* Terms & Notes */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FileChart className="h-4 w-4" />
+              <h3 className="text-sm font-medium">Terms & Notes</h3>
+            </div>
+            <div className="p-4 border rounded-md whitespace-pre-wrap">
+              {sections["Terms & Notes"] || "No terms or notes specified"}
+            </div>
+          </div>
 
           {/* Amount */}
           <div className="flex justify-between font-medium text-lg">
