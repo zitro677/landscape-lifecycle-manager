@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   const updateProposalStatus = async (status: ProposalStatus) => {
     console.log("Updating proposal status to:", status);
     
-    // Ensure we're using lowercase status that matches the database constraint
+    // Directly use the status value (already lowercase from our types)
     const { error } = await supabase
       .from("proposals")
       .update({ status })
@@ -65,21 +66,15 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   });
 
   const markAsApproved = () => {
-    statusMutation.mutate("approved", {
-      onSuccess: () => toast.success("Proposal marked as approved")
-    });
+    statusMutation.mutate("approved");
   };
 
   const markAsRejected = () => {
-    statusMutation.mutate("rejected", {
-      onSuccess: () => toast.success("Proposal marked as rejected")
-    });
+    statusMutation.mutate("rejected");
   };
 
   const markAsSent = () => {
-    statusMutation.mutate("sent", {
-      onSuccess: () => toast.success("Proposal marked as sent")
-    });
+    statusMutation.mutate("sent");
   };
 
   const deleteProposalHandler = () => {
