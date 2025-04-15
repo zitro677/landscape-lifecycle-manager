@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Mail, X, FileText, CalendarDays, List, FileChart } from "lucide-react";
+import { Download, Mail, X, FileText, CalendarDays, List, File } from "lucide-react";
 import { Proposal } from "./types";
 import { formatDate, formatCurrency, parseProposalContent } from "./utils/formatters";
 
@@ -103,7 +103,7 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
           {/* Terms & Notes */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <FileChart className="h-4 w-4" />
+              <File className="h-4 w-4" />
               <h3 className="text-sm font-medium">Terms & Notes</h3>
             </div>
             <div className="p-4 border rounded-md whitespace-pre-wrap">
