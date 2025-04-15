@@ -76,25 +76,25 @@ export const useProposals = () => {
         // Scope
         {
           proposal_id: proposal.id,
-          type: 'scope',
+          type: 'scope' as const,
           description: formData.scope,
         },
         // Timeline
         {
           proposal_id: proposal.id,
-          type: 'timeline',
+          type: 'timeline' as const,
           description: formData.timeline,
         },
         // Notes
         {
           proposal_id: proposal.id,
-          type: 'note',
+          type: 'note' as const,
           description: formData.notes,
         },
         // Items & Services
         ...formData.items.map(item => ({
           proposal_id: proposal.id,
-          type: 'item',
+          type: 'item' as const,
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unitPrice,
