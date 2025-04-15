@@ -16,9 +16,8 @@ const ProposalStatusManager = ({ proposal }: ProposalStatusManagerProps) => {
   const updateProposalStatus = async (status: ProposalStatus) => {
     console.log("Updating proposal status to:", status);
     
-    // Convert status to match the exact format expected by the database
-    // Database likely expects "Draft", "Sent", "Approved", "Rejected" with capital first letter
-    const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    // Database expects exactly "Draft", "Sent", "Approved", "Rejected" - capitalized first letter
+    const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1);
     
     console.log("Using formatted status:", formattedStatus);
     
