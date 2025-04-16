@@ -32,13 +32,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const { handleEditProject, handleShareProject, handleExportProject } = useProjectActions(projectId, projectName);
 
   const handleStatusChange = (newStatus: string) => {
-    console.log("Status changed to:", newStatus);
+    // Simply update local state for UI rendering
     setStatus(newStatus);
-    
-    // Update the project object with the new status
-    if (project) {
-      project.status = newStatus;
-    }
   };
 
   return (
@@ -66,7 +61,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             onEdit={handleEditProject}
             onShare={handleShareProject}
             onExport={() => handleExportProject(
-              {...project, status}, // Use the updated status
+              {...project, status}, 
               extraData,
               teamMembers
             )}

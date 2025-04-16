@@ -37,8 +37,7 @@ export const updateProject = (id: string, projectData: any) => {
     console.log("Updating project with ID:", id, projectData);
     
     // Get existing projects from localStorage
-    const storedProjects = localStorage.getItem("landscape_projects");
-    const projects = storedProjects ? JSON.parse(storedProjects) : [];
+    const projects = getLocalProjects();
     
     // Find the project to update
     const projectIndex = projects.findIndex((p: any) => p.id === id);
@@ -54,7 +53,7 @@ export const updateProject = (id: string, projectData: any) => {
       projects[projectIndex] = updatedProject;
       
       // Save updated projects back to localStorage
-      localStorage.setItem("landscape_projects", JSON.stringify(projects));
+      saveLocalProjects(projects);
       
       console.log("Project updated successfully:", updatedProject);
       return updatedProject;
@@ -72,7 +71,7 @@ export const updateProject = (id: string, projectData: any) => {
         };
         
         projects.push(projectToCopy);
-        localStorage.setItem("landscape_projects", JSON.stringify(projects));
+        saveLocalProjects(projects);
         
         console.log("Default project copied and updated:", projectToCopy);
         return projectToCopy;

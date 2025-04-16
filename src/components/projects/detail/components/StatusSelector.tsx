@@ -49,33 +49,29 @@ const StatusSelector: React.FC<StatusSelectorProps> = ({
       return;
     }
 
+    // Update the local state first for immediate UI feedback
+    setStatus(newStatus);
+    
+    // Close the dropdown
+    setOpen(false);
+    
+    // Try to update the project status in localStorage
     try {
-      // Update the local state first for immediate feedback
-      setStatus(newStatus);
+      updateProject(projectId, { status: newStatus });
       
-      // Close the dropdown
-      setOpen(false);
+      // Notify the user
+      toast.success(`Project status updated to ${newStatus}`);
       
-      // Update the project with the new status
-      const result = updateProject(projectId, { status: newStatus });
-      
-      if (result) {
-        toast.success(`Project status updated to ${newStatus}`);
-        
-        // Call the callback if provided
-        if (onStatusChange) {
-          onStatusChange(newStatus);
-        }
-      } else {
-        // If update failed, revert back to original status
-        setStatus(currentStatus);
-        toast.error("Failed to update project status");
+      // Call the callback if provided
+      if (onStatusChange) {
+        onStatusChange(newStatus);
       }
     } catch (error) {
       console.error("Error updating project status:", error);
-      // If update failed, revert back to original status
-      setStatus(currentStatus);
       toast.error("Failed to update project status");
+      
+      // We don't revert the UI state because that might cause flickering
+      // The next time the component loads, it will show the correct status from storage
     }
   };
 
