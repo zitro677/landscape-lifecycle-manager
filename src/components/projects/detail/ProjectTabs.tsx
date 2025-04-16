@@ -25,7 +25,7 @@ const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData: initialExtraData, 
   const { toast } = useToast();
   
   // Use our custom hook for data management
-  const { extraData, saveExtraData } = useProjectData(projectId);
+  const { extraData, loadExtraData, saveExtraData } = useProjectData(projectId);
   
   // Dialog states
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);

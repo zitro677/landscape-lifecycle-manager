@@ -21,9 +21,6 @@ const ProjectDetail: React.FC = () => {
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // Get extra data for the project
-  const [extraData, setExtraData] = useState<any>({});
-  
   // Load project data
   useEffect(() => {
     const loadProject = () => {
@@ -61,15 +58,6 @@ const ProjectDetail: React.FC = () => {
         if (foundProject) {
           console.log("Project found:", foundProject);
           setProject(foundProject);
-          
-          // Check if the project has extraData
-          if (foundProject.extraData) {
-            setExtraData(foundProject.extraData);
-          } else {
-            // Use default extra data
-            const defaultExtraData = getProjectExtraData(id || "");
-            setExtraData(defaultExtraData);
-          }
         } else {
           console.error("Project not found with ID:", id);
         }
@@ -166,7 +154,7 @@ const ProjectDetail: React.FC = () => {
           {/* Project Overview */}
           <ProjectOverview 
             project={project}
-            extraData={extraData}
+            extraData={{}} // This will be handled by the useProjectData hook
             teamSize={teamMembers.length}
           />
 
@@ -179,7 +167,7 @@ const ProjectDetail: React.FC = () => {
 
         {/* Project Tabs (Tasks, Materials, Notes) */}
         <ProjectTabs 
-          extraData={extraData}
+          extraData={{}} // This will be handled by the useProjectData hook
           getStatusColor={getStatusColor}
           projectId={project.id}
         />
