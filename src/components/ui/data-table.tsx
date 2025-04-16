@@ -18,6 +18,7 @@ import {
   useReactTable,
   ColumnFiltersState,
   getFilteredRowModel,
+  FilterFn,
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchColumn?: string;
+  searchColumns?: string[];
   searchPlaceholder?: string;
 }
 
@@ -35,10 +37,29 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchColumn,
+  searchColumns,
   searchPlaceholder = "Search...",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+
+  // Create custom filter function for searching across multiple columns
+  const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+    // Default to first column if no search columns specified
+    if (!searchColumns || searchColumns.length === 0) {
+      const itemValue = String(row.getValue(columnId)).toLowerCase();
+      return itemValue.includes(String(value).toLowerCase());
+    }
+    
+    // Check if the value exists in any of the searchable columns
+    return searchColumns.some(column => {
+      const cellValue = row.getValue(column);
+      if (cellValue == null) return false;
+      const itemValue = String(cellValue).toLowerCase();
+      return itemValue.includes(String(value).toLowerCase());
+    });
+  };
 
   const table = useReactTable({
     data,
@@ -49,23 +70,27 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
+    globalFilterFn: fuzzyFilter,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
+      globalFilter,
     },
   });
 
   return (
     <div className="space-y-4">
-      {searchColumn && (
+      {(searchColumn || searchColumns) && (
         <div className="flex items-center relative">
           <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-            }
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.target.value)}
             className="max-w-sm pl-9"
           />
         </div>

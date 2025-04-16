@@ -83,8 +83,8 @@ const ExpenseTracker: React.FC = () => {
           <DataTable
             columns={expenseColumns}
             data={expenses}
-            searchColumn="vendor"
-            searchPlaceholder="Search expenses..."
+            searchColumns={["vendor", "category", "description"]}
+            searchPlaceholder="Search expenses by vendor, category or description..."
           />
         </CardContent>
       </Card>
