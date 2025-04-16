@@ -155,6 +155,9 @@ const ProjectDetail: React.FC = () => {
           projectName={project.name}
           projectStatus={project.status}
           getStatusColor={getStatusColor}
+          project={project}
+          extraData={extraData}
+          teamMembers={teamMembers}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
