@@ -1,8 +1,9 @@
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Share2, FileEdit, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ProjectTitle from "./components/ProjectTitle";
 import ProjectActions from "./components/ProjectActions";
 import { useProjectActions } from "./hooks/useProjectActions";
@@ -24,39 +25,51 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   getStatusColor,
   project,
   extraData,
-  teamMembers
+  teamMembers,
 }) => {
   const navigate = useNavigate();
+  const [status, setStatus] = useState(projectStatus);
   const { handleEditProject, handleShareProject, handleExportProject } = useProjectActions(projectId, projectName);
 
-  return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/projects")}
-          className="h-8 w-8"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <ProjectTitle 
-          projectId={projectId}
-          projectName={projectName}
-          projectStatus={projectStatus}
-          getStatusColor={getStatusColor}
-        />
-      </div>
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus);
+    // Status update happens in the StatusSelector component
+    // We just need to update the local state here
+  };
 
-      <ProjectActions
-        onShare={handleShareProject}
-        onExport={() => {
-          console.log("Export button clicked with data:", { project, extraData, teamMembers });
-          handleExportProject(project, extraData, teamMembers);
-        }}
-        onEdit={handleEditProject}
-      />
-    </div>
+  return (
+    <Card className="mb-6">
+      <CardContent className="pt-6 pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/projects")}
+              className="h-8 w-8 mt-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <ProjectTitle
+              projectId={projectId}
+              projectName={projectName}
+              projectStatus={status}
+              getStatusColor={getStatusColor}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
+          <ProjectActions
+            onEdit={handleEditProject}
+            onShare={handleShareProject}
+            onExport={() => handleExportProject(
+              {...project, status}, // Use the updated status
+              extraData,
+              teamMembers
+            )}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

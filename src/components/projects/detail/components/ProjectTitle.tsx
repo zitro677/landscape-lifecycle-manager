@@ -8,6 +8,7 @@ interface ProjectTitleProps {
   projectName: string;
   projectStatus: string;
   getStatusColor: (status: string) => string;
+  onStatusChange?: (newStatus: string) => void;
 }
 
 const ProjectTitle: React.FC<ProjectTitleProps> = ({
@@ -15,6 +16,7 @@ const ProjectTitle: React.FC<ProjectTitleProps> = ({
   projectName,
   projectStatus,
   getStatusColor,
+  onStatusChange,
 }) => {
   return (
     <motion.div
@@ -25,7 +27,13 @@ const ProjectTitle: React.FC<ProjectTitleProps> = ({
       <h1 className="text-3xl font-bold">{projectName}</h1>
       <div className="flex items-center gap-2 mt-1">
         <p className="text-muted-foreground">Project {projectId}</p>
-        <ProjectBadge status={projectStatus} getStatusColor={getStatusColor} />
+        <ProjectBadge 
+          status={projectStatus} 
+          getStatusColor={getStatusColor} 
+          projectId={projectId}
+          editable={true}
+          onStatusChange={onStatusChange}
+        />
       </div>
     </motion.div>
   );

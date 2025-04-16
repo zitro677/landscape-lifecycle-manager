@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { updateProject } from "../../hooks/useProjects";
@@ -116,3 +117,4 @@ export const useProjectActions = (projectId: string, projectName: string) => {
     handleUpdateProgress
   };
 };
+
