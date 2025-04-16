@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 
-// This would typically come from an API/database
+// Mock project data (would come from an API/database in a real app)
 export const projects = [
   {
     id: "PRJ-2023-001",
@@ -60,10 +60,12 @@ export const projects = [
   },
 ];
 
-// Added local storage for persisting new projects
+// Local storage utility functions
+const LOCAL_STORAGE_KEY = 'newProjects';
+
 const getLocalProjects = () => {
   try {
-    const storedProjects = localStorage.getItem('newProjects');
+    const storedProjects = localStorage.getItem(LOCAL_STORAGE_KEY);
     return storedProjects ? JSON.parse(storedProjects) : [];
   } catch (error) {
     console.error('Error loading projects from localStorage:', error);
@@ -71,24 +73,59 @@ const getLocalProjects = () => {
   }
 };
 
+const saveLocalProjects = (projectsData) => {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(projectsData));
+    return true;
+  } catch (error) {
+    console.error('Error saving projects to localStorage:', error);
+    return false;
+  }
+};
+
+// Format and generate a new project
+const formatNewProject = (project) => {
+  return {
+    ...project,
+    id: generateProjectId(),
+    progress: calculateInitialProgress(project.status),
+    startDate: formatDate(project.startDate),
+    dueDate: formatDate(project.dueDate),
+    budget: formatBudget(project.budget),
+    team: project.team || [],
+  };
+};
+
+// Helper functions for project formatting
+const generateProjectId = () => {
+  return `PRJ-${new Date().getFullYear()}-${String(projects.length + getLocalProjects().length + 1).padStart(3, '0')}`;
+};
+
+const calculateInitialProgress = (status) => {
+  switch (status) {
+    case 'Completed': return 100;
+    case 'Planning': return 10;
+    case 'In Progress': return 30;
+    case 'On Hold': return 30;
+    default: return 0;
+  }
+};
+
+const formatDate = (dateString) => {
+  return dateString ? new Date(dateString).toISOString().split('T')[0] : '';
+};
+
+const formatBudget = (budget) => {
+  return budget ? `$${budget}` : '$0';
+};
+
+// Add a new project
 export const addProject = (project) => {
   try {
-    const newProject = {
-      ...project,
-      id: `PRJ-${new Date().getFullYear()}-${String(projects.length + 1).padStart(3, '0')}`,
-      progress: project.status === 'Completed' ? 100 : (project.status === 'Planning' ? 10 : 30),
-      // Format dates consistently with existing projects
-      startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-      dueDate: project.dueDate ? new Date(project.dueDate).toISOString().split('T')[0] : '',
-      // Format budget with dollar sign
-      budget: project.budget ? `$${project.budget}` : '$0',
-      // Default team if none provided
-      team: project.team || [],
-    };
-    
+    const newProject = formatNewProject(project);
     const localProjects = getLocalProjects();
     localProjects.push(newProject);
-    localStorage.setItem('newProjects', JSON.stringify(localProjects));
+    saveLocalProjects(localProjects);
     return newProject;
   } catch (error) {
     console.error('Error saving project:', error);
@@ -96,6 +133,23 @@ export const addProject = (project) => {
   }
 };
 
+// Get status color based on project status
+export const getStatusColor = (status) => {
+  switch (status) {
+    case "Completed":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+    case "In Progress":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    case "Planning":
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+    case "On Hold":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+  }
+};
+
+// Main hook for managing projects
 export const useProjects = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("dueDate");
@@ -103,38 +157,25 @@ export const useProjects = () => {
   // Combine predefined projects with any user-created projects stored in localStorage
   const allProjects = [...projects, ...getLocalProjects()];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "In Progress":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "Planning":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-      case "On Hold":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-    }
-  };
-
+  // Filter projects based on status
   const filteredProjects = allProjects.filter((project) => {
     if (statusFilter === "all") return true;
     return project.status.toLowerCase() === statusFilter.toLowerCase();
   });
 
+  // Sort projects based on selected sort order
   const sortedProjects = [...filteredProjects].sort((a, b) => {
-    if (sortOrder === "dueDate") {
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    } else if (sortOrder === "progress") {
-      return b.progress - a.progress;
-    } else if (sortOrder === "budget") {
-      return (
-        parseFloat(b.budget.replace("$", "").replace(",", "")) -
-        parseFloat(a.budget.replace("$", "").replace(",", ""))
-      );
+    switch (sortOrder) {
+      case "dueDate":
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      case "progress":
+        return b.progress - a.progress;
+      case "budget":
+        return parseFloat(b.budget.replace("$", "").replace(",", "")) - 
+               parseFloat(a.budget.replace("$", "").replace(",", ""));
+      default:
+        return 0;
     }
-    return 0;
   });
 
   return {
