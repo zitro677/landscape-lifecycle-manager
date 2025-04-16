@@ -133,7 +133,7 @@ const ProjectForm: React.FC = () => {
               description: foundProject.description || "",
               startDate: startDate,
               dueDate: dueDate,
-              budget: foundProject.budget?.toString() || "",
+              budget: foundProject.budget?.toString().replace(/[$,]/g, '') || "",
               estimatedHours: foundProject.estimatedHours?.toString() || "",
               team: foundProject.team || [],
             });
@@ -157,19 +157,37 @@ const ProjectForm: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      console.log("Form submission data:", data);
+      
       if (isEditMode && id) {
         // Update existing project
-        const updatedProject = updateProject(id, data);
+        console.log("Updating project with ID:", id);
+        
+        const formattedData = {
+          ...data,
+          startDate: format(data.startDate, "yyyy-MM-dd"),
+          dueDate: format(data.dueDate, "yyyy-MM-dd"),
+        };
+        
+        const updatedProject = updateProject(id, formattedData);
         
         if (updatedProject) {
+          console.log("Project updated successfully:", updatedProject);
           toast.success("Project updated successfully");
           navigate(`/projects/${id}`);
         } else {
+          console.error("Failed to update project");
           toast.error("Failed to update project");
         }
       } else {
         // Create new project
-        const newProject = addProject(data);
+        const formattedData = {
+          ...data,
+          startDate: format(data.startDate, "yyyy-MM-dd"),
+          dueDate: format(data.dueDate, "yyyy-MM-dd"),
+        };
+        
+        const newProject = addProject(formattedData);
         
         if (newProject) {
           toast.success("Project created successfully");

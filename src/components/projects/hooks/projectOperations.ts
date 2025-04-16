@@ -14,6 +14,8 @@ export const formatNewProject = (project: any) => {
     dueDate: formatDate(project.dueDate),
     budget: formatBudget(project.budget),
     team: project.team || [],
+    updatedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   };
 };
 
@@ -24,6 +26,7 @@ export const addProject = (project: any) => {
     const localProjects = getLocalProjects();
     localProjects.push(newProject);
     saveLocalProjects(localProjects);
+    console.log("Project added successfully:", newProject);
     return newProject;
   } catch (error) {
     console.error('Error saving project:', error);
@@ -48,6 +51,10 @@ export const updateProject = (id: string, projectData: any) => {
         ...projects[projectIndex],
         ...projectData,
         updatedAt: new Date().toISOString(),
+        // Make sure these fields are formatted correctly
+        budget: formatBudget(projectData.budget),
+        startDate: typeof projectData.startDate === 'string' ? projectData.startDate : formatDate(projectData.startDate),
+        dueDate: typeof projectData.dueDate === 'string' ? projectData.dueDate : formatDate(projectData.dueDate),
       };
       
       projects[projectIndex] = updatedProject;
@@ -68,6 +75,10 @@ export const updateProject = (id: string, projectData: any) => {
           ...defaultProject,
           ...projectData,
           updatedAt: new Date().toISOString(),
+          // Make sure these fields are formatted correctly
+          budget: formatBudget(projectData.budget),
+          startDate: typeof projectData.startDate === 'string' ? projectData.startDate : formatDate(projectData.startDate),
+          dueDate: typeof projectData.dueDate === 'string' ? projectData.dueDate : formatDate(projectData.dueDate),
         };
         
         projects.push(projectToCopy);
