@@ -4,15 +4,55 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Plus, Edit2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TasksTabProps {
   tasks: any[];
   getStatusColor: (status: string) => string;
   onAddTaskClick: () => void;
+  projectId: string;
+  saveExtraData: (data: any) => void;
+  extraData: any;
 }
 
-const TasksTab: React.FC<TasksTabProps> = ({ tasks, getStatusColor, onAddTaskClick }) => {
+const TasksTab: React.FC<TasksTabProps> = ({ 
+  tasks, 
+  getStatusColor, 
+  onAddTaskClick, 
+  projectId,
+  saveExtraData,
+  extraData
+}) => {
+  const { toast } = useToast();
+
+  const handleStatusChange = (index: number, newStatus: string) => {
+    // Create a copy of tasks
+    const updatedTasks = [...tasks];
+    
+    // Update the status of the task at the given index
+    updatedTasks[index] = {
+      ...updatedTasks[index],
+      status: newStatus
+    };
+    
+    // Create updated extraData
+    const updatedExtraData = {
+      ...extraData,
+      tasks: updatedTasks
+    };
+    
+    // Save to localStorage
+    saveExtraData(updatedExtraData);
+    
+    // Show success toast
+    toast({
+      title: "Task Updated",
+      description: `Task status updated to "${newStatus}".`,
+    });
+  };
+
   return (
     <Card className="card-shadow">
       <CardHeader className="flex-row justify-between items-center">
@@ -31,6 +71,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ tasks, getStatusColor, onAddTaskCli
                 <TableHead>Status</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Assignee</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -44,6 +85,23 @@ const TasksTab: React.FC<TasksTabProps> = ({ tasks, getStatusColor, onAddTaskCli
                   </TableCell>
                   <TableCell>{task.dueDate}</TableCell>
                   <TableCell>{task.assignee}</TableCell>
+                  <TableCell>
+                    <Select 
+                      defaultValue={task.status}
+                      onValueChange={(value) => handleStatusChange(index, value)}
+                    >
+                      <SelectTrigger className="h-8 w-[130px]">
+                        <Edit2 className="h-3.5 w-3.5 mr-1" />
+                        <span>Change Status</span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Not Started">Not Started</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="On Hold">On Hold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

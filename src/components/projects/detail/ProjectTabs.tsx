@@ -68,6 +68,9 @@ const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData: initialExtraData, 
             tasks={extraData.tasks || []} 
             getStatusColor={getStatusColor} 
             onAddTaskClick={dialogActions.openTaskDialog} 
+            projectId={projectId}
+            saveExtraData={saveExtraData}
+            extraData={extraData}
           />
         </TabsContent>
 
@@ -76,6 +79,9 @@ const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData: initialExtraData, 
             materials={extraData.materials || []} 
             getStatusColor={getStatusColor} 
             onAddMaterialClick={dialogActions.openMaterialDialog} 
+            projectId={projectId}
+            saveExtraData={saveExtraData}
+            extraData={extraData}
           />
         </TabsContent>
 

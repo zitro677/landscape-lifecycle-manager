@@ -1,9 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Clock, DollarSign, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { useProjectActions } from "./hooks/useProjectActions";
 
 interface ProjectOverviewProps {
   project: any;
@@ -16,6 +19,16 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   extraData,
   teamSize,
 }) => {
+  const [showProgressEdit, setShowProgressEdit] = useState(false);
+  const [progressValue, setProgressValue] = useState(project.progress);
+  
+  const { handleUpdateProgress } = useProjectActions(project.id, project.name);
+
+  const saveProgress = () => {
+    handleUpdateProgress(progressValue);
+    setShowProgressEdit(false);
+  };
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -78,13 +91,42 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           </div>
 
           <div className="mt-6">
-            <h3 className="font-medium mb-2">Progress</h3>
-            <div className="space-y-1">
-              <Progress value={project.progress} className="h-2" />
-              <p className="text-xs text-muted-foreground text-right">
-                {project.progress}% Complete
-              </p>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-medium">Progress</h3>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowProgressEdit(!showProgressEdit)}
+              >
+                {showProgressEdit ? "Cancel" : "Edit Progress"}
+              </Button>
             </div>
+            
+            {showProgressEdit ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Slider
+                    value={[progressValue]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onValueChange={(value) => setProgressValue(value[0])}
+                    className="flex-1"
+                  />
+                  <span className="text-sm font-medium min-w-10 text-right">
+                    {progressValue}%
+                  </span>
+                </div>
+                <Button size="sm" onClick={saveProgress}>Save Progress</Button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Progress value={project.progress} className="h-2" />
+                <p className="text-xs text-muted-foreground text-right">
+                  {project.progress}% Complete
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

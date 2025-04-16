@@ -1,6 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { updateProject } from "../../hooks/useProjects";
 
 export const useProjectActions = (projectId: string, projectName: string) => {
   const navigate = useNavigate();
@@ -45,9 +46,41 @@ export const useProjectActions = (projectId: string, projectName: string) => {
     }, 1500);
   };
 
+  // New function to update project progress
+  const handleUpdateProgress = (newProgress: number) => {
+    if (newProgress < 0 || newProgress > 100) {
+      toast({
+        title: "Invalid Progress Value",
+        description: "Progress must be between 0 and 100.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Update the project with the new progress
+    const result = updateProject(projectId, { progress: newProgress });
+    
+    if (result) {
+      toast({
+        title: "Project Updated",
+        description: `Project progress updated to ${newProgress}%.`,
+      });
+      
+      // Force reload to see changes
+      window.location.reload();
+    } else {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update project progress.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return {
     handleEditProject,
     handleShareProject,
-    handleExportProject
+    handleExportProject,
+    handleUpdateProgress
   };
 };
