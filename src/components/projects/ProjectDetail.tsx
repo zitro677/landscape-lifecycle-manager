@@ -40,7 +40,7 @@ const ProjectDetail: React.FC = () => {
       try {
         // First check if we have it in user projects
         if (userProjects.length > 0) {
-          foundProject = userProjects.find((p: any) => p.id === id);
+          foundProject = userProjects.find((p: any) => String(p.id) === String(id));
         }
         
         // If not found in user projects, check the projectsData
@@ -48,7 +48,7 @@ const ProjectDetail: React.FC = () => {
           const projectsData = localStorage.getItem("projectsData");
           if (projectsData) {
             const projects = JSON.parse(projectsData);
-            foundProject = projects.find((p: any) => p.id === id);
+            foundProject = projects.find((p: any) => String(p.id) === String(id));
           }
         }
         
@@ -56,7 +56,7 @@ const ProjectDetail: React.FC = () => {
         if (!foundProject) {
           // Import the static projects for fallback
           const { projects } = require("./hooks/useProjects");
-          foundProject = projects.find((p: any) => p.id === id);
+          foundProject = projects.find((p: any) => String(p.id) === String(id));
         }
         
         if (foundProject) {

@@ -20,7 +20,7 @@ export const useProjectData = (projectId: string) => {
     if (userProjectsStr) {
       try {
         const userProjects = JSON.parse(userProjectsStr);
-        const userProject = userProjects.find((p: any) => p.id === projectId);
+        const userProject = userProjects.find((p: any) => String(p.id) === String(projectId));
         
         if (userProject && userProject.extraData) {
           console.log("Found user project extra data:", userProject.extraData);
@@ -37,7 +37,7 @@ export const useProjectData = (projectId: string) => {
     if (storedProjects) {
       try {
         const projectsData = JSON.parse(storedProjects);
-        const projectData = projectsData.find((p: any) => p.id === projectId);
+        const projectData = projectsData.find((p: any) => String(p.id) === String(projectId));
         
         if (projectData && projectData.extraData) {
           console.log("Found project extra data:", projectData.extraData);
@@ -64,7 +64,7 @@ export const useProjectData = (projectId: string) => {
     if (userProjectsStr) {
       try {
         let userProjects = JSON.parse(userProjectsStr);
-        let userProjectIndex = userProjects.findIndex((p: any) => p.id === projectId);
+        let userProjectIndex = userProjects.findIndex((p: any) => String(p.id) === String(projectId));
         
         if (userProjectIndex !== -1) {
           // Update user project
@@ -83,7 +83,7 @@ export const useProjectData = (projectId: string) => {
     if (storedProjects) {
       try {
         let projectsData = JSON.parse(storedProjects);
-        let projectIndex = projectsData.findIndex((p: any) => p.id === projectId);
+        let projectIndex = projectsData.findIndex((p: any) => String(p.id) === String(projectId));
         
         if (projectIndex !== -1) {
           // Update project data

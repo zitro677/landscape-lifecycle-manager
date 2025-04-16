@@ -42,8 +42,8 @@ export const updateProject = (id: string, projectData: any) => {
     // Get existing projects from localStorage
     const localProjects = getLocalProjects();
     
-    // Find the project to update
-    const projectIndex = localProjects.findIndex((p: any) => p.id === id);
+    // Find the project to update - ensure string comparison
+    const projectIndex = localProjects.findIndex((p: any) => String(p.id) === String(id));
     
     if (projectIndex >= 0) {
       // Format the data before update
@@ -71,7 +71,7 @@ export const updateProject = (id: string, projectData: any) => {
     } else {
       // Handle projects from default data
       const allProjects = getAllProjects();
-      const defaultProject = allProjects.find(p => p.id === id);
+      const defaultProject = allProjects.find(p => String(p.id) === String(id));
       
       if (defaultProject) {
         // Format the data before creating a copy

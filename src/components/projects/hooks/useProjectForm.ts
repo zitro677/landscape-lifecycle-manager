@@ -65,7 +65,7 @@ export const useProjectForm = () => {
         try {
           // First check if we have it in user projects
           if (userProjects.length > 0) {
-            foundProject = userProjects.find((p: any) => p.id === id);
+            foundProject = userProjects.find((p: any) => String(p.id) === String(id));
           }
           
           // If not found in user projects, check the projectsData
@@ -73,7 +73,7 @@ export const useProjectForm = () => {
             const projectsData = localStorage.getItem("projectsData");
             if (projectsData) {
               const projects = JSON.parse(projectsData);
-              foundProject = projects.find((p: any) => p.id === id);
+              foundProject = projects.find((p: any) => String(p.id) === String(id));
             }
           }
           
@@ -81,7 +81,7 @@ export const useProjectForm = () => {
           if (!foundProject) {
             // Import the static projects for fallback
             const { projects } = require("./useProjects");
-            foundProject = projects.find((p: any) => p.id === id);
+            foundProject = projects.find((p: any) => String(p.id) === String(id));
           }
           
           if (foundProject) {
