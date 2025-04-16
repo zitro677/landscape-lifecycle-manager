@@ -1,5 +1,5 @@
-
 import React, { useState } from "react";
+import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -49,13 +49,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   };
 
   const saveBudget = () => {
-    // Update both project budget and extraData totalCost
     const updatedProject = {
       ...project,
       budget: budgetValue
     };
     
-    // Update the project in localStorage
     const projectsJson = localStorage.getItem("landscape_projects");
     if (projectsJson) {
       const projects = JSON.parse(projectsJson);
@@ -69,14 +67,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       }
     }
     
-    // Also update extraData
     const updatedExtraData = {
       ...extraData,
       totalCost: budgetUsedValue
     };
     saveExtraData(updatedExtraData);
     
-    // Refresh the page to see changes
     window.location.reload();
     
     setShowBudgetEdit(false);
@@ -107,7 +103,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               <div>
                 <h3 className="font-medium">Timeline</h3>
                 <p className="text-sm text-muted-foreground">
-                  {project.startDate} to {project.dueDate}
+                  {project.startDate && format(new Date(project.startDate), 'MM-dd-yyyy')} to {project.dueDate && format(new Date(project.dueDate), 'MM-dd-yyyy')}
                 </p>
               </div>
             </div>
