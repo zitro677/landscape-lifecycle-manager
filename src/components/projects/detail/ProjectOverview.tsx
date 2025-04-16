@@ -1,13 +1,16 @@
-import React, { useState } from "react";
-import { format } from "date-fns";
+
+import React from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Calendar, Clock, DollarSign, Users, Edit2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
 import { useProjectActions } from "./hooks/useProjectActions";
+
+// Import our new components
+import TimelineSection from "./components/TimelineSection";
+import HoursSection from "./components/HoursSection";
+import BudgetSection from "./components/BudgetSection";
+import TeamInfoSection from "./components/TeamInfoSection";
+import ProgressSection from "./components/ProgressSection";
+import ProjectDescription from "./components/ProjectDescription";
 
 interface ProjectOverviewProps {
   project: any;
@@ -22,38 +25,25 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   teamSize,
   saveExtraData,
 }) => {
-  const [showProgressEdit, setShowProgressEdit] = useState(false);
-  const [progressValue, setProgressValue] = useState(project.progress);
-  const [showHoursEdit, setShowHoursEdit] = useState(false);
-  const [hoursValue, setHoursValue] = useState(extraData.estimatedHours || 0);
-  const [hoursLoggedValue, setHoursLoggedValue] = useState(extraData.hoursLogged || 0);
-  const [showBudgetEdit, setShowBudgetEdit] = useState(false);
-  const [budgetValue, setBudgetValue] = useState(project.budget || 0);
-  const [budgetUsedValue, setBudgetUsedValue] = useState(extraData.totalCost || 0);
-  
   const { handleUpdateProgress } = useProjectActions(project.id, project.name);
 
-  const saveProgress = () => {
-    handleUpdateProgress(progressValue);
-    setShowProgressEdit(false);
-  };
-
-  const saveHours = () => {
+  const handleSaveHours = (hoursLogged: number, estimatedHours: number) => {
     const updatedExtraData = {
       ...extraData,
-      estimatedHours: hoursValue,
-      hoursLogged: hoursLoggedValue
+      hoursLogged: hoursLogged,
+      estimatedHours: estimatedHours
     };
     saveExtraData(updatedExtraData);
-    setShowHoursEdit(false);
   };
 
-  const saveBudget = () => {
+  const handleSaveBudget = (budgetUsed: number, totalBudget: number) => {
+    // Update project budget
     const updatedProject = {
       ...project,
-      budget: budgetValue
+      budget: totalBudget
     };
     
+    // Save to localStorage
     const projectsJson = localStorage.getItem("landscape_projects");
     if (projectsJson) {
       const projects = JSON.parse(projectsJson);
@@ -61,21 +51,21 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       if (projectIndex !== -1) {
         projects[projectIndex] = {
           ...projects[projectIndex],
-          budget: budgetValue
+          budget: totalBudget
         };
         localStorage.setItem("landscape_projects", JSON.stringify(projects));
       }
     }
     
+    // Update extra data
     const updatedExtraData = {
       ...extraData,
-      totalCost: budgetUsedValue
+      totalCost: budgetUsed
     };
     saveExtraData(updatedExtraData);
     
+    // Refresh to see changes
     window.location.reload();
-    
-    setShowBudgetEdit(false);
   };
   
   return (
@@ -93,162 +83,33 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-4">
-            {extraData.description}
-          </p>
+          <ProjectDescription description={extraData.description} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 mt-6">
-            <div className="flex items-start gap-2">
-              <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <h3 className="font-medium">Timeline</h3>
-                <p className="text-sm text-muted-foreground">
-                  {project.startDate && format(new Date(project.startDate), 'MM-dd-yyyy')} to {project.dueDate && format(new Date(project.dueDate), 'MM-dd-yyyy')}
-                </p>
-              </div>
-            </div>
+            <TimelineSection 
+              startDate={project.startDate} 
+              dueDate={project.dueDate} 
+            />
 
-            <div className="flex items-start gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div className="w-full">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium">Hours</h3>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setShowHoursEdit(!showHoursEdit)}
-                    className="h-7 px-2"
-                  >
-                    {showHoursEdit ? "Cancel" : <Edit2 className="h-3.5 w-3.5" />}
-                  </Button>
-                </div>
-                {showHoursEdit ? (
-                  <div className="space-y-2 mt-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs text-muted-foreground">Hours Logged</label>
-                        <Input
-                          type="number"
-                          value={hoursLoggedValue}
-                          onChange={(e) => setHoursLoggedValue(Number(e.target.value))}
-                          className="h-8"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Estimated Hours</label>
-                        <Input
-                          type="number"
-                          value={hoursValue}
-                          onChange={(e) => setHoursValue(Number(e.target.value))}
-                          className="h-8"
-                        />
-                      </div>
-                    </div>
-                    <Button size="sm" onClick={saveHours} className="w-full">Save Hours</Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {extraData.hoursLogged} of {extraData.estimatedHours} hrs logged
-                  </p>
-                )}
-              </div>
-            </div>
+            <HoursSection 
+              hoursLogged={extraData.hoursLogged || 0} 
+              estimatedHours={extraData.estimatedHours || 0}
+              onSaveHours={handleSaveHours}
+            />
 
-            <div className="flex items-start gap-2">
-              <DollarSign className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div className="w-full">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium">Budget</h3>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setShowBudgetEdit(!showBudgetEdit)}
-                    className="h-7 px-2"
-                  >
-                    {showBudgetEdit ? "Cancel" : <Edit2 className="h-3.5 w-3.5" />}
-                  </Button>
-                </div>
-                {showBudgetEdit ? (
-                  <div className="space-y-2 mt-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs text-muted-foreground">Budget Used</label>
-                        <Input
-                          type="number"
-                          value={budgetUsedValue}
-                          onChange={(e) => setBudgetUsedValue(Number(e.target.value))}
-                          className="h-8"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Total Budget</label>
-                        <Input
-                          type="number"
-                          value={budgetValue}
-                          onChange={(e) => setBudgetValue(Number(e.target.value))}
-                          className="h-8"
-                        />
-                      </div>
-                    </div>
-                    <Button size="sm" onClick={saveBudget} className="w-full">Save Budget</Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {extraData.totalCost} of {project.budget} used
-                  </p>
-                )}
-              </div>
-            </div>
+            <BudgetSection 
+              budgetUsed={extraData.totalCost || 0} 
+              totalBudget={project.budget || 0}
+              onSaveBudget={handleSaveBudget}
+            />
 
-            <div className="flex items-start gap-2">
-              <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <h3 className="font-medium">Team</h3>
-                <p className="text-sm text-muted-foreground">
-                  {teamSize} team members assigned
-                </p>
-              </div>
-            </div>
+            <TeamInfoSection teamSize={teamSize} />
           </div>
 
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium">Progress</h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowProgressEdit(!showProgressEdit)}
-              >
-                {showProgressEdit ? "Cancel" : "Edit Progress"}
-              </Button>
-            </div>
-            
-            {showProgressEdit ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Slider
-                    value={[progressValue]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => setProgressValue(value[0])}
-                    className="flex-1"
-                  />
-                  <span className="text-sm font-medium min-w-10 text-right">
-                    {progressValue}%
-                  </span>
-                </div>
-                <Button size="sm" onClick={saveProgress}>Save Progress</Button>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <Progress value={project.progress} className="h-2" />
-                <p className="text-xs text-muted-foreground text-right">
-                  {project.progress}% Complete
-                </p>
-              </div>
-            )}
-          </div>
+          <ProgressSection 
+            progress={project.progress} 
+            onUpdateProgress={handleUpdateProgress} 
+          />
         </CardContent>
       </Card>
     </motion.div>
