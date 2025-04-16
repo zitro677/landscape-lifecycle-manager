@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -24,17 +23,19 @@ interface ExpenseFormProps {
   newExpense: NewExpense;
   onExpenseChange: (expense: NewExpense) => void;
   onSubmit: () => void;
+  isEditMode?: boolean;
 }
 
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   newExpense,
   onExpenseChange,
   onSubmit,
+  isEditMode = false,
 }) => {
   return (
     <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
-        <DialogTitle>Add New Expense</DialogTitle>
+        <DialogTitle>{isEditMode ? "Edit Expense" : "Add New Expense"}</DialogTitle>
       </DialogHeader>
       <div className="grid gap-4 py-4">
         <div className="grid grid-cols-2 gap-4">
@@ -145,9 +146,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
         <DialogClose asChild>
           <Button variant="outline">Cancel</Button>
         </DialogClose>
-        <DialogClose asChild>
-          <Button onClick={onSubmit}>Save Expense</Button>
-        </DialogClose>
+        <Button onClick={onSubmit}>
+          {isEditMode ? "Update Expense" : "Save Expense"}
+        </Button>
       </DialogFooter>
     </DialogContent>
   );

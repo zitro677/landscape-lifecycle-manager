@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format } from "date-fns";
 import { mockExpenses } from "../data/mockExpenses";
@@ -30,6 +31,7 @@ const MILEAGE_RATE = 0.67;
 
 export const useExpenseTracker = () => {
   const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
+  const [currentExpenseId, setCurrentExpenseId] = useState<string | null>(null);
 
   const [newExpense, setNewExpense] = useState<NewExpense>({
     date: format(new Date(), "yyyy-MM-dd"),
@@ -51,18 +53,45 @@ export const useExpenseTracker = () => {
       finalAmount = parseFloat(newExpense.amount);
     }
 
-    const expense: Expense = {
-      id: `EXP-${String(expenses.length + 1).padStart(3, "0")}`,
-      date: newExpense.date,
-      category: newExpense.category,
-      amount: finalAmount,
-      vendor: newExpense.vendor,
-      description: newExpense.description,
-      deductible: newExpense.deductible,
-      miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
-    };
+    // If we're editing an existing expense
+    if (currentExpenseId) {
+      const updatedExpenses = expenses.map(expense => {
+        if (expense.id === currentExpenseId) {
+          return {
+            ...expense,
+            date: newExpense.date,
+            category: newExpense.category,
+            amount: finalAmount,
+            vendor: newExpense.vendor,
+            description: newExpense.description,
+            deductible: newExpense.deductible,
+            miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
+          };
+        }
+        return expense;
+      });
+      
+      setExpenses(updatedExpenses);
+      setCurrentExpenseId(null);
+      toast.success("Expense updated successfully");
+    } else {
+      // Adding a new expense
+      const expense: Expense = {
+        id: `EXP-${String(expenses.length + 1).padStart(3, "0")}`,
+        date: newExpense.date,
+        category: newExpense.category,
+        amount: finalAmount,
+        vendor: newExpense.vendor,
+        description: newExpense.description,
+        deductible: newExpense.deductible,
+        miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
+      };
 
-    setExpenses([expense, ...expenses]);
+      setExpenses([expense, ...expenses]);
+      toast.success("Expense added successfully");
+    }
+
+    // Reset form
     setNewExpense({
       date: format(new Date(), "yyyy-MM-dd"),
       category: "Materials",
@@ -75,6 +104,7 @@ export const useExpenseTracker = () => {
   };
 
   const handleEditExpense = (expense: Expense) => {
+    setCurrentExpenseId(expense.id);
     setNewExpense({
       date: expense.date,
       category: expense.category,
@@ -84,8 +114,6 @@ export const useExpenseTracker = () => {
       deductible: expense.deductible,
       miles: expense.miles?.toString() || "",
     });
-    // The dialog will be opened by the parent component
-    toast.info("Edit expense details and save to update");
   };
 
   const handleDeleteExpense = (id: string) => {
