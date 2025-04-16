@@ -1,14 +1,17 @@
+
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "../ui/data-table";
 import { DialogTrigger, Dialog } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Download } from "lucide-react";
+import { Plus, FileDown } from "lucide-react";
 import { ExpenseStats } from "./expense-tracker/components/ExpenseStats";
 import { ExpenseForm } from "./expense-tracker/components/ExpenseForm";
 import { expenseColumns } from "./expense-tracker/components/ExpenseTableColumns";
 import { useExpenseTracker } from "./expense-tracker/hooks/useExpenseTracker";
+import { exportToCSV } from "./expense-tracker/utils/exportUtils";
+import { toast } from "sonner";
 
 const ExpenseTracker: React.FC = () => {
   const {
@@ -20,6 +23,15 @@ const ExpenseTracker: React.FC = () => {
     deductibleExpenses,
     potentialTaxSavings,
   } = useExpenseTracker();
+
+  const handleExport = () => {
+    try {
+      exportToCSV(expenses);
+      toast.success("Expenses exported successfully");
+    } catch (error) {
+      toast.error("Failed to export expenses");
+    }
+  };
 
   return (
     <motion.div
@@ -37,9 +49,13 @@ const ExpenseTracker: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Expense Records</h2>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-1">
-            <Download className="h-4 w-4" />
-            <span>Export</span>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={handleExport}
+          >
+            <FileDown className="h-4 w-4" />
+            <span>Export CSV</span>
           </Button>
 
           <Dialog>
