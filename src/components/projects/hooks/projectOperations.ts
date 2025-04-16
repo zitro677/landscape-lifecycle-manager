@@ -34,16 +34,16 @@ export const addProject = (project: any) => {
   }
 };
 
-// Update an existing project
+// Update an existing project - simplified version
 export const updateProject = (id: string, projectData: any) => {
   try {
     console.log("Updating project with ID:", id, projectData);
     
     // Get existing projects from localStorage
-    const projects = getLocalProjects();
+    const localProjects = getLocalProjects();
     
     // Find the project to update
-    const projectIndex = projects.findIndex((p: any) => p.id === id);
+    const projectIndex = localProjects.findIndex((p: any) => p.id === id);
     
     if (projectIndex >= 0) {
       // Format the data before update
@@ -52,26 +52,26 @@ export const updateProject = (id: string, projectData: any) => {
         budget: formatBudget(projectData.budget),
         startDate: typeof projectData.startDate === 'string' ? projectData.startDate : formatDate(projectData.startDate),
         dueDate: typeof projectData.dueDate === 'string' ? projectData.dueDate : formatDate(projectData.dueDate),
+        updatedAt: new Date().toISOString()
       };
       
-      // Update the project
+      // Update the project by merging existing project with new data
       const updatedProject = {
-        ...projects[projectIndex],
-        ...formattedData,
-        updatedAt: new Date().toISOString(),
+        ...localProjects[projectIndex],
+        ...formattedData
       };
       
-      projects[projectIndex] = updatedProject;
+      localProjects[projectIndex] = updatedProject;
       
       // Save updated projects back to localStorage
-      saveLocalProjects(projects);
+      saveLocalProjects(localProjects);
       
       console.log("Project updated successfully:", updatedProject);
       return updatedProject;
     } else {
-      // Project not found in user projects, check if it's in default projects
-      const defaultProjects = getAllProjects().filter(p => !getLocalProjects().some(lp => lp.id === p.id));
-      const defaultProject = defaultProjects.find(p => p.id === id);
+      // Handle projects from default data
+      const allProjects = getAllProjects();
+      const defaultProject = allProjects.find(p => p.id === id);
       
       if (defaultProject) {
         // Format the data before creating a copy
@@ -89,8 +89,8 @@ export const updateProject = (id: string, projectData: any) => {
           updatedAt: new Date().toISOString(),
         };
         
-        projects.push(projectToCopy);
-        saveLocalProjects(projects);
+        localProjects.push(projectToCopy);
+        saveLocalProjects(localProjects);
         
         console.log("Default project copied and updated:", projectToCopy);
         return projectToCopy;
