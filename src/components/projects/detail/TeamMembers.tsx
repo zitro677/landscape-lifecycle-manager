@@ -8,15 +8,22 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { updateProject } from "../hooks/useProjects";
 
 interface TeamMembersProps {
   teamMembers: Array<{ name: string; role: string; avatar: string }>;
   setTeamMembers: React.Dispatch<React.SetStateAction<Array<{ name: string; role: string; avatar: string }>>>;
+  projectId: string;
 }
 
-const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers }) => {
+const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers, projectId }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "" });
+
+  const saveTeamToProject = (updatedTeam: Array<{ name: string; role: string; avatar: string }>) => {
+    // Update the project in localStorage
+    updateProject(projectId, { team: updatedTeam });
+  };
 
   const handleAddTeamMember = () => {
     if (newTeamMember.name.trim() === "") {
@@ -30,7 +37,14 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers }
       avatar: ""
     };
     
-    setTeamMembers([...teamMembers, newMember]);
+    const updatedTeam = [...teamMembers, newMember];
+    
+    // Update local state
+    setTeamMembers(updatedTeam);
+    
+    // Persist to localStorage
+    saveTeamToProject(updatedTeam);
+    
     setNewTeamMember({ name: "", role: "" });
     setDialogOpen(false);
     
@@ -40,7 +54,13 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers }
   const handleRemoveTeamMember = (index: number) => {
     const updatedTeam = [...teamMembers];
     updatedTeam.splice(index, 1);
+    
+    // Update local state
     setTeamMembers(updatedTeam);
+    
+    // Persist to localStorage
+    saveTeamToProject(updatedTeam);
+    
     toast.success("Team member removed");
   };
 

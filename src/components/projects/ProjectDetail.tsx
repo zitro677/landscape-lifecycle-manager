@@ -170,6 +170,7 @@ const ProjectDetail: React.FC = () => {
           <TeamMembers 
             teamMembers={teamMembers}
             setTeamMembers={setTeamMembers}
+            projectId={project.id}
           />
         </div>
 
