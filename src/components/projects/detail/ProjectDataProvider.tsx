@@ -1,6 +1,6 @@
-
 import React from "react";
-import { getAllProjects } from "../hooks/useProjects";
+import { getAllProjects } from "../hooks/projectData";
+import { getStatusColor } from "../hooks/projectUtils";
 
 // Extra data for demo purposes (will be stored with the project in a real app)
 const projectExtraData = {
@@ -62,25 +62,5 @@ export const getProjectExtraData = (projectId: string) => {
   return projectExtraData[projectId as keyof typeof projectExtraData] || defaultExtraData;
 };
 
-// Re-export getAllProjects to maintain API compatibility
-export { getAllProjects };
-
-// Get status color
-export const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Completed":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    case "In Progress":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-    case "Planning":
-    case "Not Started":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-    case "On Hold":
-    case "Pending Delivery":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-    case "Delivered":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-  }
-};
+// Re-export getAllProjects and getStatusColor to maintain API compatibility
+export { getAllProjects, getStatusColor };

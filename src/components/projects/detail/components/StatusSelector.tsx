@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { updateProject } from "../../hooks/useProjects";
+import { updateProject } from "../../hooks/projectOperations";
 
 interface StatusSelectorProps {
   projectId: string;
