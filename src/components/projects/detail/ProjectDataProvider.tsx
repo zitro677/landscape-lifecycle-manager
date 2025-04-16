@@ -62,6 +62,9 @@ export const getProjectExtraData = (projectId: string) => {
   return projectExtraData[projectId as keyof typeof projectExtraData] || defaultExtraData;
 };
 
+// Re-export getAllProjects to maintain API compatibility
+export { getAllProjects };
+
 // Get status color
 export const getStatusColor = (status: string) => {
   switch (status) {
