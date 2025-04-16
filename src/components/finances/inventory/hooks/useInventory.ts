@@ -31,18 +31,33 @@ export const useInventory = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const handleAddItem = (data: any) => {
+    // Ensure unit_cost is stored as a number
     const newItem = {
       ...data,
       id: `inv-${String(inventory.length + 1).padStart(3, "0")}`,
+      unit_cost: parseFloat(data.unit_cost),
+      quantity: parseInt(data.quantity, 10),
+      life_span: parseInt(data.life_span, 10),
+      depreciation_rate: parseFloat(data.depreciation_rate),
     };
+    
     setInventory([...inventory, newItem]);
     toast.success("Item added successfully");
   };
 
   const handleEditItem = (data: any) => {
+    // Ensure unit_cost is stored as a number when editing
+    const updatedData = {
+      ...data,
+      unit_cost: parseFloat(data.unit_cost),
+      quantity: parseInt(data.quantity, 10),
+      life_span: parseInt(data.life_span, 10),
+      depreciation_rate: parseFloat(data.depreciation_rate),
+    };
+    
     setInventory(
       inventory.map((item) =>
-        item.id === selectedItem.id ? { ...item, ...data } : item
+        item.id === selectedItem.id ? { ...item, ...updatedData } : item
       )
     );
     setSelectedItem(null);

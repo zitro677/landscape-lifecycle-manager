@@ -16,7 +16,12 @@ export const inventoryColumns: ColumnDef<any>[] = [
     accessorKey: "unit_cost",
     header: "Unit Cost",
     cell: ({ row }) => {
-      return `$${row.original.unit_cost.toFixed(2)}`;
+      const value = row.original.unit_cost;
+      // Check if value is a number before using toFixed
+      const formattedValue = typeof value === 'number' 
+        ? `$${value.toFixed(2)}` 
+        : `$${value}`;
+      return formattedValue;
     },
   },
   {
