@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -28,13 +28,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   teamMembers,
 }) => {
   const navigate = useNavigate();
-  const [status, setStatus] = useState(projectStatus);
   const { handleEditProject, handleShareProject, handleExportProject } = useProjectActions(projectId, projectName);
-
-  const handleStatusChange = (newStatus: string) => {
-    // Simply update local state for UI rendering
-    setStatus(newStatus);
-  };
 
   return (
     <Card className="mb-6">
@@ -52,16 +46,15 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <ProjectTitle
               projectId={projectId}
               projectName={projectName}
-              projectStatus={status}
+              projectStatus={projectStatus}
               getStatusColor={getStatusColor}
-              onStatusChange={handleStatusChange}
             />
           </div>
           <ProjectActions
             onEdit={handleEditProject}
             onShare={handleShareProject}
             onExport={() => handleExportProject(
-              {...project, status}, 
+              project, 
               extraData,
               teamMembers
             )}
