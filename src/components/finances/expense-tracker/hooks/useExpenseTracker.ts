@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { mockExpenses } from "../data/mockExpenses";
+import { toast } from "sonner";
 
 export interface Expense {
   id: string;
@@ -12,6 +12,8 @@ export interface Expense {
   description: string;
   deductible: boolean;
   miles?: number;
+  onEdit?: (expense: Expense) => void;
+  onDelete?: (id: string) => void;
 }
 
 export interface NewExpense {
@@ -72,31 +74,45 @@ export const useExpenseTracker = () => {
     });
   };
 
-  // Calculate total mileage expenses per month/year
-  const getMileageStats = () => {
-    const mileageExpenses = expenses.filter(e => e.category === "Mileage");
-    const totalMiles = mileageExpenses.reduce((sum, exp) => sum + (exp.miles || 0), 0);
-    const totalMileageDeduction = totalMiles * MILEAGE_RATE;
-
-    return { totalMiles, totalMileageDeduction };
+  const handleEditExpense = (expense: Expense) => {
+    setNewExpense({
+      date: expense.date,
+      category: expense.category,
+      amount: expense.amount.toString(),
+      vendor: expense.vendor,
+      description: expense.description,
+      deductible: expense.deductible,
+      miles: expense.miles?.toString() || "",
+    });
+    // The dialog will be opened by the parent component
+    toast.info("Edit expense details and save to update");
   };
 
-  const { totalMiles, totalMileageDeduction } = getMileageStats();
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const deductibleExpenses = expenses
-    .filter((expense) => expense.deductible)
-    .reduce((sum, expense) => sum + expense.amount, 0);
-  const potentialTaxSavings = deductibleExpenses * 0.3;
+  const handleDeleteExpense = (id: string) => {
+    setExpenses(expenses.filter(expense => expense.id !== id));
+    toast.success("Expense deleted successfully");
+  };
+
+  // Add handlers to each expense object
+  const expensesWithHandlers = expenses.map(expense => ({
+    ...expense,
+    onEdit: handleEditExpense,
+    onDelete: handleDeleteExpense,
+  }));
 
   return {
-    expenses,
+    expenses: expensesWithHandlers,
     newExpense,
     setNewExpense,
     addExpense,
-    totalExpenses,
-    deductibleExpenses,
-    potentialTaxSavings,
-    totalMiles,
-    totalMileageDeduction,
+    totalExpenses: expenses.reduce((sum, expense) => sum + expense.amount, 0),
+    deductibleExpenses: expenses
+      .filter((expense) => expense.deductible)
+      .reduce((sum, expense) => sum + expense.amount, 0),
+    potentialTaxSavings: expenses
+      .filter((expense) => expense.deductible)
+      .reduce((sum, expense) => sum + expense.amount, 0) * 0.3,
+    totalMiles: expenses.reduce((sum, expense) => sum + (expense.miles || 0), 0),
+    totalMileageDeduction: expenses.reduce((sum, expense) => sum + (expense.miles || 0), 0) * MILEAGE_RATE,
   };
 };
