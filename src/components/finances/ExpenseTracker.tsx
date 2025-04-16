@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "../ui/data-table";
 import { DialogTrigger, Dialog } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, Pencil, Trash2 } from "lucide-react";
 import { ExpenseStats } from "./expense-tracker/components/ExpenseStats";
 import { ExpenseForm } from "./expense-tracker/components/ExpenseForm";
 import { expenseColumns } from "./expense-tracker/components/ExpenseTableColumns";
