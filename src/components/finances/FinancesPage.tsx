@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +9,7 @@ import IncomeExpenseChart from "./charts/IncomeExpenseChart";
 import ProjectIncomeChart from "./charts/ProjectIncomeChart";
 import ExpenseBreakdownChart from "./charts/ExpenseBreakdownChart";
 import { monthlyIncomeData, projectIncomeData, expenseBreakdownData } from "./data/FinancialData";
+import { InventoryPage } from "./inventory/InventoryPage";
 
 const FinancesPage: React.FC = () => {
   const [timeFilter, setTimeFilter] = useState<string>("year");
@@ -43,6 +43,7 @@ const FinancesPage: React.FC = () => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="expenses">Expense Tracking</TabsTrigger>
             <TabsTrigger value="taxes">Tax Calculator</TabsTrigger>
+            <TabsTrigger value="inventory">Inventory</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 pt-4">
@@ -60,6 +61,10 @@ const FinancesPage: React.FC = () => {
 
           <TabsContent value="taxes" className="pt-4">
             <TaxCalculator />
+          </TabsContent>
+
+          <TabsContent value="inventory" className="pt-4">
+            <InventoryPage />
           </TabsContent>
         </Tabs>
       </div>
