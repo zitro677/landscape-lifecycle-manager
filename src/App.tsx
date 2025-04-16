@@ -42,6 +42,7 @@ const AppRoutes = () => (
         <Route path="finances" element={<FinancesPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/new" element={<ProjectForm />} />
+        <Route path="projects/edit/:id" element={<ProjectForm />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
       </Route>
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

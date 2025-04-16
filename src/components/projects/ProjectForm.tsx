@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,14 +32,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, CalendarIcon, Plus } from "lucide-react";
+import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AnimatedPage from "../shared/AnimatedPage";
-import { addProject } from "./hooks/useProjects";
+import { addProject, updateProject } from "./hooks/useProjects";
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -58,7 +58,11 @@ type FormValues = z.infer<typeof formSchema>;
 
 const ProjectForm: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [initialProject, setInitialProject] = useState<any>(null);
+  const [loading, setLoading] = useState(id ? true : false);
 
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -76,21 +80,107 @@ const ProjectForm: React.FC = () => {
     },
   });
 
+  // Load project data if in edit mode
+  useEffect(() => {
+    if (id) {
+      setIsEditMode(true);
+
+      const loadProject = () => {
+        console.log("Loading project for edit with ID:", id);
+        
+        // Check localStorage first (for user-created projects)
+        const storedUserProjects = localStorage.getItem("landscape_projects");
+        const userProjects = storedUserProjects ? JSON.parse(storedUserProjects) : [];
+        
+        // Check default projects
+        let foundProject = null;
+        
+        try {
+          // First check if we have it in user projects
+          if (userProjects.length > 0) {
+            foundProject = userProjects.find((p: any) => p.id === id);
+          }
+          
+          // If not found in user projects, check the projectsData
+          if (!foundProject) {
+            const projectsData = localStorage.getItem("projectsData");
+            if (projectsData) {
+              const projects = JSON.parse(projectsData);
+              foundProject = projects.find((p: any) => p.id === id);
+            }
+          }
+          
+          // Also check static project data
+          if (!foundProject) {
+            // Import the static projects for fallback
+            const { projects } = require("./hooks/useProjects");
+            foundProject = projects.find((p: any) => p.id === id);
+          }
+          
+          if (foundProject) {
+            console.log("Project found for editing:", foundProject);
+            setInitialProject(foundProject);
+            
+            // Format dates properly
+            const startDate = foundProject.startDate ? new Date(foundProject.startDate) : new Date();
+            const dueDate = foundProject.dueDate ? new Date(foundProject.dueDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
+            
+            // Set form values
+            form.reset({
+              name: foundProject.name || "",
+              client: foundProject.client || "",
+              status: foundProject.status || "Planning",
+              description: foundProject.description || "",
+              startDate: startDate,
+              dueDate: dueDate,
+              budget: foundProject.budget?.toString() || "",
+              estimatedHours: foundProject.estimatedHours?.toString() || "",
+              team: foundProject.team || [],
+            });
+          } else {
+            console.error("Project not found for editing with ID:", id);
+            toast.error("Project not found for editing");
+            navigate("/projects");
+          }
+        } catch (error) {
+          console.error("Error loading project for edit:", error);
+          toast.error("Error loading project for editing");
+        }
+        
+        setLoading(false);
+      };
+      
+      loadProject();
+    }
+  }, [id, navigate, form]);
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Save the project using the addProject function
-      const newProject = addProject(data);
-      
-      if (newProject) {
-        toast.success("Project created successfully");
-        navigate("/projects");
+      if (isEditMode && id) {
+        // Update existing project
+        const updatedProject = updateProject(id, data);
+        
+        if (updatedProject) {
+          toast.success("Project updated successfully");
+          navigate(`/projects/${id}`);
+        } else {
+          toast.error("Failed to update project");
+        }
       } else {
-        toast.error("Failed to create project");
+        // Create new project
+        const newProject = addProject(data);
+        
+        if (newProject) {
+          toast.success("Project created successfully");
+          navigate("/projects");
+        } else {
+          toast.error("Failed to create project");
+        }
       }
     } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Failed to create project");
+      console.error(isEditMode ? "Error updating project:" : "Error creating project:", error);
+      toast.error(isEditMode ? "Failed to update project" : "Failed to create project");
     } finally {
       setIsSubmitting(false);
     }
@@ -103,6 +193,26 @@ const ProjectForm: React.FC = () => {
     { value: "On Hold", label: "On Hold" },
     { value: "Completed", label: "Completed" },
   ];
+
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="flex items-center gap-2 mb-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/projects")}
+              className="h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Loading Project...</h1>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   return (
     <AnimatedPage>
@@ -122,9 +232,13 @@ const ProjectForm: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl font-bold">Create New Project</h1>
+              <h1 className="text-3xl font-bold">
+                {isEditMode ? "Edit Project" : "Create New Project"}
+              </h1>
               <p className="text-muted-foreground mt-1">
-                Fill out the form below to create a new landscape project
+                {isEditMode 
+                  ? "Update your landscape project details below"
+                  : "Fill out the form below to create a new landscape project"}
               </p>
             </motion.div>
           </div>
@@ -380,7 +494,9 @@ const ProjectForm: React.FC = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Project"}
+                {isSubmitting 
+                  ? (isEditMode ? "Updating..." : "Creating...") 
+                  : (isEditMode ? "Update Project" : "Create Project")}
               </Button>
             </div>
           </form>

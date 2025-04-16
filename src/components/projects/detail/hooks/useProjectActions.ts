@@ -8,6 +8,7 @@ export const useProjectActions = (projectId: string, projectName: string) => {
 
   const handleEditProject = () => {
     // Navigate to the edit project form with the project id
+    console.log(`Navigating to edit project: ${projectId}`);
     navigate(`/projects/edit/${projectId}`);
   };
 
