@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getAllProjects } from "../../projects/hooks/projectData";
 
@@ -108,7 +107,6 @@ export const useDashboardData = () => {
   };
 
   // Generate revenue data (currently mock data)
-  // In a real app, this would come from actual financial data
   const generateRevenueData = () => {
     return [
       { name: "Jan", revenue: 10000, expenses: 7000 },
@@ -121,17 +119,21 @@ export const useDashboardData = () => {
     ];
   };
 
-  // Get recent projects (5 most recent)
+  // Get recent projects (4 most recent by creation date)
   const getRecentProjects = () => {
     return [...projects]
-      .sort((a, b) => new Date(b.createdAt || b.startDate).getTime() - new Date(a.createdAt || a.startDate).getTime())
-      .slice(0, 5)
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.startDate).getTime();
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.startDate).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 4)
       .map(project => ({
         id: project.id,
         client: project.client,
         status: project.status,
         dueDate: project.dueDate,
-        value: project.budget
+        budget: project.budget
       }));
   };
 
