@@ -144,7 +144,7 @@ const ProjectDetail: React.FC = () => {
   }
 
   // Only attempt to use projectData if we have a valid ID
-  const { extraData } = projectData || { extraData: {} };
+  const { extraData, saveExtraData } = projectData || { extraData: {}, saveExtraData: () => {} };
 
   return (
     <AnimatedPage>
@@ -163,6 +163,7 @@ const ProjectDetail: React.FC = () => {
             project={project}
             extraData={extraData} 
             teamSize={teamMembers.length}
+            saveExtraData={saveExtraData}
           />
 
           {/* Team Members */}
