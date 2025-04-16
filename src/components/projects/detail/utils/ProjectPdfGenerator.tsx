@@ -31,11 +31,18 @@ declare module 'jspdf' {
 
 const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGeneratorProps) => {
   const generatePDF = () => {
+    console.group('PDF Generation Process');
+    console.log('Input Project:', project);
+    console.log('Extra Data:', extraData);
+    console.log('Team Members:', teamMembers);
+
     try {
-      console.log("Generating PDF for project:", project);
-      console.log("With extra data:", extraData);
-      console.log("And team members:", teamMembers);
-      
+      // Validate input data
+      if (!project) {
+        console.error('No project data provided');
+        return false;
+      }
+
       // Initialize PDF document
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
@@ -49,29 +56,44 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
         contentWidth: pageWidth - (margin * 2),
         yPosition: 20,
         project,
-        extraData,
-        teamMembers
+        extraData: extraData || {},
+        teamMembers: teamMembers || []
       };
       
-      // Generate PDF sections
-      generatePdfHeader(context);
-      generateProjectDetails(context);
-      generateBudgetAndHours(context);
-      generateDescription(context);
-      generateTeamMembers(context);
-      generateTasks(context);
-      generateMaterials(context);
-      generateNotes(context);
-      
-      // Add footer to all pages
-      addFooter(context);
+      console.log('PDF Context Created:', context);
+
+      // Generate PDF sections with error handling
+      try {
+        generatePdfHeader(context);
+        generateProjectDetails(context);
+        generateBudgetAndHours(context);
+        generateDescription(context);
+        generateTeamMembers(context);
+        generateTasks(context);
+        generateMaterials(context);
+        generateNotes(context);
+        
+        // Add footer to all pages
+        addFooter(context);
+      } catch (generationError) {
+        console.error('Error during PDF section generation:', generationError);
+        return false;
+      }
       
       // Save the PDF
-      doc.save(`Project_${project.id}.pdf`);
-      console.log("PDF generated successfully");
-      return true;
+      try {
+        const filename = `Project_${project.id || 'Unknown'}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        doc.save(filename);
+        console.log('PDF generated successfully:', filename);
+        console.groupEnd();
+        return true;
+      } catch (saveError) {
+        console.error('Error saving PDF:', saveError);
+        return false;
+      }
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error('Unexpected error in PDF generation:', error);
+      console.groupEnd();
       return false;
     }
   };
