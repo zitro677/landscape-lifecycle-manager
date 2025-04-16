@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Share2, FileEdit, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProjectTitle from "./components/ProjectTitle";
 import ProjectActions from "./components/ProjectActions";
@@ -34,8 +34,11 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const handleStatusChange = (newStatus: string) => {
     console.log("Status changed to:", newStatus);
     setStatus(newStatus);
-    // Status update already happened in the StatusSelector component
-    // We just need to update the local state here for UI consistency
+    
+    // Update the project object with the new status
+    if (project) {
+      project.status = newStatus;
+    }
   };
 
   return (

@@ -60,25 +60,22 @@ export const updateProject = (id: string, projectData: any) => {
       return updatedProject;
     } else {
       // Project not found in user projects, check if it's in default projects
-      const projectsData = localStorage.getItem("projectsData");
-      if (projectsData) {
-        const defaultProjects = JSON.parse(projectsData);
-        const defaultProjectIndex = defaultProjects.findIndex((p: any) => p.id === id);
+      const defaultProjects = getAllProjects().filter(p => !getLocalProjects().some(lp => lp.id === p.id));
+      const defaultProject = defaultProjects.find(p => p.id === id);
+      
+      if (defaultProject) {
+        // Create a copy in user projects (with updates)
+        const projectToCopy = {
+          ...defaultProject,
+          ...projectData,
+          updatedAt: new Date().toISOString(),
+        };
         
-        if (defaultProjectIndex >= 0) {
-          // Create a copy in user projects (with updates)
-          const projectToCopy = {
-            ...defaultProjects[defaultProjectIndex],
-            ...projectData,
-            updatedAt: new Date().toISOString(),
-          };
-          
-          projects.push(projectToCopy);
-          localStorage.setItem("landscape_projects", JSON.stringify(projects));
-          
-          console.log("Default project copied and updated:", projectToCopy);
-          return projectToCopy;
-        }
+        projects.push(projectToCopy);
+        localStorage.setItem("landscape_projects", JSON.stringify(projects));
+        
+        console.log("Default project copied and updated:", projectToCopy);
+        return projectToCopy;
       }
       
       console.error("Project not found for update:", id);
