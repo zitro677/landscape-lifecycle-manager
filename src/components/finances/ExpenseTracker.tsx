@@ -22,6 +22,8 @@ const ExpenseTracker: React.FC = () => {
     totalExpenses,
     deductibleExpenses,
     potentialTaxSavings,
+    totalMiles,
+    totalMileageDeduction,
   } = useExpenseTracker();
 
   const handleExport = () => {
@@ -44,6 +46,8 @@ const ExpenseTracker: React.FC = () => {
         totalExpenses={totalExpenses}
         deductibleExpenses={deductibleExpenses}
         potentialTaxSavings={potentialTaxSavings}
+        totalMiles={totalMiles}
+        totalMileageDeduction={totalMileageDeduction}
       />
 
       <div className="flex justify-between items-center">

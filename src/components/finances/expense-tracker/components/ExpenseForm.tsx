@@ -61,6 +61,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="Mileage">Mileage</SelectItem>
                 <SelectItem value="Materials">Materials</SelectItem>
                 <SelectItem value="Equipment">Equipment</SelectItem>
                 <SelectItem value="Fuel">Fuel</SelectItem>
@@ -74,21 +75,40 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
+          {newExpense.category === "Mileage" ? (
+            <div>
+              <Label htmlFor="miles">Miles Driven</Label>
+              <Input
+                id="miles"
+                type="number"
+                min="0"
+                value={newExpense.miles}
+                onChange={(e) =>
+                  onExpenseChange({ ...newExpense, miles: e.target.value })
+                }
+                placeholder="Enter miles driven"
+              />
+              <span className="text-xs text-muted-foreground mt-1">
+                Rate: $0.67 per mile
+              </span>
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="amount">Amount ($)</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={newExpense.amount}
+                onChange={(e) =>
+                  onExpenseChange({ ...newExpense, amount: e.target.value })
+                }
+              />
+            </div>
+          )}
           <div>
-            <Label htmlFor="amount">Amount ($)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={newExpense.amount}
-              onChange={(e) =>
-                onExpenseChange({ ...newExpense, amount: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <Label htmlFor="vendor">Vendor</Label>
+            <Label htmlFor="vendor">Vendor/Location</Label>
             <Input
               id="vendor"
               value={newExpense.vendor}
