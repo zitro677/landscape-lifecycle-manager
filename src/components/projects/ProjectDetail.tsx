@@ -12,6 +12,7 @@ import ProjectOverview from "./detail/ProjectOverview";
 import TeamMembers from "./detail/TeamMembers";
 import ProjectTabs from "./detail/ProjectTabs";
 import { getProjectExtraData, getStatusColor } from "./detail/ProjectDataProvider";
+import { useProjectData } from "./detail/hooks/useProjectData";
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,9 @@ const ProjectDetail: React.FC = () => {
   // Find the project with the matching ID from localStorage
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Use project data hook (only call it if we have an ID)
+  const projectData = id ? useProjectData(id) : null;
   
   // Load project data
   useEffect(() => {
@@ -139,6 +143,9 @@ const ProjectDetail: React.FC = () => {
     );
   }
 
+  // Only attempt to use projectData if we have a valid ID
+  const { extraData } = projectData || { extraData: {} };
+
   return (
     <AnimatedPage>
       <div className="page-container">
@@ -154,7 +161,7 @@ const ProjectDetail: React.FC = () => {
           {/* Project Overview */}
           <ProjectOverview 
             project={project}
-            extraData={{}} // This will be handled by the useProjectData hook
+            extraData={extraData} 
             teamSize={teamMembers.length}
           />
 
@@ -167,7 +174,7 @@ const ProjectDetail: React.FC = () => {
 
         {/* Project Tabs (Tasks, Materials, Notes) */}
         <ProjectTabs 
-          extraData={{}} // This will be handled by the useProjectData hook
+          extraData={extraData}
           getStatusColor={getStatusColor}
           projectId={project.id}
         />
