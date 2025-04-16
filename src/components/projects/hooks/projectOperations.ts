@@ -46,15 +46,19 @@ export const updateProject = (id: string, projectData: any) => {
     const projectIndex = projects.findIndex((p: any) => p.id === id);
     
     if (projectIndex >= 0) {
-      // Update the project
-      const updatedProject = {
-        ...projects[projectIndex],
+      // Format the data before update
+      const formattedData = {
         ...projectData,
-        updatedAt: new Date().toISOString(),
-        // Make sure these fields are formatted correctly
         budget: formatBudget(projectData.budget),
         startDate: typeof projectData.startDate === 'string' ? projectData.startDate : formatDate(projectData.startDate),
         dueDate: typeof projectData.dueDate === 'string' ? projectData.dueDate : formatDate(projectData.dueDate),
+      };
+      
+      // Update the project
+      const updatedProject = {
+        ...projects[projectIndex],
+        ...formattedData,
+        updatedAt: new Date().toISOString(),
       };
       
       projects[projectIndex] = updatedProject;
@@ -70,15 +74,19 @@ export const updateProject = (id: string, projectData: any) => {
       const defaultProject = defaultProjects.find(p => p.id === id);
       
       if (defaultProject) {
-        // Create a copy in user projects (with updates)
-        const projectToCopy = {
-          ...defaultProject,
+        // Format the data before creating a copy
+        const formattedData = {
           ...projectData,
-          updatedAt: new Date().toISOString(),
-          // Make sure these fields are formatted correctly
           budget: formatBudget(projectData.budget),
           startDate: typeof projectData.startDate === 'string' ? projectData.startDate : formatDate(projectData.startDate),
           dueDate: typeof projectData.dueDate === 'string' ? projectData.dueDate : formatDate(projectData.dueDate),
+        };
+        
+        // Create a copy in user projects (with updates)
+        const projectToCopy = {
+          ...defaultProject,
+          ...formattedData,
+          updatedAt: new Date().toISOString(),
         };
         
         projects.push(projectToCopy);

@@ -22,7 +22,11 @@ const FormActions: React.FC<FormActionsProps> = ({
       >
         Cancel
       </Button>
-      <Button type="submit" disabled={isSubmitting}>
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+        className="min-w-[150px]"
+      >
         {isSubmitting 
           ? (isEditMode ? "Updating..." : "Creating...") 
           : (isEditMode ? "Update Project" : "Create Project")}
