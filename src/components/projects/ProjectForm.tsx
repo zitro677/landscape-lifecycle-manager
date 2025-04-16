@@ -39,6 +39,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AnimatedPage from "../shared/AnimatedPage";
+import { addProject } from "./hooks/useProjects";
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -78,14 +79,15 @@ const ProjectForm: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      // In a real application, this would be an API call to create a project
-      console.log("Project data to submit:", data);
+      // Save the project using the addProject function
+      const newProject = addProject(data);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Project created successfully");
-      navigate("/projects");
+      if (newProject) {
+        toast.success("Project created successfully");
+        navigate("/projects");
+      } else {
+        toast.error("Failed to create project");
+      }
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error("Failed to create project");

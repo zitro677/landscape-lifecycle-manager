@@ -1,5 +1,7 @@
+
 import { useState } from "react";
 
+// This would typically come from an API/database
 export const projects = [
   {
     id: "PRJ-2023-001",
@@ -58,9 +60,48 @@ export const projects = [
   },
 ];
 
+// Added local storage for persisting new projects
+const getLocalProjects = () => {
+  try {
+    const storedProjects = localStorage.getItem('newProjects');
+    return storedProjects ? JSON.parse(storedProjects) : [];
+  } catch (error) {
+    console.error('Error loading projects from localStorage:', error);
+    return [];
+  }
+};
+
+export const addProject = (project) => {
+  try {
+    const newProject = {
+      ...project,
+      id: `PRJ-${new Date().getFullYear()}-${String(projects.length + 1).padStart(3, '0')}`,
+      progress: project.status === 'Completed' ? 100 : (project.status === 'Planning' ? 10 : 30),
+      // Format dates consistently with existing projects
+      startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+      dueDate: project.dueDate ? new Date(project.dueDate).toISOString().split('T')[0] : '',
+      // Format budget with dollar sign
+      budget: project.budget ? `$${project.budget}` : '$0',
+      // Default team if none provided
+      team: project.team || [],
+    };
+    
+    const localProjects = getLocalProjects();
+    localProjects.push(newProject);
+    localStorage.setItem('newProjects', JSON.stringify(localProjects));
+    return newProject;
+  } catch (error) {
+    console.error('Error saving project:', error);
+    return null;
+  }
+};
+
 export const useProjects = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("dueDate");
+  
+  // Combine predefined projects with any user-created projects stored in localStorage
+  const allProjects = [...projects, ...getLocalProjects()];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,7 +118,7 @@ export const useProjects = () => {
     }
   };
 
-  const filteredProjects = projects.filter((project) => {
+  const filteredProjects = allProjects.filter((project) => {
     if (statusFilter === "all") return true;
     return project.status.toLowerCase() === statusFilter.toLowerCase();
   });
@@ -97,7 +138,7 @@ export const useProjects = () => {
   });
 
   return {
-    projects,
+    projects: allProjects,
     statusFilter,
     setStatusFilter,
     sortOrder,

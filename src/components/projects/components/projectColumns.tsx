@@ -36,6 +36,11 @@ export const getProjectColumns = (getStatusColor: (status: string) => string, on
   {
     accessorKey: "dueDate",
     header: "Due Date",
+    cell: ({ row }: any) => {
+      const dueDate = row.getValue("dueDate");
+      // Format the date consistently for display
+      return <span>{dueDate}</span>;
+    },
   },
   {
     accessorKey: "budget",
