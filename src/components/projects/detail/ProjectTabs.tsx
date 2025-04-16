@@ -7,14 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TasksTab from "./tabs/TasksTab";
 import MaterialsTab from "./tabs/MaterialsTab";
 import NotesTab from "./tabs/NotesTab";
+
+// Import our dialogs
 import TaskDialog from "./dialogs/TaskDialog";
 import MaterialDialog from "./dialogs/MaterialDialog";
 import NoteDialog from "./dialogs/NoteDialog";
 
-// Import our custom hooks
-import { useProjectData } from "./hooks/useProjectData";
-import { useTabDialogs } from "./hooks/useTabDialogs";
-import { useTabForms } from "./hooks/useTabForms";
+// Import custom hooks
+import { useTabManager } from "./hooks/useTabManager";
 
 interface ProjectTabsProps {
   extraData: any;
@@ -22,33 +22,20 @@ interface ProjectTabsProps {
   projectId: string;
 }
 
-const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData: initialExtraData, getStatusColor, projectId }) => {
-  // Use our custom hooks for data management
-  const { extraData, loadExtraData, saveExtraData } = useProjectData(projectId);
-  
-  // Use our custom hooks for dialog and form management
-  const [dialogState, dialogActions] = useTabDialogs();
-  const { 
-    newTask, newMaterial, newNote,
-    setNewTask, setNewMaterial, setNewNote,
-    handleAddTask, handleAddMaterial, handleAddNote
-  } = useTabForms();
-
-  // Handlers that combine form submission and dialog closing
-  const submitTask = () => {
-    handleAddTask(extraData, saveExtraData);
-    dialogActions.closeTaskDialog();
-  };
-  
-  const submitMaterial = () => {
-    handleAddMaterial(extraData, saveExtraData);
-    dialogActions.closeMaterialDialog();
-  };
-  
-  const submitNote = () => {
-    handleAddNote(extraData, saveExtraData);
-    dialogActions.closeNoteDialog();
-  };
+const ProjectTabs: React.FC<ProjectTabsProps> = ({ 
+  extraData: initialExtraData, 
+  getStatusColor, 
+  projectId 
+}) => {
+  // Use our custom hooks for managing tabs, dialogs and forms
+  const {
+    extraData,
+    saveExtraData,
+    dialogState,
+    dialogActions,
+    formState,
+    formActions
+  } = useTabManager(projectId, initialExtraData);
 
   return (
     <motion.div
@@ -97,27 +84,27 @@ const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData: initialExtraData, 
       <TaskDialog 
         open={dialogState.taskDialogOpen}
         onOpenChange={dialogActions.setTaskDialogOpen}
-        newTask={newTask}
-        setNewTask={setNewTask}
-        handleAddTask={submitTask}
+        newTask={formState.newTask}
+        setNewTask={formActions.setNewTask}
+        handleAddTask={() => formActions.handleAddTask(extraData, saveExtraData, dialogActions.closeTaskDialog)}
       />
 
       {/* Material Dialog */}
       <MaterialDialog 
         open={dialogState.materialDialogOpen}
         onOpenChange={dialogActions.setMaterialDialogOpen}
-        newMaterial={newMaterial}
-        setNewMaterial={setNewMaterial}
-        handleAddMaterial={submitMaterial}
+        newMaterial={formState.newMaterial}
+        setNewMaterial={formActions.setNewMaterial}
+        handleAddMaterial={() => formActions.handleAddMaterial(extraData, saveExtraData, dialogActions.closeMaterialDialog)}
       />
 
       {/* Note Dialog */}
       <NoteDialog 
         open={dialogState.noteDialogOpen}
         onOpenChange={dialogActions.setNoteDialogOpen}
-        newNote={newNote}
-        setNewNote={setNewNote}
-        handleAddNote={submitNote}
+        newNote={formState.newNote}
+        setNewNote={formActions.setNewNote}
+        handleAddNote={() => formActions.handleAddNote(extraData, saveExtraData, dialogActions.closeNoteDialog)}
       />
     </motion.div>
   );

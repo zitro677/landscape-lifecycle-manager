@@ -1,41 +1,34 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useProjectData } from "./useProjectData";
 
-interface TabFormsResult {
-  newTask: { name: string; status: string; dueDate: string; assignee: string };
-  newMaterial: { name: string; quantity: string; cost: string; status: string };
-  newNote: { content: string };
-  setNewTask: React.Dispatch<React.SetStateAction<{
-    name: string;
-    status: string;
-    dueDate: string;
-    assignee: string;
-  }>>;
-  setNewMaterial: React.Dispatch<React.SetStateAction<{
-    name: string;
-    quantity: string;
-    cost: string;
-    status: string;
-  }>>;
-  setNewNote: React.Dispatch<React.SetStateAction<{
-    content: string;
-  }>>;
-  handleAddTask: (extraData: any, saveExtraData: (data: any) => void) => void;
-  handleAddMaterial: (extraData: any, saveExtraData: (data: any) => void) => void;
-  handleAddNote: (extraData: any, saveExtraData: (data: any) => void) => void;
-}
-
-export const useTabForms = (): TabFormsResult => {
+export const useTabManager = (projectId: string, initialExtraData: any = {}) => {
   const { toast } = useToast();
+  
+  // Use project data hook
+  const { extraData, saveExtraData } = useProjectData(projectId);
+  
+  // Dialog state management
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   
   // Form state
   const [newTask, setNewTask] = useState({ name: "", status: "Not Started", dueDate: "", assignee: "" });
   const [newMaterial, setNewMaterial] = useState({ name: "", quantity: "", cost: "", status: "Pending Delivery" });
   const [newNote, setNewNote] = useState({ content: "" });
   
-  // Task handlers
-  const handleAddTask = (extraData: any, saveExtraData: (data: any) => void) => {
+  // Dialog actions
+  const openTaskDialog = () => setTaskDialogOpen(true);
+  const openMaterialDialog = () => setMaterialDialogOpen(true);
+  const openNoteDialog = () => setNoteDialogOpen(true);
+  const closeTaskDialog = () => setTaskDialogOpen(false);
+  const closeMaterialDialog = () => setMaterialDialogOpen(false);
+  const closeNoteDialog = () => setNoteDialogOpen(false);
+  
+  // Form actions
+  const handleAddTask = (extraData: any, saveExtraData: (data: any) => void, closeDialog?: () => void) => {
     // Create the new task object
     const task = {
       name: newTask.name,
@@ -64,10 +57,12 @@ export const useTabForms = (): TabFormsResult => {
     
     // Reset form
     setNewTask({ name: "", status: "Not Started", dueDate: "", assignee: "" });
+    
+    // Close dialog if callback provided
+    if (closeDialog) closeDialog();
   };
   
-  // Material handlers
-  const handleAddMaterial = (extraData: any, saveExtraData: (data: any) => void) => {
+  const handleAddMaterial = (extraData: any, saveExtraData: (data: any) => void, closeDialog?: () => void) => {
     // Create the new material object
     const material = {
       name: newMaterial.name,
@@ -96,10 +91,12 @@ export const useTabForms = (): TabFormsResult => {
     
     // Reset form
     setNewMaterial({ name: "", quantity: "", cost: "", status: "Pending Delivery" });
+    
+    // Close dialog if callback provided
+    if (closeDialog) closeDialog();
   };
   
-  // Note handlers
-  const handleAddNote = (extraData: any, saveExtraData: (data: any) => void) => {
+  const handleAddNote = (extraData: any, saveExtraData: (data: any) => void, closeDialog?: () => void) => {
     // Create the new note object
     const note = {
       content: newNote.content,
@@ -127,17 +124,51 @@ export const useTabForms = (): TabFormsResult => {
     
     // Reset form
     setNewNote({ content: "" });
+    
+    // Close dialog if callback provided
+    if (closeDialog) closeDialog();
   };
 
   return {
-    newTask, 
-    newMaterial, 
-    newNote,
-    setNewTask,
-    setNewMaterial,
-    setNewNote,
-    handleAddTask,
-    handleAddMaterial,
-    handleAddNote
+    // Data
+    extraData,
+    saveExtraData,
+    
+    // Dialog state
+    dialogState: {
+      taskDialogOpen,
+      materialDialogOpen,
+      noteDialogOpen
+    },
+    
+    // Dialog actions
+    dialogActions: {
+      openTaskDialog,
+      openMaterialDialog,
+      openNoteDialog,
+      closeTaskDialog,
+      closeMaterialDialog,
+      closeNoteDialog,
+      setTaskDialogOpen,
+      setMaterialDialogOpen,
+      setNoteDialogOpen
+    },
+    
+    // Form state
+    formState: {
+      newTask,
+      newMaterial,
+      newNote
+    },
+    
+    // Form actions
+    formActions: {
+      setNewTask,
+      setNewMaterial,
+      setNewNote,
+      handleAddTask,
+      handleAddMaterial,
+      handleAddNote
+    }
   };
 };
