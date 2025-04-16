@@ -1,7 +1,8 @@
 
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { updateProject } from "../../hooks/useProjects";
+import ProjectPdfGenerator from "../utils/ProjectPdfGenerator";
 
 export const useProjectActions = (projectId: string, projectName: string) => {
   const navigate = useNavigate();
@@ -37,29 +38,37 @@ export const useProjectActions = (projectId: string, projectName: string) => {
     });
     
     try {
-      // Import the ProjectPdfGenerator module
-      import("../utils/ProjectPdfGenerator").then((module) => {
-        // Create an instance of the PDF generator
-        const pdfGenerator = module.default({ project, extraData, teamMembers });
-        
-        // Call the generatePDF method
-        const success = pdfGenerator.generatePDF();
-        
-        if (!success) {
-          toast({
-            title: "Export Failed",
-            description: "Failed to generate project PDF.",
-            variant: "destructive"
-          });
-        }
-      }).catch((error) => {
-        console.error("Error loading PDF generator:", error);
+      console.log("Starting PDF generation with:", { project, extraData, teamMembers });
+      
+      // Make sure we have the required data
+      if (!project || !project.id) {
+        console.error("Project data is missing or invalid");
         toast({
           title: "Export Failed",
-          description: "There was an error generating the PDF.",
+          description: "Project data is missing or invalid.",
           variant: "destructive"
         });
-      });
+        return;
+      }
+      
+      // Create the PDF generator instance
+      const pdfGenerator = ProjectPdfGenerator({ project, extraData, teamMembers });
+      
+      // Generate the PDF
+      const success = pdfGenerator.generatePDF();
+      
+      if (success) {
+        toast({
+          title: "Export Complete",
+          description: "Project PDF has been downloaded.",
+        });
+      } else {
+        toast({
+          title: "Export Failed",
+          description: "Failed to generate project PDF.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error("Error in handleExportProject:", error);
       toast({

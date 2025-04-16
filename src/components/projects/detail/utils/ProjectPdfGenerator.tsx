@@ -2,7 +2,7 @@
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { format } from "date-fns";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProjectPdfGeneratorProps {
   project: any;
@@ -260,11 +260,10 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
 
       // Save the PDF
       doc.save(`Project_${project.id}.pdf`);
-      toast.success("Project exported as PDF successfully");
+      console.log("PDF generated successfully");
       return true;
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF");
       return false;
     }
   };

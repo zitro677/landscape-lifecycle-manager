@@ -50,7 +50,10 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
       <ProjectActions
         onShare={handleShareProject}
-        onExport={() => handleExportProject(project, extraData, teamMembers)}
+        onExport={() => {
+          console.log("Export button clicked with data:", { project, extraData, teamMembers });
+          handleExportProject(project, extraData, teamMembers);
+        }}
         onEdit={handleEditProject}
       />
     </div>
