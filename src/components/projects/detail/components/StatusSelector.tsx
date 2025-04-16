@@ -49,25 +49,29 @@ const StatusSelector: React.FC<StatusSelectorProps> = ({
       return;
     }
 
-    // Update the project with the new status
-    const result = updateProject(projectId, { status: newStatus });
-    
-    if (result) {
-      setStatus(newStatus);
-      toast.success(`Project status updated to ${newStatus}`);
+    try {
+      // Update the project with the new status
+      const result = updateProject(projectId, { status: newStatus });
       
-      // Call the callback if provided
-      if (onStatusChange) {
-        onStatusChange(newStatus);
+      if (result) {
+        setStatus(newStatus);
+        toast.success(`Project status updated to ${newStatus}`);
+        
+        // Call the callback if provided
+        if (onStatusChange) {
+          onStatusChange(newStatus);
+        }
+      } else {
+        toast.error("Failed to update project status");
       }
       
-      // Optionally force reload to see changes
-      window.location.reload();
-    } else {
+      // Close the dropdown
+      setOpen(false);
+    } catch (error) {
+      console.error("Error updating project status:", error);
       toast.error("Failed to update project status");
+      setOpen(false);
     }
-    
-    setOpen(false);
   };
 
   return (

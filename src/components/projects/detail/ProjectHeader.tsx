@@ -32,9 +32,10 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const { handleEditProject, handleShareProject, handleExportProject } = useProjectActions(projectId, projectName);
 
   const handleStatusChange = (newStatus: string) => {
+    console.log("Status changed to:", newStatus);
     setStatus(newStatus);
-    // Status update happens in the StatusSelector component
-    // We just need to update the local state here
+    // Status update already happened in the StatusSelector component
+    // We just need to update the local state here for UI consistency
   };
 
   return (
