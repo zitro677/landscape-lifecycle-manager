@@ -16,6 +16,7 @@ import ProposalForm from "./components/proposals/ProposalForm";
 import FinancesPage from "./components/finances/FinancesPage";
 import ProjectsPage from "./components/projects/ProjectsPage";
 import ProjectDetail from "./components/projects/ProjectDetail";
+import ProjectForm from "./components/projects/ProjectForm";
 import LoginPage from "./components/auth/LoginPage";
 import { AuthProvider } from "./components/auth/AuthProvider";
 import ClientsPage from "./components/clients/ClientsPage";
@@ -40,6 +41,7 @@ const AppRoutes = () => (
         <Route path="proposals/edit/:id" element={<ProposalForm />} />
         <Route path="finances" element={<FinancesPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/new" element={<ProjectForm />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
       </Route>
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
