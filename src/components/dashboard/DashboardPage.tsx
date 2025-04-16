@@ -1,101 +1,66 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import OverviewCard from "./OverviewCard";
 import RevenueChart from "./RevenueChart";
 import ProjectStatusChart from "./ProjectStatusChart";
 import AnimatedPage from "../shared/AnimatedPage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "../ui/data-table";
-import { BarChart3, PenTool, FileText, FolderKanban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-const revenueData = [
-  { name: "Jan", revenue: 10000, expenses: 7000 },
-  { name: "Feb", revenue: 12000, expenses: 7500 },
-  { name: "Mar", revenue: 9000, expenses: 6800 },
-  { name: "Apr", revenue: 17000, expenses: 9000 },
-  { name: "May", revenue: 21000, expenses: 11000 },
-  { name: "Jun", revenue: 19000, expenses: 9800 },
-  { name: "Jul", revenue: 23000, expenses: 12000 },
-];
-
-const projectStatusData = [
-  { name: "Completed", value: 54, color: "#10b981" },
-  { name: "In Progress", value: 32, color: "#0ea5e9" },
-  { name: "Planning", value: 14, color: "#8b5cf6" },
-];
-
-const recentProjects = [
-  {
-    id: "P-2023-089",
-    client: "Johnson Family",
-    status: "In Progress",
-    dueDate: "2023-12-15",
-    value: "$8,750",
-  },
-  {
-    id: "P-2023-088",
-    client: "Oakridge Community Center",
-    status: "Planning",
-    dueDate: "2024-01-10",
-    value: "$22,500",
-  },
-  {
-    id: "P-2023-087",
-    client: "Peterson Residence",
-    status: "Completed",
-    dueDate: "2023-11-30",
-    value: "$6,200",
-  },
-  {
-    id: "P-2023-086",
-    client: "Sunset Hills Park",
-    status: "In Progress",
-    dueDate: "2023-12-20",
-    value: "$15,300",
-  },
-];
-
-const columns = [
-  {
-    accessorKey: "id",
-    header: "ID",
-  },
-  {
-    accessorKey: "client",
-    header: "Client",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }: any) => {
-      const status = row.getValue("status");
-      const colorMap: Record<string, string> = {
-        "Completed": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-        "In Progress": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-        "Planning": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
-      };
-      
-      return (
-        <Badge className={`${colorMap[status]} hover:${colorMap[status]}`}>
-          {status}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "dueDate",
-    header: "Due Date",
-  },
-  {
-    accessorKey: "value",
-    header: "Value",
-  },
-];
+import { BarChart3, PenTool, FileText, FolderKanban } from "lucide-react";
+import { useDashboardData } from "./hooks/useDashboardData";
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { 
+    overviewStats, 
+    revenueData, 
+    projectStatusData, 
+    recentProjects,
+    isLoading 
+  } = useDashboardData();
+
+  const columns = [
+    {
+      accessorKey: "id",
+      header: "ID",
+    },
+    {
+      accessorKey: "client",
+      header: "Client",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }: any) => {
+        const status = row.getValue("status");
+        const colorMap: Record<string, string> = {
+          "Completed": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+          "In Progress": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+          "Planning": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+          "On Hold": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+        };
+        
+        return (
+          <Badge className={`${colorMap[status] || ""} hover:${colorMap[status] || ""}`}>
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "dueDate",
+      header: "Due Date",
+    },
+    {
+      accessorKey: "budget",
+      header: "Value",
+    },
+  ];
+
   return (
     <AnimatedPage>
       <div className="page-container">
@@ -113,48 +78,52 @@ const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <OverviewCard
             title="Total Revenue"
-            value="$125,430"
+            value={overviewStats.totalRevenue}
             description="vs. last month"
             icon={BarChart3}
-            trend={12}
+            trend={overviewStats.revenueTrend}
             delay={0}
+            isLoading={isLoading}
           />
           <OverviewCard
             title="Active Projects"
-            value="8"
-            description="2 due this week"
+            value={overviewStats.activeProjects.toString()}
+            description={`${overviewStats.dueSoonProjects} due this week`}
             icon={FolderKanban}
             trend={0}
             delay={1}
+            isLoading={isLoading}
           />
           <OverviewCard
             title="Pending Invoices"
-            value="$32,580"
-            description="5 invoices pending"
+            value={overviewStats.pendingInvoices}
+            description={`${overviewStats.pendingInvoicesCount} invoices pending`}
             icon={FileText}
             trend={-4}
             delay={2}
+            isLoading={isLoading}
           />
           <OverviewCard
             title="New Proposals"
-            value="12"
-            description="3 awaiting approval"
+            value={overviewStats.newProposals.toString()}
+            description={`${overviewStats.pendingApprovals} awaiting approval`}
             icon={PenTool}
             trend={24}
             delay={3}
+            isLoading={isLoading}
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <RevenueChart data={revenueData} />
-          <ProjectStatusChart data={projectStatusData} />
+          <RevenueChart data={revenueData} isLoading={isLoading} />
+          <ProjectStatusChart data={projectStatusData} isLoading={isLoading} />
         </div>
 
         <div className="grid grid-cols-1 gap-6">
           <Card className="card-shadow">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Projects</CardTitle>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate("/projects")}>
                 View All
               </Button>
             </CardHeader>

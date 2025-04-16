@@ -3,6 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface OverviewCardProps {
   title: string;
@@ -11,6 +12,7 @@ interface OverviewCardProps {
   icon: LucideIcon;
   trend?: number;
   delay?: number;
+  isLoading?: boolean;
 }
 
 const OverviewCard: React.FC<OverviewCardProps> = ({
@@ -20,6 +22,7 @@ const OverviewCard: React.FC<OverviewCardProps> = ({
   icon: Icon,
   trend,
   delay = 0,
+  isLoading = false,
 }) => {
   return (
     <motion.div
@@ -41,24 +44,33 @@ const OverviewCard: React.FC<OverviewCardProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
-          {(description || trend !== undefined) && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center">
-              {trend !== undefined && (
-                <span
-                  className={`inline-flex items-center mr-1 ${
-                    trend > 0
-                      ? "text-green-500"
-                      : trend < 0
-                      ? "text-red-500"
-                      : ""
-                  }`}
-                >
-                  {trend > 0 ? "↑" : trend < 0 ? "↓" : "•"} {Math.abs(trend)}%
-                </span>
+          {isLoading ? (
+            <>
+              <Skeleton className="h-8 w-24 mb-1" />
+              <Skeleton className="h-4 w-32" />
+            </>
+          ) : (
+            <>
+              <div className="text-2xl font-bold">{value}</div>
+              {(description || trend !== undefined) && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center">
+                  {trend !== undefined && (
+                    <span
+                      className={`inline-flex items-center mr-1 ${
+                        trend > 0
+                          ? "text-green-500"
+                          : trend < 0
+                          ? "text-red-500"
+                          : ""
+                      }`}
+                    >
+                      {trend > 0 ? "↑" : trend < 0 ? "↓" : "•"} {Math.abs(trend)}%
+                    </span>
+                  )}
+                  {description}
+                </p>
               )}
-              {description}
-            </p>
+            </>
           )}
         </CardContent>
       </Card>
