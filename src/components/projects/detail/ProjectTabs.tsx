@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { getProjectExtraData } from "./ProjectDataProvider";
 
 interface ProjectTabsProps {
   extraData: any;
@@ -21,8 +22,11 @@ interface ProjectTabsProps {
   projectId: string;
 }
 
-const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData, getStatusColor, projectId }) => {
+const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData: initialExtraData, getStatusColor, projectId }) => {
   const { toast } = useToast();
+  
+  // State for the project extra data
+  const [extraData, setExtraData] = useState(initialExtraData);
   
   // Dialog states
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -34,35 +38,134 @@ const ProjectTabs: React.FC<ProjectTabsProps> = ({ extraData, getStatusColor, pr
   const [newMaterial, setNewMaterial] = useState({ name: "", quantity: "", cost: "", status: "Pending Delivery" });
   const [newNote, setNewNote] = useState({ content: "" });
   
+  // Fetch the current project data from localStorage when the component mounts or projectId changes
+  useEffect(() => {
+    const storedProjects = localStorage.getItem("projectsData");
+    if (storedProjects) {
+      const projectsData = JSON.parse(storedProjects);
+      
+      // Find if our project has extra data stored
+      const projectData = projectsData.find((p: any) => p.id === projectId);
+      if (projectData && projectData.extraData) {
+        setExtraData(projectData.extraData);
+      }
+    }
+  }, [projectId]);
+  
+  // Helper to save the updated extra data to localStorage
+  const saveExtraData = (updatedExtraData: any) => {
+    const storedProjects = localStorage.getItem("projectsData");
+    if (storedProjects) {
+      let projectsData = JSON.parse(storedProjects);
+      
+      // Find the project and update or add its extraData
+      let projectIndex = projectsData.findIndex((p: any) => p.id === projectId);
+      if (projectIndex !== -1) {
+        projectsData[projectIndex].extraData = updatedExtraData;
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem("projectsData", JSON.stringify(projectsData));
+      
+      // Update the component state
+      setExtraData(updatedExtraData);
+    }
+  };
+  
   // Task handlers
   const handleAddTask = () => {
-    // In a real app, this would call an API
+    // Create the new task object
+    const task = {
+      name: newTask.name,
+      status: newTask.status,
+      dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
+      assignee: newTask.assignee
+    };
+    
+    // Create updated tasks array
+    const updatedTasks = extraData.tasks ? [...extraData.tasks, task] : [task];
+    
+    // Create updated extraData
+    const updatedExtraData = {
+      ...extraData,
+      tasks: updatedTasks
+    };
+    
+    // Save to localStorage
+    saveExtraData(updatedExtraData);
+    
+    // Show success toast
     toast({
       title: "Task Added",
       description: `Task "${newTask.name}" has been added to the project.`,
     });
+    
+    // Close dialog and reset form
     setTaskDialogOpen(false);
     setNewTask({ name: "", status: "Not Started", dueDate: "", assignee: "" });
   };
   
   // Material handlers
   const handleAddMaterial = () => {
-    // In a real app, this would call an API
+    // Create the new material object
+    const material = {
+      name: newMaterial.name,
+      quantity: newMaterial.quantity,
+      cost: newMaterial.cost,
+      status: newMaterial.status
+    };
+    
+    // Create updated materials array
+    const updatedMaterials = extraData.materials ? [...extraData.materials, material] : [material];
+    
+    // Create updated extraData
+    const updatedExtraData = {
+      ...extraData,
+      materials: updatedMaterials
+    };
+    
+    // Save to localStorage
+    saveExtraData(updatedExtraData);
+    
+    // Show success toast
     toast({
       title: "Material Added",
       description: `Material "${newMaterial.name}" has been added to the project.`,
     });
+    
+    // Close dialog and reset form
     setMaterialDialogOpen(false);
     setNewMaterial({ name: "", quantity: "", cost: "", status: "Pending Delivery" });
   };
   
   // Note handlers
   const handleAddNote = () => {
-    // In a real app, this would call an API
+    // Create the new note object
+    const note = {
+      content: newNote.content,
+      date: new Date().toISOString().split('T')[0],
+      author: "Current User", // In a real app, get the user's name from auth
+    };
+    
+    // Create updated notes array
+    const updatedNotes = extraData.notes ? [...extraData.notes, note] : [note];
+    
+    // Create updated extraData
+    const updatedExtraData = {
+      ...extraData,
+      notes: updatedNotes
+    };
+    
+    // Save to localStorage
+    saveExtraData(updatedExtraData);
+    
+    // Show success toast
     toast({
       title: "Note Added",
       description: "Your note has been added to the project.",
     });
+    
+    // Close dialog and reset form
     setNoteDialogOpen(false);
     setNewNote({ content: "" });
   };

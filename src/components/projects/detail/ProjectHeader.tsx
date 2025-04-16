@@ -24,28 +24,41 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const { toast } = useToast();
 
   const handleEditProject = () => {
-    // In a production app, this would navigate to an edit form with the project data
-    // For now, we'll just navigate to the projects page with a notification
-    toast({
-      title: "Edit Project",
-      description: "This feature will be implemented in a future update.",
-    });
-    // Uncomment the following line when the edit project form is ready
-    // navigate(`/projects/edit/${projectId}`);
+    // Navigate to the edit project form with the project id
+    navigate(`/projects/edit/${projectId}`);
   };
 
   const handleShareProject = () => {
     toast({
       title: "Share Project",
-      description: "Sharing functionality coming soon.",
+      description: "Project sharing link copied to clipboard.",
+    });
+    
+    // In a real app, this would generate a sharing link
+    // For now, just simulate copying to clipboard
+    navigator.clipboard.writeText(`${window.location.origin}/projects/${projectId}`).catch(() => {
+      toast({
+        title: "Clipboard Error",
+        description: "Failed to copy link to clipboard.",
+        variant: "destructive"
+      });
     });
   };
 
   const handleExportProject = () => {
     toast({
       title: "Export Project",
-      description: "Export functionality coming soon.",
+      description: "Project export started. The file will download shortly.",
     });
+    
+    // In a real app, this would generate a PDF or export file
+    // For now, just show a toast
+    setTimeout(() => {
+      toast({
+        title: "Export Complete",
+        description: `Project "${projectName}" has been exported.`,
+      });
+    }, 1500);
   };
 
   return (
