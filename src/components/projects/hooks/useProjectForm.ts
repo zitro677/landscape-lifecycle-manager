@@ -92,6 +92,11 @@ export const useProjectForm = () => {
             const startDate = foundProject.startDate ? new Date(foundProject.startDate) : new Date();
             const dueDate = foundProject.dueDate ? new Date(foundProject.dueDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
             
+            // Clean budget value (remove $ and commas)
+            const cleanBudget = foundProject.budget 
+              ? foundProject.budget.toString().replace(/[$,]/g, '') 
+              : "";
+            
             // Set form values
             form.reset({
               name: foundProject.name || "",
@@ -100,7 +105,7 @@ export const useProjectForm = () => {
               description: foundProject.description || "",
               startDate: startDate,
               dueDate: dueDate,
-              budget: foundProject.budget?.toString().replace(/[$,]/g, '') || "",
+              budget: cleanBudget,
               estimatedHours: foundProject.estimatedHours?.toString() || "",
               team: foundProject.team || [],
             });
