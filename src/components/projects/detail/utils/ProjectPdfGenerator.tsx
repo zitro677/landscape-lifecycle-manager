@@ -10,9 +10,23 @@ interface ProjectPdfGeneratorProps {
   teamMembers: any[];
 }
 
+// Add type definition for jsPDF with autotable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
+
 const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGeneratorProps) => {
   const generatePDF = () => {
     try {
+      console.log("Generating PDF for project:", project);
+      console.log("With extra data:", extraData);
+      console.log("And team members:", teamMembers);
+      
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const margin = 20;
@@ -39,11 +53,11 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       
       yPosition += 7;
       doc.text(`ID: ${project.id}`, margin + 5, yPosition);
-      doc.text(`Client: ${project.client}`, margin + 80, yPosition);
+      doc.text(`Client: ${project.client || 'N/A'}`, margin + 80, yPosition);
       
       yPosition += 6;
-      doc.text(`Status: ${project.status}`, margin + 5, yPosition);
-      doc.text(`Progress: ${project.progress}%`, margin + 80, yPosition);
+      doc.text(`Status: ${project.status || 'N/A'}`, margin + 5, yPosition);
+      doc.text(`Progress: ${project.progress || 0}%`, margin + 80, yPosition);
       
       yPosition += 6;
       doc.text(`Start Date: ${project.startDate ? format(new Date(project.startDate), 'MM/dd/yyyy') : 'N/A'}`, margin + 5, yPosition);
@@ -68,11 +82,11 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       
       yPosition += 7;
       doc.text(`Total Budget: $${project.budget || 0}`, margin + 5, yPosition);
-      doc.text(`Estimated Hours: ${extraData.estimatedHours || 0}`, margin + contentWidth / 2 + 10, yPosition);
+      doc.text(`Estimated Hours: ${extraData?.estimatedHours || 0}`, margin + contentWidth / 2 + 10, yPosition);
       
       yPosition += 6;
-      doc.text(`Budget Used: $${extraData.totalCost || 0}`, margin + 5, yPosition);
-      doc.text(`Hours Logged: ${extraData.hoursLogged || 0}`, margin + contentWidth / 2 + 10, yPosition);
+      doc.text(`Budget Used: $${extraData?.totalCost || 0}`, margin + 5, yPosition);
+      doc.text(`Hours Logged: ${extraData?.hoursLogged || 0}`, margin + contentWidth / 2 + 10, yPosition);
       
       yPosition += 20;
 
@@ -84,7 +98,8 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       doc.setFontSize(10);
       yPosition += 7;
       
-      const descriptionLines = doc.splitTextToSize(extraData.description || "No description available.", contentWidth);
+      const descriptionText = extraData?.description || project.description || "No description available.";
+      const descriptionLines = doc.splitTextToSize(descriptionText, contentWidth);
       doc.text(descriptionLines, margin, yPosition);
       yPosition += descriptionLines.length * 5 + 10;
 
@@ -96,7 +111,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       doc.setFontSize(10);
       yPosition += 7;
       
-      if (teamMembers.length === 0) {
+      if (!teamMembers || teamMembers.length === 0) {
         doc.text("No team members assigned to this project.", margin, yPosition);
         yPosition += 10;
       } else {
@@ -106,7 +121,6 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           member.role || ""
         ]);
         
-        // @ts-ignore - jspdf-autotable is imported
         doc.autoTable({
           head: [['Name', 'Role']],
           body: teamMemberData,
@@ -116,8 +130,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           headStyles: { fillColor: [80, 80, 80] },
         });
         
-        // @ts-ignore - need to get the final y position after the table
-        yPosition = (doc as any).lastAutoTable.finalY + 10;
+        yPosition = doc.lastAutoTable.finalY + 10;
       }
 
       // Check if we need a new page for tasks
@@ -134,7 +147,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       doc.setFontSize(10);
       yPosition += 7;
       
-      if (!extraData.tasks || extraData.tasks.length === 0) {
+      if (!extraData?.tasks || extraData.tasks.length === 0) {
         doc.text("No tasks added to this project.", margin, yPosition);
         yPosition += 10;
       } else {
@@ -146,7 +159,6 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           task.assignee || ""
         ]);
         
-        // @ts-ignore - jspdf-autotable is imported
         doc.autoTable({
           head: [['Task Name', 'Status', 'Due Date', 'Assignee']],
           body: taskData,
@@ -156,8 +168,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           headStyles: { fillColor: [80, 80, 80] },
         });
         
-        // @ts-ignore - need to get the final y position after the table
-        yPosition = (doc as any).lastAutoTable.finalY + 10;
+        yPosition = doc.lastAutoTable.finalY + 10;
       }
 
       // Check if we need a new page for materials
@@ -174,7 +185,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       doc.setFontSize(10);
       yPosition += 7;
       
-      if (!extraData.materials || extraData.materials.length === 0) {
+      if (!extraData?.materials || extraData.materials.length === 0) {
         doc.text("No materials added to this project.", margin, yPosition);
         yPosition += 10;
       } else {
@@ -186,7 +197,6 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           material.status || ""
         ]);
         
-        // @ts-ignore - jspdf-autotable is imported
         doc.autoTable({
           head: [['Material Name', 'Quantity', 'Cost', 'Status']],
           body: materialData,
@@ -196,8 +206,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           headStyles: { fillColor: [80, 80, 80] },
         });
         
-        // @ts-ignore - need to get the final y position after the table
-        yPosition = (doc as any).lastAutoTable.finalY + 10;
+        yPosition = doc.lastAutoTable.finalY + 10;
       }
 
       // Check if we need a new page for notes
@@ -214,7 +223,7 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
       doc.setFontSize(10);
       yPosition += 7;
       
-      if (!extraData.notes || extraData.notes.length === 0) {
+      if (!extraData?.notes || extraData.notes.length === 0) {
         doc.text("No notes added to this project.", margin, yPosition);
       } else {
         // Create a table for notes
@@ -224,7 +233,6 @@ const ProjectPdfGenerator = ({ project, extraData, teamMembers }: ProjectPdfGene
           note.content || ""
         ]);
         
-        // @ts-ignore - jspdf-autotable is imported
         doc.autoTable({
           head: [['Date', 'Author', 'Content']],
           body: noteData,

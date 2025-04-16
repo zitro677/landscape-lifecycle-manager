@@ -36,29 +36,38 @@ export const useProjectActions = (projectId: string, projectName: string) => {
       description: "Generating project PDF...",
     });
     
-    // Use dynamic import to load the PDF generator only when needed
-    import("../utils/ProjectPdfGenerator").then((module) => {
-      const ProjectPdfGenerator = module.default;
-      const { generatePDF } = ProjectPdfGenerator({ project, extraData, teamMembers });
-      
-      // Generate the PDF
-      const success = generatePDF();
-      
-      if (!success) {
+    try {
+      // Import the ProjectPdfGenerator module
+      import("../utils/ProjectPdfGenerator").then((module) => {
+        // Create an instance of the PDF generator
+        const pdfGenerator = module.default({ project, extraData, teamMembers });
+        
+        // Call the generatePDF method
+        const success = pdfGenerator.generatePDF();
+        
+        if (!success) {
+          toast({
+            title: "Export Failed",
+            description: "Failed to generate project PDF.",
+            variant: "destructive"
+          });
+        }
+      }).catch((error) => {
+        console.error("Error loading PDF generator:", error);
         toast({
           title: "Export Failed",
-          description: "Failed to generate project PDF.",
+          description: "There was an error generating the PDF.",
           variant: "destructive"
         });
-      }
-    }).catch((error) => {
-      console.error("Error loading PDF generator:", error);
+      });
+    } catch (error) {
+      console.error("Error in handleExportProject:", error);
       toast({
         title: "Export Failed",
-        description: "There was an error generating the PDF.",
+        description: "Unexpected error during PDF generation.",
         variant: "destructive"
       });
-    });
+    }
   };
 
   // New function to update project progress
