@@ -27,12 +27,39 @@ const ProjectDetail: React.FC = () => {
   // Load project data
   useEffect(() => {
     const loadProject = () => {
-      const storedProjects = localStorage.getItem("projectsData");
-      if (storedProjects) {
-        const projects = JSON.parse(storedProjects);
-        const foundProject = projects.find((p: any) => p.id === id);
+      console.log("Loading project with ID:", id);
+      
+      // Check localStorage first (for user-created projects)
+      const storedUserProjects = localStorage.getItem("landscape_projects");
+      const userProjects = storedUserProjects ? JSON.parse(storedUserProjects) : [];
+      
+      // Check default projects
+      let foundProject = null;
+      
+      try {
+        // First check if we have it in user projects
+        if (userProjects.length > 0) {
+          foundProject = userProjects.find((p: any) => p.id === id);
+        }
+        
+        // If not found in user projects, check the projectsData
+        if (!foundProject) {
+          const projectsData = localStorage.getItem("projectsData");
+          if (projectsData) {
+            const projects = JSON.parse(projectsData);
+            foundProject = projects.find((p: any) => p.id === id);
+          }
+        }
+        
+        // Also check static project data
+        if (!foundProject) {
+          // Import the static projects for fallback
+          const { projects } = require("./hooks/useProjects");
+          foundProject = projects.find((p: any) => p.id === id);
+        }
         
         if (foundProject) {
+          console.log("Project found:", foundProject);
           setProject(foundProject);
           
           // Check if the project has extraData
@@ -43,8 +70,13 @@ const ProjectDetail: React.FC = () => {
             const defaultExtraData = getProjectExtraData(id || "");
             setExtraData(defaultExtraData);
           }
+        } else {
+          console.error("Project not found with ID:", id);
         }
+      } catch (error) {
+        console.error("Error loading project:", error);
       }
+      
       setLoading(false);
     };
     
