@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Share, Download, Edit } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProjectHeaderProps {
   projectId: string;
@@ -20,6 +21,32 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   getStatusColor,
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleEditProject = () => {
+    // In a production app, this would navigate to an edit form with the project data
+    // For now, we'll just navigate to the projects page with a notification
+    toast({
+      title: "Edit Project",
+      description: "This feature will be implemented in a future update.",
+    });
+    // Uncomment the following line when the edit project form is ready
+    // navigate(`/projects/edit/${projectId}`);
+  };
+
+  const handleShareProject = () => {
+    toast({
+      title: "Share Project",
+      description: "Sharing functionality coming soon.",
+    });
+  };
+
+  const handleExportProject = () => {
+    toast({
+      title: "Export Project",
+      description: "Export functionality coming soon.",
+    });
+  };
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
@@ -53,15 +80,15 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         transition={{ duration: 0.5, delay: 0.1 }}
         className="mt-4 md:mt-0 flex flex-wrap gap-2"
       >
-        <Button variant="outline" size="sm" className="gap-1">
+        <Button variant="outline" size="sm" className="gap-1" onClick={handleShareProject}>
           <Share className="h-4 w-4" />
           <span>Share</span>
         </Button>
-        <Button variant="outline" size="sm" className="gap-1">
+        <Button variant="outline" size="sm" className="gap-1" onClick={handleExportProject}>
           <Download className="h-4 w-4" />
           <span>Export</span>
         </Button>
-        <Button size="sm" className="gap-1">
+        <Button size="sm" className="gap-1" onClick={handleEditProject}>
           <Edit className="h-4 w-4" />
           <span>Edit Project</span>
         </Button>

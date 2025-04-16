@@ -95,6 +95,7 @@ const ProjectDetail: React.FC = () => {
         <ProjectTabs 
           extraData={extraData}
           getStatusColor={getStatusColor}
+          projectId={project.id}
         />
       </div>
     </AnimatedPage>
