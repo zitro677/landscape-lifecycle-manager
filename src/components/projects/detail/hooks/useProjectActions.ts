@@ -30,20 +30,35 @@ export const useProjectActions = (projectId: string, projectName: string) => {
     });
   };
 
-  const handleExportProject = () => {
+  const handleExportProject = (project: any, extraData: any, teamMembers: any[]) => {
     toast({
       title: "Export Project",
-      description: "Project export started. The file will download shortly.",
+      description: "Generating project PDF...",
     });
     
-    // In a real app, this would generate a PDF or export file
-    // For now, just show a toast
-    setTimeout(() => {
+    // Use dynamic import to load the PDF generator only when needed
+    import("../utils/ProjectPdfGenerator").then((module) => {
+      const ProjectPdfGenerator = module.default;
+      const { generatePDF } = ProjectPdfGenerator({ project, extraData, teamMembers });
+      
+      // Generate the PDF
+      const success = generatePDF();
+      
+      if (!success) {
+        toast({
+          title: "Export Failed",
+          description: "Failed to generate project PDF.",
+          variant: "destructive"
+        });
+      }
+    }).catch((error) => {
+      console.error("Error loading PDF generator:", error);
       toast({
-        title: "Export Complete",
-        description: `Project "${projectName}" has been exported.`,
+        title: "Export Failed",
+        description: "There was an error generating the PDF.",
+        variant: "destructive"
       });
-    }, 1500);
+    });
   };
 
   // New function to update project progress

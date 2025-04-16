@@ -12,6 +12,9 @@ interface ProjectHeaderProps {
   projectName: string;
   projectStatus: string;
   getStatusColor: (status: string) => string;
+  project: any;
+  extraData: any;
+  teamMembers: any[];
 }
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({
@@ -19,6 +22,9 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   projectName,
   projectStatus,
   getStatusColor,
+  project,
+  extraData,
+  teamMembers
 }) => {
   const navigate = useNavigate();
   const { handleEditProject, handleShareProject, handleExportProject } = useProjectActions(projectId, projectName);
@@ -44,7 +50,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
       <ProjectActions
         onShare={handleShareProject}
-        onExport={handleExportProject}
+        onExport={() => handleExportProject(project, extraData, teamMembers)}
         onEdit={handleEditProject}
       />
     </div>
