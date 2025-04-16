@@ -1,5 +1,6 @@
 
 import React from "react";
+import { getAllProjects } from "../hooks/useProjects";
 
 // Extra data for demo purposes (will be stored with the project in a real app)
 const projectExtraData = {
@@ -47,22 +48,21 @@ const defaultExtraData = {
 
 // Function to generate extra data for a project if it doesn't exist
 export const getProjectExtraData = (projectId: string) => {
+  // For new projects, use the description from the project if available
+  if (!projectExtraData[projectId as keyof typeof projectExtraData]) {
+    const project = getAllProjects().find(p => p.id === projectId);
+    if (project && project.description) {
+      return {
+        ...defaultExtraData,
+        description: project.description,
+        estimatedHours: project.estimatedHours ? Number(project.estimatedHours) : 0
+      };
+    }
+  }
   return projectExtraData[projectId as keyof typeof projectExtraData] || defaultExtraData;
 };
 
-// Get all projects including those from localStorage
-export const getAllProjects = () => {
-  try {
-    const predefinedProjects = require("../hooks/useProjects").projects;
-    const localProjects = localStorage.getItem('newProjects');
-    const savedProjects = localProjects ? JSON.parse(localProjects) : [];
-    return [...predefinedProjects, ...savedProjects];
-  } catch (error) {
-    console.error('Error loading projects:', error);
-    return [];
-  }
-};
-
+// Get status color
 export const getStatusColor = (status: string) => {
   switch (status) {
     case "Completed":

@@ -61,7 +61,7 @@ export const projects = [
 ];
 
 // Local storage utility functions
-const LOCAL_STORAGE_KEY = 'newProjects';
+const LOCAL_STORAGE_KEY = 'landscape_projects';
 
 const getLocalProjects = () => {
   try {
@@ -98,7 +98,7 @@ const formatNewProject = (project) => {
 
 // Helper functions for project formatting
 const generateProjectId = () => {
-  return `PRJ-${new Date().getFullYear()}-${String(projects.length + getLocalProjects().length + 1).padStart(3, '0')}`;
+  return `PRJ-${new Date().getFullYear()}-${String(getAllProjects().length + 1).padStart(3, '0')}`;
 };
 
 const calculateInitialProgress = (status) => {
@@ -116,7 +116,13 @@ const formatDate = (dateString) => {
 };
 
 const formatBudget = (budget) => {
-  return budget ? `$${budget}` : '$0';
+  if (!budget) return '$0';
+  return budget.startsWith('$') ? budget : `$${budget}`;
+};
+
+// Get all projects (predefined + local)
+export const getAllProjects = () => {
+  return [...projects, ...getLocalProjects()];
 };
 
 // Add a new project
@@ -155,7 +161,7 @@ export const useProjects = () => {
   const [sortOrder, setSortOrder] = useState<string>("dueDate");
   
   // Combine predefined projects with any user-created projects stored in localStorage
-  const allProjects = [...projects, ...getLocalProjects()];
+  const allProjects = getAllProjects();
 
   // Filter projects based on status
   const filteredProjects = allProjects.filter((project) => {
