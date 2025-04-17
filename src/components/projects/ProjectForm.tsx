@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ArrowLeft } from "lucide-react";
@@ -9,7 +9,6 @@ import ProjectInfoCard from "./form/ProjectInfoCard";
 import TimelineBudgetCard from "./form/TimelineBudgetCard";
 import DescriptionCard from "./form/DescriptionCard";
 import ProjectFormHeader from "./form/ProjectFormHeader";
-import FormActions from "./form/FormActions";
 
 const ProjectForm: React.FC = () => {
   const {
@@ -60,9 +59,9 @@ const ProjectForm: React.FC = () => {
             <DescriptionCard form={form} />
 
             <FormActions 
-              isSubmitting={isSubmitting} 
-              isEditMode={isEditMode} 
-              navigateBack={() => navigate("/projects")} 
+              isSubmitting={isSubmitting}
+              isEditMode={isEditMode}
+              navigateBack={() => navigate("/projects")}
             />
           </form>
         </Form>

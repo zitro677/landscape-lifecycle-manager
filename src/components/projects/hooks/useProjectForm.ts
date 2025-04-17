@@ -47,13 +47,13 @@ export const useProjectForm = () => {
     },
   });
 
-  // Load project data if in edit mode
+  // Load project data if editing
   useEffect(() => {
     if (id) {
       setIsEditMode(true);
 
       const loadProject = () => {
-        console.log("Loading project for edit with ID:", id);
+        console.log("Loading project with ID:", id);
         
         // Check localStorage first (for user-created projects)
         const storedUserProjects = localStorage.getItem("landscape_projects");
@@ -79,9 +79,12 @@ export const useProjectForm = () => {
           
           // Also check static project data
           if (!foundProject) {
-            // Import the static projects for fallback
-            const { projects } = require("./useProjects");
-            foundProject = projects.find((p: any) => String(p.id) === String(id));
+            try {
+              const { projects } = require("./useProjects");
+              foundProject = projects.find((p: any) => String(p.id) === String(id));
+            } catch (error) {
+              console.error("Error loading static projects:", error);
+            }
           }
           
           if (foundProject) {
@@ -89,12 +92,21 @@ export const useProjectForm = () => {
             setInitialProject(foundProject);
             
             // Format dates properly
-            const startDate = foundProject.startDate ? new Date(foundProject.startDate) : new Date();
-            const dueDate = foundProject.dueDate ? new Date(foundProject.dueDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
+            let startDate = new Date();
+            let dueDate = new Date();
             
-            // Clean budget value (remove $ and commas)
+            try {
+              startDate = foundProject.startDate ? new Date(foundProject.startDate) : new Date();
+              dueDate = foundProject.dueDate ? new Date(foundProject.dueDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
+            } catch (error) {
+              console.error("Error parsing dates:", error);
+            }
+            
+            // Clean budget value
             const cleanBudget = foundProject.budget 
-              ? foundProject.budget.toString().replace(/[$,]/g, '') 
+              ? typeof foundProject.budget === 'string' 
+                ? foundProject.budget.replace(/[$,]/g, '') 
+                : foundProject.budget.toString()
               : "";
             
             // Set form values
@@ -126,32 +138,33 @@ export const useProjectForm = () => {
     }
   }, [id, navigate, form]);
 
+  // Handle form submission
   const onSubmit = async (data: ProjectFormValues) => {
-    setIsSubmitting(true);
     try {
+      setIsSubmitting(true);
       console.log("Form submission data:", data);
       
       if (isEditMode && id) {
-        // Update existing project
-        console.log("Updating project with ID:", id);
-        
+        // Format dates correctly for storage
         const formattedData = {
           ...data,
-          startDate: format(data.startDate, "yyyy-MM-dd"),
-          dueDate: format(data.dueDate, "yyyy-MM-dd"),
+          startDate: format(new Date(data.startDate), "yyyy-MM-dd"),
+          dueDate: format(new Date(data.dueDate), "yyyy-MM-dd"),
         };
         
-        console.log("Formatted data for update:", formattedData);
-        const updatedProject = updateProject(id, formattedData);
+        console.log("Updating project with ID:", id);
+        console.log("Update data:", formattedData);
         
-        if (updatedProject) {
-          console.log("Project updated successfully:", updatedProject);
+        const updated = updateProject(id, formattedData);
+        
+        if (updated) {
+          console.log("Project updated successfully:", updated);
           toast.success("Project updated successfully");
           
-          // Force a small delay to ensure localStorage is updated
+          // Navigate back to project details after successful update
           setTimeout(() => {
             navigate(`/projects/${id}`);
-          }, 300);
+          }, 500);
         } else {
           console.error("Failed to update project");
           toast.error("Failed to update project");
@@ -160,28 +173,33 @@ export const useProjectForm = () => {
         // Create new project
         const formattedData = {
           ...data,
-          startDate: format(data.startDate, "yyyy-MM-dd"),
-          dueDate: format(data.dueDate, "yyyy-MM-dd"),
+          startDate: format(new Date(data.startDate), "yyyy-MM-dd"),
+          dueDate: format(new Date(data.dueDate), "yyyy-MM-dd"),
         };
         
         const newProject = addProject(formattedData);
         
         if (newProject) {
+          console.log("Project created successfully:", newProject);
           toast.success("Project created successfully");
-          navigate("/projects");
+          
+          setTimeout(() => {
+            navigate("/projects");
+          }, 500);
         } else {
+          console.error("Failed to create project");
           toast.error("Failed to create project");
         }
       }
     } catch (error) {
-      console.error(isEditMode ? "Error updating project:" : "Error creating project:", error);
-      toast.error(isEditMode ? "Failed to update project" : "Failed to create project");
+      console.error("Error submitting form:", error);
+      toast.error(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Status options
+  // Status options for the form
   const statusOptions = [
     { value: "Planning", label: "Planning" },
     { value: "In Progress", label: "In Progress" },

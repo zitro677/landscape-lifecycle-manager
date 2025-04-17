@@ -14,16 +14,17 @@ const FormActions: React.FC<FormActionsProps> = ({
   navigateBack
 }) => {
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-3 mt-8">
       <Button
         type="button"
         variant="outline"
         onClick={navigateBack}
+        disabled={isSubmitting}
       >
         Cancel
       </Button>
       <Button 
-        type="submit" 
+        type="submit"
         disabled={isSubmitting}
         className="min-w-[150px]"
       >
