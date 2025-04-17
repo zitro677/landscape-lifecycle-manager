@@ -1,14 +1,15 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { UserSettings } from "../types";
 
 export const useSettings = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   // Load user settings from localStorage
-  const loadUserSettings = () => {
+  const loadUserSettings = (): UserSettings => {
     try {
       const storedSettings = localStorage.getItem("user_settings");
       if (storedSettings) {
@@ -36,7 +37,7 @@ export const useSettings = () => {
   };
   
   // Save settings to localStorage
-  const saveUserSettings = (settings: any) => {
+  const saveUserSettings = (settings: UserSettings): boolean => {
     try {
       localStorage.setItem("user_settings", JSON.stringify(settings));
       return true;
@@ -46,7 +47,7 @@ export const useSettings = () => {
     }
   };
 
-  const onSubmitAccount = (data: any) => {
+  const onSubmitAccount = (data: Partial<UserSettings>) => {
     setIsLoading(true);
     
     // Get current settings
@@ -55,10 +56,10 @@ export const useSettings = () => {
     // Update account information
     const updatedSettings = {
       ...currentSettings,
-      name: data.name,
-      email: data.email,
-      company: data.company,
-      bio: data.bio
+      name: data.name || currentSettings.name,
+      email: data.email || currentSettings.email,
+      company: data.company || currentSettings.company,
+      bio: data.bio || currentSettings.bio
     };
     
     // Save to localStorage
@@ -71,7 +72,7 @@ export const useSettings = () => {
     setIsLoading(false);
   };
 
-  const onSubmitPreferences = (data: any) => {
+  const onSubmitPreferences = (data: Partial<UserSettings>) => {
     setIsLoading(true);
     
     // Get current settings
@@ -80,9 +81,9 @@ export const useSettings = () => {
     // Update preferences
     const updatedSettings = {
       ...currentSettings,
-      darkMode: data.darkMode,
-      compactView: data.compactView,
-      defaultDashboard: data.defaultDashboard
+      darkMode: data.darkMode !== undefined ? data.darkMode : currentSettings.darkMode,
+      compactView: data.compactView !== undefined ? data.compactView : currentSettings.compactView,
+      defaultDashboard: data.defaultDashboard || currentSettings.defaultDashboard
     };
     
     // Save to localStorage
@@ -95,7 +96,7 @@ export const useSettings = () => {
     setIsLoading(false);
   };
 
-  const onSubmitNotifications = (data: any) => {
+  const onSubmitNotifications = (data: Partial<UserSettings>) => {
     setIsLoading(true);
     
     // Get current settings
@@ -104,11 +105,11 @@ export const useSettings = () => {
     // Update notification settings
     const updatedSettings = {
       ...currentSettings,
-      emailNotifications: data.emailNotifications,
-      projectUpdates: data.projectUpdates,
-      invoiceReminders: data.invoiceReminders,
-      marketingEmails: data.marketingEmails,
-      smsNotifications: data.smsNotifications
+      emailNotifications: data.emailNotifications !== undefined ? data.emailNotifications : currentSettings.emailNotifications,
+      projectUpdates: data.projectUpdates !== undefined ? data.projectUpdates : currentSettings.projectUpdates,
+      invoiceReminders: data.invoiceReminders !== undefined ? data.invoiceReminders : currentSettings.invoiceReminders,
+      marketingEmails: data.marketingEmails !== undefined ? data.marketingEmails : currentSettings.marketingEmails,
+      smsNotifications: data.smsNotifications !== undefined ? data.smsNotifications : currentSettings.smsNotifications
     };
     
     // Save to localStorage
