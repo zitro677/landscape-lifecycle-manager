@@ -37,6 +37,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
   };
 
   const handleDownloadPDF = () => {
+    console.log("Downloading PDF for invoice:", invoice.invoice_number);
     pdfGenerator.generatePDF();
   };
 

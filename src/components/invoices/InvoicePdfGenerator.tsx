@@ -125,6 +125,10 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
       doc.text("Web: www.greenlandscapeirrigation.com", 20, pageHeight - 10);
       doc.setTextColor(0, 0, 0);
       
+      // Save the PDF with a filename based on the invoice number
+      doc.save(`Invoice_${invoice.invoice_number}.pdf`);
+      
+      toast.success("Invoice PDF downloaded successfully");
       return doc;
     } catch (error) {
       console.error("Error generating PDF:", error);
