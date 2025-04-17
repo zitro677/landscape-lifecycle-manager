@@ -21,6 +21,7 @@ import LoginPage from "./components/auth/LoginPage";
 import { AuthProvider } from "./components/auth/AuthProvider";
 import ClientsPage from "./components/clients/ClientsPage";
 import ClientForm from "./components/clients/ClientForm";
+import SettingsPage from "./components/settings/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const AppRoutes = () => (
         <Route path="projects/new" element={<ProjectForm />} />
         <Route path="projects/edit/:id" element={<ProjectForm />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
