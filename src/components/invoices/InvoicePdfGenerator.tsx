@@ -3,7 +3,8 @@ import { Invoice } from "./types";
 import { formatCurrency } from "./utils";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
-import 'jspdf-autotable';
+// Fix the import for jspdf-autotable
+import autoTable from 'jspdf-autotable';
 
 interface InvoicePdfGeneratorProps {
   invoice: Invoice;
@@ -85,8 +86,8 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
         data = [["Services", "1", formatCurrency(Number(invoice.amount)), formatCurrency(Number(invoice.amount))]];
       }
       
-      // @ts-ignore - jspdf-autotable types are not included in the TS definition
-      doc.autoTable({
+      // Apply the autoTable function directly to the doc object
+      autoTable(doc, {
         startY: yPosition,
         head: headers,
         body: data,
@@ -94,7 +95,7 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
         styles: { fontSize: 10 },
       });
       
-      // Add total
+      // Get the finalY position after the table
       const finalY = (doc as any).lastAutoTable.finalY + 10;
       doc.text(`Subtotal: ${formatCurrency(Number(invoice.amount))}`, pageWidth - 20, finalY, { align: "right" });
       
