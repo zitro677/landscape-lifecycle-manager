@@ -141,12 +141,17 @@ export const useProjectForm = () => {
           dueDate: format(data.dueDate, "yyyy-MM-dd"),
         };
         
+        console.log("Formatted data for update:", formattedData);
         const updatedProject = updateProject(id, formattedData);
         
         if (updatedProject) {
           console.log("Project updated successfully:", updatedProject);
           toast.success("Project updated successfully");
-          navigate(`/projects/${id}`);
+          
+          // Force a small delay to ensure localStorage is updated
+          setTimeout(() => {
+            navigate(`/projects/${id}`);
+          }, 300);
         } else {
           console.error("Failed to update project");
           toast.error("Failed to update project");

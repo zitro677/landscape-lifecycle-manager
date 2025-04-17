@@ -44,6 +44,7 @@ export const updateProject = (id: string, projectData: any) => {
     
     // Find the project to update - ensure string comparison
     const projectIndex = localProjects.findIndex((p: any) => String(p.id) === String(id));
+    console.log("Project index:", projectIndex);
     
     if (projectIndex >= 0) {
       // Format the data before update
@@ -61,12 +62,17 @@ export const updateProject = (id: string, projectData: any) => {
         ...formattedData
       };
       
+      // Ensure progress is maintained if not specified in the update
+      if (!formattedData.progress && localProjects[projectIndex].progress) {
+        updatedProject.progress = localProjects[projectIndex].progress;
+      }
+      
       localProjects[projectIndex] = updatedProject;
       
       // Save updated projects back to localStorage
-      saveLocalProjects(localProjects);
+      const saveResult = saveLocalProjects(localProjects);
+      console.log("Save result:", saveResult, "Updated projects:", localProjects);
       
-      console.log("Project updated successfully:", updatedProject);
       return updatedProject;
     } else {
       // Handle projects from default data

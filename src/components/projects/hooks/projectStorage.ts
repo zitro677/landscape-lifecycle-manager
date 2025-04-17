@@ -14,7 +14,9 @@ export const getLocalProjects = () => {
 
 export const saveLocalProjects = (projectsData: any[]) => {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(projectsData));
+    const projectsJson = JSON.stringify(projectsData);
+    localStorage.setItem(LOCAL_STORAGE_KEY, projectsJson);
+    console.log(`Saved ${projectsData.length} projects to localStorage`);
     return true;
   } catch (error) {
     console.error('Error saving projects to localStorage:', error);

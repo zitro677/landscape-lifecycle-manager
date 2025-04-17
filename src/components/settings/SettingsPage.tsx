@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
@@ -14,10 +14,39 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Bell, User, Sliders } from "lucide-react";
+import { useSettings } from "./hooks/useSettings";
 
 const SettingsPage = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { loadUserSettings, isLoading, onSubmitAccount, onSubmitPreferences, onSubmitNotifications } = useSettings();
+  
+  // Load settings from localStorage
+  useEffect(() => {
+    const settings = loadUserSettings();
+    
+    // Update form values
+    accountForm.reset({
+      name: settings.name,
+      email: settings.email || user?.email || "user@example.com",
+      company: settings.company,
+      bio: settings.bio
+    });
+    
+    preferencesForm.reset({
+      darkMode: settings.darkMode,
+      compactView: settings.compactView,
+      defaultDashboard: settings.defaultDashboard || "overview",
+      emailDigest: true
+    });
+    
+    notificationsForm.reset({
+      emailNotifications: settings.emailNotifications,
+      projectUpdates: settings.projectUpdates,
+      invoiceReminders: settings.invoiceReminders,
+      marketingEmails: settings.marketingEmails,
+      smsNotifications: settings.smsNotifications
+    });
+  }, [user?.email]);
   
   // Account form
   const accountForm = useForm({
