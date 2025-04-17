@@ -20,7 +20,7 @@ export const useSettings = () => {
     
     // Default settings if nothing found
     return {
-      name: user?.name || "John Doe",
+      name: user?.email?.split('@')[0] || "John Doe",
       email: user?.email || "user@example.com",
       company: "Landscape Irrigation",
       bio: "I'm a landscape professional specializing in irrigation systems and sustainable landscaping solutions.",

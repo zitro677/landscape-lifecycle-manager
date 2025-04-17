@@ -79,36 +79,6 @@ const SettingsPage = () => {
     }
   });
 
-  const onSubmitAccount = (data) => {
-    setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
-      console.log("Account data submitted:", data);
-      toast.success("Account information updated successfully");
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const onSubmitPreferences = (data) => {
-    setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
-      console.log("Preferences data submitted:", data);
-      toast.success("Preferences updated successfully");
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const onSubmitNotifications = (data) => {
-    setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
-      console.log("Notifications data submitted:", data);
-      toast.success("Notification settings updated successfully");
-      setIsLoading(false);
-    }, 1000);
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
