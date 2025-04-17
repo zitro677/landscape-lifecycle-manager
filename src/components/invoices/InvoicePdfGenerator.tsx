@@ -2,6 +2,8 @@
 import { Invoice } from "./types";
 import { formatCurrency } from "./utils";
 import { toast } from "sonner";
+import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
 
 interface InvoicePdfGeneratorProps {
   invoice: Invoice;
@@ -9,110 +11,125 @@ interface InvoicePdfGeneratorProps {
 
 const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
   const generatePDF = () => {
-    // Create a printable version of the invoice
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error("Pop-up blocked. Please allow pop-ups for this site.");
-      return;
+    try {
+      // Create new PDF document
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      
+      // Add company information
+      let yPosition = 20;
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text("Green Landscape Irrigation", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 8;
+      
+      // Add company contact information
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text("Phone: (727) 484-5516", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 5;
+      
+      doc.text("Email: greenplanetlandscaping01@gmail.com", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 5;
+      
+      doc.text("Web: www.greenlandscapeirrigation.com", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 15;
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.text("INVOICE", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 15;
+      
+      // Add invoice details
+      doc.setFontSize(12);
+      doc.text(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);
+      doc.text(`Status: ${invoice.status}`, pageWidth - 20, yPosition, { align: "right" });
+      yPosition += 10;
+      
+      // Add client information
+      doc.text("Bill To:", 20, yPosition);
+      yPosition += 7;
+      doc.setFontSize(10);
+      doc.text(`${invoice.client_name || "Client"}`, 20, yPosition);
+      yPosition += 6;
+      if (invoice.clients?.address) {
+        doc.text(`${invoice.clients.address}`, 20, yPosition);
+        yPosition += 6;
+      }
+      if (invoice.clients?.email) {
+        doc.text(`${invoice.clients.email}`, 20, yPosition);
+        yPosition += 6;
+      }
+      
+      // Add invoice dates
+      doc.setFontSize(10);
+      doc.text(`Issue Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, pageWidth - 20, yPosition - 12, { align: "right" });
+      doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, pageWidth - 20, yPosition - 6, { align: "right" });
+      yPosition += 15;
+      
+      // Prepare table data for invoice items
+      const headers = [["Description", "Quantity", "Unit Price", "Amount"]];
+      let data = [];
+      
+      // Check if invoice has items and add them to the table
+      if (invoice.items && invoice.items.length > 0) {
+        data = invoice.items.map(item => [
+          item.description,
+          item.quantity.toString(),
+          formatCurrency(Number(item.unit_price)),
+          formatCurrency(Number(item.quantity) * Number(item.unit_price))
+        ]);
+      } else {
+        // If no items, just show the total amount as a single row
+        data = [["Services", "1", formatCurrency(Number(invoice.amount)), formatCurrency(Number(invoice.amount))]];
+      }
+      
+      // @ts-ignore - jspdf-autotable types are not included in the TS definition
+      doc.autoTable({
+        startY: yPosition,
+        head: headers,
+        body: data,
+        theme: 'grid',
+        styles: { fontSize: 10 },
+      });
+      
+      // Add total
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.text(`Subtotal: ${formatCurrency(Number(invoice.amount))}`, pageWidth - 20, finalY, { align: "right" });
+      
+      // Add tax if applicable
+      let currentY = finalY + 6;
+      if (invoice.tax_rate && Number(invoice.tax_rate) > 0) {
+        const taxAmount = Number(invoice.amount) * (Number(invoice.tax_rate) / 100);
+        doc.text(`Tax (${invoice.tax_rate}%): ${formatCurrency(taxAmount)}`, pageWidth - 20, currentY, { align: "right" });
+        currentY += 6;
+        doc.text(`Total: ${formatCurrency(Number(invoice.amount) + taxAmount)}`, pageWidth - 20, currentY, { align: "right" });
+      } else {
+        doc.text(`Total: ${formatCurrency(Number(invoice.amount))}`, pageWidth - 20, currentY, { align: "right" });
+      }
+      
+      // Add notes
+      if (invoice.notes) {
+        doc.text("Notes:", 20, currentY + 15);
+        doc.text(invoice.notes || 'No additional notes', 20, currentY + 22);
+      }
+      
+      // Add footer with company information
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Green Landscape Irrigation", 20, pageHeight - 20);
+      doc.text("Phone: (727) 484-5516 | Email: greenplanetlandscaping01@gmail.com", 20, pageHeight - 15);
+      doc.text("Web: www.greenlandscapeirrigation.com", 20, pageHeight - 10);
+      doc.setTextColor(0, 0, 0);
+      
+      return doc;
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate invoice PDF");
+      return null;
     }
-    
-    // Create invoice HTML content
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice.invoice_number}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 30px; }
-            .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-            .invoice-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-            .invoice-number { font-size: 16px; color: #666; }
-            .invoice-meta { margin-bottom: 30px; }
-            .invoice-meta div { margin-bottom: 5px; }
-            .amount { font-size: 18px; font-weight: bold; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { text-align: left; border-bottom: 1px solid #ddd; padding: 10px 5px; }
-            td { padding: 10px 5px; border-bottom: 1px solid #eee; }
-            .text-right { text-align: right; }
-            .total-row { font-weight: bold; }
-            .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 14px; }
-            .status-paid { background: #d1fae5; color: #047857; }
-            .status-pending { background: #fef3c7; color: #92400e; }
-            .status-overdue { background: #fee2e2; color: #b91c1c; }
-            @media print {
-              .no-print { display: none; }
-              body { margin: 0; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-header">
-            <div>
-              <div class="invoice-title">INVOICE</div>
-              <div class="invoice-number">${invoice.invoice_number}</div>
-            </div>
-            <div>
-              <div class="status status-${invoice.status?.toLowerCase()}">${invoice.status}</div>
-            </div>
-          </div>
-          
-          <div class="invoice-meta">
-            <div><strong>To:</strong> ${invoice.client_name}</div>
-            <div><strong>Date:</strong> ${new Date(invoice.issue_date).toLocaleDateString()}</div>
-            <div><strong>Due Date:</strong> ${new Date(invoice.due_date).toLocaleDateString()}</div>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th class="text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${invoice.items && invoice.items.length > 0 ? 
-                invoice.items.map(item => `
-                  <tr>
-                    <td>${item.description}</td>
-                    <td>${item.quantity}</td>
-                    <td>${formatCurrency(Number(item.unit_price))}</td>
-                    <td class="text-right">${formatCurrency(Number(item.quantity) * Number(item.unit_price))}</td>
-                  </tr>
-                `).join('') 
-                : 
-                `<tr>
-                  <td>Services</td>
-                  <td>1</td>
-                  <td>${formatCurrency(Number(invoice.amount))}</td>
-                  <td class="text-right">${formatCurrency(Number(invoice.amount))}</td>
-                </tr>`
-              }
-              <tr class="total-row">
-                <td colspan="3" class="text-right"><strong>Total</strong></td>
-                <td class="text-right"><strong>${formatCurrency(Number(invoice.amount))}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div style="margin-top: 40px;">
-            <div><strong>Notes:</strong></div>
-            <div>${invoice.notes || 'No additional notes'}</div>
-          </div>
-          
-          <div class="no-print" style="margin-top: 40px; text-align: center;">
-            <button onclick="window.print()">Print Invoice</button>
-          </div>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-    // Give a moment for styles to load before showing print dialog
-    setTimeout(() => {
-      printWindow.print();
-      toast.success("Invoice prepared for printing");
-    }, 500);
   };
 
   return { generatePDF };

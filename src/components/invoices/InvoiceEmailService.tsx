@@ -4,6 +4,7 @@ import { formatCurrency } from "./utils";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
+import { addHeaderSection } from "../proposals/utils/pdf/headerSection";
 
 interface InvoiceEmailServiceProps {
   invoice: Invoice;
@@ -14,37 +15,32 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
     try {
       // Create new PDF document
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
       
-      // Add company information
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text("Green Landscape Irrigation", 20, 20);
-      
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text("Phone: (727) 484-5516", 20, 28);
-      doc.text("Email: greenplanetlandscaping01@gmail.com", 20, 34);
-      doc.text("Web: www.greenlandscapeirrigation.com", 20, 40);
-      
-      // Add title
-      doc.setFontSize(20);
-      doc.text("INVOICE", 105, 50, { align: "center" });
+      // Add company header information using the shared component
+      let yPosition = 20;
+      yPosition = addHeaderSection(doc, "INVOICE", yPosition, pageWidth);
       
       // Add invoice number
       doc.setFontSize(12);
-      doc.text(`Invoice #: ${invoice.invoice_number}`, 20, 60);
+      doc.text(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);
       
       // Add status
       const statusText = `Status: ${invoice.status}`;
-      doc.text(statusText, 190, 60, { align: "right" });
+      doc.text(statusText, 190, yPosition, { align: "right" });
+      yPosition += 10;
       
       // Add client information
       doc.setFontSize(12);
-      doc.text("Client Information:", 20, 75);
+      doc.text("Client Information:", 20, yPosition);
+      yPosition += 7;
       doc.setFontSize(10);
-      doc.text(`To: ${invoice.client_name || "Client"}`, 20, 82);
-      doc.text(`Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 20, 88);
-      doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 94);
+      doc.text(`To: ${invoice.client_name || "Client"}`, 20, yPosition);
+      yPosition += 6;
+      doc.text(`Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 20, yPosition);
+      yPosition += 6;
+      doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, yPosition);
+      yPosition += 15;
       
       // Prepare table data for invoice items
       const headers = [["Description", "Quantity", "Unit Price", "Amount"]];
@@ -65,7 +61,7 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
       
       // @ts-ignore - jspdf-autotable types are not included in the TS definition
       doc.autoTable({
-        startY: 105,
+        startY: yPosition,
         head: headers,
         body: data,
         theme: 'grid',
@@ -92,6 +88,15 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
         doc.text("Notes:", 20, currentY + 15);
         doc.text(invoice.notes || 'No additional notes', 20, currentY + 22);
       }
+      
+      // Add footer with company information
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Green Landscape Irrigation", 20, pageHeight - 20);
+      doc.text("Phone: (727) 484-5516 | Email: greenplanetlandscaping01@gmail.com", 20, pageHeight - 15);
+      doc.text("Web: www.greenlandscapeirrigation.com", 20, pageHeight - 10);
+      doc.setTextColor(0, 0, 0);
       
       return doc;
     } catch (error) {

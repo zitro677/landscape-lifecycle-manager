@@ -16,18 +16,18 @@ const InvoicePrintService = ({ invoice }: InvoicePrintServiceProps) => {
       return;
     }
     
-    // Create invoice HTML content with print-optimized styling
+    // Create invoice HTML content with print-optimized styling and company information
     printWindow.document.write(`
       <html>
         <head>
           <title>Print Invoice ${invoice.invoice_number}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 30px; }
-            .company-header { margin-bottom: 20px; }
+            .company-header { margin-bottom: 20px; text-align: center; }
             .company-name { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
             .company-info { font-size: 14px; color: #555; margin-bottom: 3px; }
             .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-            .invoice-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+            .invoice-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; text-align: center; margin-top: 20px; }
             .invoice-number { font-size: 16px; color: #666; }
             .invoice-meta { margin-bottom: 30px; }
             .invoice-meta div { margin-bottom: 5px; }
@@ -67,9 +67,10 @@ const InvoicePrintService = ({ invoice }: InvoicePrintServiceProps) => {
             <div class="company-info">Web: www.greenlandscapeirrigation.com</div>
           </div>
           
+          <div class="invoice-title">INVOICE</div>
+          
           <div class="invoice-header">
             <div>
-              <div class="invoice-title">INVOICE</div>
               <div class="invoice-number">#${invoice.invoice_number}</div>
             </div>
             <div>
@@ -153,6 +154,9 @@ const InvoicePrintService = ({ invoice }: InvoicePrintServiceProps) => {
           </div>` : ''}
           
           <div class="invoice-footer">
+            Green Landscape Irrigation<br>
+            Phone: (727) 484-5516 | Email: greenplanetlandscaping01@gmail.com<br>
+            Web: www.greenlandscapeirrigation.com<br>
             Thank you for your business!
           </div>
           
