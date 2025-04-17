@@ -46,6 +46,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoice }) => {
   };
 
   const handleSendEmail = () => {
+    console.log("Sending email for invoice:", invoice.invoice_number);
     emailService.sendEmail();
   };
 

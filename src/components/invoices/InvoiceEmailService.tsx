@@ -110,8 +110,23 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
   const sendEmail = () => {
     try {
       // Create email content
-      const subject = `Invoice ${invoice.invoice_number}`;
-      const body = `Dear ${invoice.client_name},\n\nPlease find attached invoice ${invoice.invoice_number} for ${formatCurrency(Number(invoice.amount))}.\n\nDue date: ${new Date(invoice.due_date).toLocaleDateString()}\n\nThank you for your business.\n\nRegards,\nYour Company`;
+      const companyEmail = "greenplanetlandscaping01@gmail.com";
+      const subject = `Invoice ${invoice.invoice_number} from Green Landscape Irrigation`;
+      const body = `Dear ${invoice.client_name},
+
+Thank you for choosing Green Landscape Irrigation. Please find attached invoice ${invoice.invoice_number} for ${formatCurrency(Number(invoice.amount))}.
+
+Due date: ${new Date(invoice.due_date).toLocaleDateString()}
+
+If you have any questions regarding this invoice, please don't hesitate to contact us.
+
+Thank you for your business.
+
+Regards,
+Green Landscape Irrigation
+Phone: (727) 484-5516
+Email: greenplanetlandscaping01@gmail.com
+Web: www.greenlandscapeirrigation.com`;
       
       // Create and download the PDF
       const doc = createPdf();
@@ -121,12 +136,12 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
       
       // Guide the user
       toast.success(
-        "PDF invoice has been downloaded. Please attach it to your email manually.", 
+        "PDF invoice has been downloaded. Opening email client...", 
         { duration: 5000 }
       );
       
-      // Open default email client
-      window.location.href = `mailto:${invoice.clients?.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      // Open default email client with the company email as sender
+      window.location.href = `mailto:${invoice.clients?.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&from=${encodeURIComponent(companyEmail)}`;
     } catch (err) {
       console.error("Error in sendEmail:", err);
       toast.error("Failed to prepare email");
