@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { mockExpenses } from "../data/mockExpenses";
 import { toast } from "sonner";
@@ -28,9 +28,10 @@ export interface NewExpense {
 }
 
 const MILEAGE_RATE = 0.67;
+const EXPENSE_STORAGE_KEY = "expense-tracker-data";
 
 export const useExpenseTracker = () => {
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [currentExpenseId, setCurrentExpenseId] = useState<string | null>(null);
 
   const [newExpense, setNewExpense] = useState<NewExpense>({
@@ -42,6 +43,30 @@ export const useExpenseTracker = () => {
     deductible: true,
     miles: "",
   });
+
+  // Load expenses from localStorage on initial load
+  useEffect(() => {
+    const savedExpenses = localStorage.getItem(EXPENSE_STORAGE_KEY);
+    if (savedExpenses) {
+      try {
+        setExpenses(JSON.parse(savedExpenses));
+      } catch (error) {
+        console.error("Failed to parse saved expenses:", error);
+        // Fallback to mock data if parsing fails
+        setExpenses(mockExpenses);
+      }
+    } else {
+      // If no saved data, use mock data for initial state
+      setExpenses(mockExpenses);
+    }
+  }, []);
+
+  // Save expenses to localStorage whenever they change
+  useEffect(() => {
+    if (expenses.length > 0) {
+      localStorage.setItem(EXPENSE_STORAGE_KEY, JSON.stringify(expenses));
+    }
+  }, [expenses]);
 
   const addExpense = () => {
     if (!newExpense.vendor) return;
@@ -117,7 +142,8 @@ export const useExpenseTracker = () => {
   };
 
   const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
+    const updatedExpenses = expenses.filter(expense => expense.id !== id);
+    setExpenses(updatedExpenses);
     toast.success("Expense deleted successfully");
   };
 
