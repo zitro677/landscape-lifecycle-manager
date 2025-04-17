@@ -28,6 +28,8 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({
   const { toast } = useToast();
 
   const handleStatusChange = (index: number, newStatus: string) => {
+    console.log(`Updating material at index ${index} to status: ${newStatus}`);
+    
     // Create a copy of materials
     const updatedMaterials = [...materials];
     
@@ -37,11 +39,15 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({
       status: newStatus
     };
     
+    console.log("Updated materials array:", updatedMaterials);
+    
     // Create updated extraData
     const updatedExtraData = {
       ...extraData,
       materials: updatedMaterials
     };
+    
+    console.log("Saving updated extraData:", updatedExtraData);
     
     // Save to localStorage
     saveExtraData(updatedExtraData);
@@ -76,7 +82,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({
             </TableHeader>
             <TableBody>
               {materials.map((material: any, index: number) => (
-                <TableRow key={index} className="hover-scale">
+                <TableRow key={material.id || index} className="hover-scale">
                   <TableCell>{material.name}</TableCell>
                   <TableCell>{material.quantity}</TableCell>
                   <TableCell>{material.cost}</TableCell>

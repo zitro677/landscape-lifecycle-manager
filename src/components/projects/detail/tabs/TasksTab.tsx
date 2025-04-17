@@ -28,6 +28,8 @@ const TasksTab: React.FC<TasksTabProps> = ({
   const { toast } = useToast();
 
   const handleStatusChange = (index: number, newStatus: string) => {
+    console.log(`Updating task at index ${index} to status: ${newStatus}`);
+    
     // Create a copy of tasks
     const updatedTasks = [...tasks];
     
@@ -37,13 +39,16 @@ const TasksTab: React.FC<TasksTabProps> = ({
       status: newStatus
     };
     
+    console.log("Updated tasks array:", updatedTasks);
+    
     // Create updated extraData
     const updatedExtraData = {
       ...extraData,
       tasks: updatedTasks
     };
     
-    // Save to localStorage
+    // Save to localStorage with detailed logging
+    console.log("Saving updated extraData:", updatedExtraData);
     saveExtraData(updatedExtraData);
     
     // Show success toast
@@ -76,7 +81,7 @@ const TasksTab: React.FC<TasksTabProps> = ({
             </TableHeader>
             <TableBody>
               {tasks.map((task: any, index: number) => (
-                <TableRow key={index} className="hover-scale">
+                <TableRow key={task.id || index} className="hover-scale">
                   <TableCell>{task.name}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(task.status)}>

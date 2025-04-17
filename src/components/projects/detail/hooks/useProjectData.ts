@@ -15,7 +15,20 @@ export const useProjectData = (projectId: string) => {
   const loadExtraData = () => {
     console.log("Loading extra data for project:", projectId);
     
-    // Check user-created projects first
+    // First check if we have project-specific extra data storage
+    const projectExtraDataStr = localStorage.getItem(`project_extra_data_${projectId}`);
+    if (projectExtraDataStr) {
+      try {
+        const projectExtraData = JSON.parse(projectExtraDataStr);
+        console.log("Found project-specific extra data:", projectExtraData);
+        setExtraData(projectExtraData);
+        return;
+      } catch (error) {
+        console.error("Error parsing project-specific extra data:", error);
+      }
+    }
+    
+    // Check user-created projects
     const userProjectsStr = localStorage.getItem("landscape_projects");
     if (userProjectsStr) {
       try {
@@ -59,7 +72,14 @@ export const useProjectData = (projectId: string) => {
   const saveExtraData = (updatedExtraData: any) => {
     console.log("Saving extra data for project:", projectId, updatedExtraData);
     
-    // First check user projects
+    // First, save to project-specific key (this ensures it's always available)
+    try {
+      localStorage.setItem(`project_extra_data_${projectId}`, JSON.stringify(updatedExtraData));
+    } catch (error) {
+      console.error("Error saving project-specific extra data:", error);
+    }
+    
+    // Then update user projects if it exists there
     const userProjectsStr = localStorage.getItem("landscape_projects");
     if (userProjectsStr) {
       try {
@@ -70,8 +90,7 @@ export const useProjectData = (projectId: string) => {
           // Update user project
           userProjects[userProjectIndex].extraData = updatedExtraData;
           localStorage.setItem("landscape_projects", JSON.stringify(userProjects));
-          setExtraData(updatedExtraData);
-          return;
+          console.log("Updated user project extra data");
         }
       } catch (error) {
         console.error("Error updating user projects:", error);
@@ -89,19 +108,11 @@ export const useProjectData = (projectId: string) => {
           // Update project data
           projectsData[projectIndex].extraData = updatedExtraData;
           localStorage.setItem("projectsData", JSON.stringify(projectsData));
-        } else {
-          // If project doesn't exist in projectsData, add it
-          const newProject = { id: projectId, extraData: updatedExtraData };
-          projectsData.push(newProject);
-          localStorage.setItem("projectsData", JSON.stringify(projectsData));
+          console.log("Updated default project extra data");
         }
       } catch (error) {
         console.error("Error updating projects data:", error);
       }
-    } else {
-      // If projectsData doesn't exist, create it
-      const newProjectsData = [{ id: projectId, extraData: updatedExtraData }];
-      localStorage.setItem("projectsData", JSON.stringify(newProjectsData));
     }
     
     // Update the state

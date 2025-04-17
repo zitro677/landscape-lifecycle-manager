@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectData } from "./useProjectData";
 
@@ -19,6 +19,11 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
   const [newMaterial, setNewMaterial] = useState({ name: "", quantity: "", cost: "", status: "Pending Delivery" });
   const [newNote, setNewNote] = useState({ content: "" });
   
+  // Ensure we have the latest data
+  useEffect(() => {
+    console.log("Tab manager received initial extra data:", initialExtraData);
+  }, [initialExtraData]);
+  
   // Dialog actions
   const openTaskDialog = () => setTaskDialogOpen(true);
   const openMaterialDialog = () => setMaterialDialogOpen(true);
@@ -29,8 +34,18 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
   
   // Form actions
   const handleAddTask = (extraData: any, saveExtraData: (data: any) => void, closeDialog?: () => void) => {
-    // Create the new task object
+    if (!newTask.name.trim()) {
+      toast({
+        title: "Task Name Required",
+        description: "Please enter a name for the task.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create the new task object with a unique ID
     const task = {
+      id: `task-${Date.now()}`,
       name: newTask.name,
       status: newTask.status,
       dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
@@ -45,6 +60,9 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
       ...extraData,
       tasks: updatedTasks
     };
+    
+    console.log("Saving task to extraData:", task);
+    console.log("Updated tasks array:", updatedTasks);
     
     // Save to localStorage
     saveExtraData(updatedExtraData);
@@ -63,8 +81,18 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
   };
   
   const handleAddMaterial = (extraData: any, saveExtraData: (data: any) => void, closeDialog?: () => void) => {
-    // Create the new material object
+    if (!newMaterial.name.trim()) {
+      toast({
+        title: "Material Name Required",
+        description: "Please enter a name for the material.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create the new material object with a unique ID
     const material = {
+      id: `material-${Date.now()}`,
       name: newMaterial.name,
       quantity: newMaterial.quantity,
       cost: newMaterial.cost,
@@ -79,6 +107,9 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
       ...extraData,
       materials: updatedMaterials
     };
+    
+    console.log("Saving material to extraData:", material);
+    console.log("Updated materials array:", updatedMaterials);
     
     // Save to localStorage
     saveExtraData(updatedExtraData);
@@ -97,8 +128,18 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
   };
   
   const handleAddNote = (extraData: any, saveExtraData: (data: any) => void, closeDialog?: () => void) => {
-    // Create the new note object
+    if (!newNote.content.trim()) {
+      toast({
+        title: "Note Content Required",
+        description: "Please enter content for the note.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create the new note object with a unique ID and timestamp
     const note = {
+      id: `note-${Date.now()}`,
       content: newNote.content,
       date: new Date().toISOString().split('T')[0],
       author: "Current User", // In a real app, get the user's name from auth
@@ -112,6 +153,9 @@ export const useTabManager = (projectId: string, initialExtraData: any = {}) => 
       ...extraData,
       notes: updatedNotes
     };
+    
+    console.log("Saving note to extraData:", note);
+    console.log("Updated notes array:", updatedNotes);
     
     // Save to localStorage
     saveExtraData(updatedExtraData);
