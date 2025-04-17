@@ -9,6 +9,7 @@ import ProjectInfoCard from "./form/ProjectInfoCard";
 import TimelineBudgetCard from "./form/TimelineBudgetCard";
 import DescriptionCard from "./form/DescriptionCard";
 import ProjectFormHeader from "./form/ProjectFormHeader";
+import FormActions from "./form/FormActions";
 
 const ProjectForm: React.FC = () => {
   const {
