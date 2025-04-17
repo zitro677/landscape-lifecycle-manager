@@ -15,25 +15,36 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
       // Create new PDF document
       const doc = new jsPDF();
       
+      // Add company information
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text("Green Landscape Irrigation", 20, 20);
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text("Phone: (727) 484-5516", 20, 28);
+      doc.text("Email: greenplanetlandscaping01@gmail.com", 20, 34);
+      doc.text("Web: www.greenlandscapeirrigation.com", 20, 40);
+      
       // Add title
       doc.setFontSize(20);
-      doc.text("INVOICE", 105, 20, { align: "center" });
+      doc.text("INVOICE", 105, 50, { align: "center" });
       
       // Add invoice number
       doc.setFontSize(12);
-      doc.text(`Invoice #: ${invoice.invoice_number}`, 20, 30);
+      doc.text(`Invoice #: ${invoice.invoice_number}`, 20, 60);
       
       // Add status
       const statusText = `Status: ${invoice.status}`;
-      doc.text(statusText, 190, 30, { align: "right" });
+      doc.text(statusText, 190, 60, { align: "right" });
       
       // Add client information
       doc.setFontSize(12);
-      doc.text("Client Information:", 20, 45);
+      doc.text("Client Information:", 20, 75);
       doc.setFontSize(10);
-      doc.text(`To: ${invoice.client_name || "Client"}`, 20, 52);
-      doc.text(`Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 20, 58);
-      doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 64);
+      doc.text(`To: ${invoice.client_name || "Client"}`, 20, 82);
+      doc.text(`Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 20, 88);
+      doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 94);
       
       // Prepare table data for invoice items
       const headers = [["Description", "Quantity", "Unit Price", "Amount"]];
@@ -54,7 +65,7 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
       
       // @ts-ignore - jspdf-autotable types are not included in the TS definition
       doc.autoTable({
-        startY: 75,
+        startY: 105,
         head: headers,
         body: data,
         theme: 'grid',

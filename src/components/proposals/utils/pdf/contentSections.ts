@@ -38,5 +38,20 @@ export const addContentSections = (
     yPosition += lines.length * 5 + 10; // Add extra spacing between sections
   });
 
+  // Add company footer at the end of the content
+  if (yPosition > doc.internal.pageSize.height - 30) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text("Green Landscape Irrigation", margin, yPosition);
+  yPosition += 4;
+  doc.text("Phone: (727) 484-5516 | Email: greenplanetlandscaping01@gmail.com", margin, yPosition);
+  yPosition += 4;
+  doc.text("Web: www.greenlandscapeirrigation.com", margin, yPosition);
+  doc.setTextColor(0, 0, 0);
+
   return yPosition;
 };

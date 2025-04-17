@@ -23,6 +23,9 @@ const InvoicePrintService = ({ invoice }: InvoicePrintServiceProps) => {
           <title>Print Invoice ${invoice.invoice_number}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 30px; }
+            .company-header { margin-bottom: 20px; }
+            .company-name { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
+            .company-info { font-size: 14px; color: #555; margin-bottom: 3px; }
             .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
             .invoice-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
             .invoice-number { font-size: 16px; color: #666; }
@@ -57,6 +60,13 @@ const InvoicePrintService = ({ invoice }: InvoicePrintServiceProps) => {
           </style>
         </head>
         <body>
+          <div class="company-header">
+            <div class="company-name">Green Landscape Irrigation</div>
+            <div class="company-info">Phone: (727) 484-5516</div>
+            <div class="company-info">Email: greenplanetlandscaping01@gmail.com</div>
+            <div class="company-info">Web: www.greenlandscapeirrigation.com</div>
+          </div>
+          
           <div class="invoice-header">
             <div>
               <div class="invoice-title">INVOICE</div>
@@ -70,9 +80,9 @@ const InvoicePrintService = ({ invoice }: InvoicePrintServiceProps) => {
           <div class="entity-info">
             <div>
               <strong>From:</strong>
-              <div>Your Company Name</div>
-              <div>123 Business Street</div>
-              <div>Business City, 12345</div>
+              <div>Green Landscape Irrigation</div>
+              <div>Phone: (727) 484-5516</div>
+              <div>Email: greenplanetlandscaping01@gmail.com</div>
             </div>
             <div>
               <strong>To:</strong>
