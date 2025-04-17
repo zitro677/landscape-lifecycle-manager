@@ -83,6 +83,27 @@ export const useProposalForm = () => {
       notes: values.notes
     };
     
+    // Format the content to include section markers for proper parsing later
+    let formattedContent = values.scope;
+    
+    if (values.timeline && values.timeline.trim()) {
+      formattedContent += `\n\nTimeline: ${values.timeline}`;
+    }
+    
+    if (values.items && values.items.length > 0) {
+      formattedContent += "\n\nItems:";
+      values.items.forEach(item => {
+        formattedContent += `\n- ${item.description}: ${item.quantity} x $${item.unitPrice.toFixed(2)}`;
+      });
+    }
+    
+    if (values.notes && values.notes.trim()) {
+      formattedContent += `\n\nNotes: ${values.notes}`;
+    }
+    
+    // Update proposal content with the formatted string
+    proposalData.formattedContent = formattedContent;
+    
     await createProposal(proposalData);
     navigate("/proposals");
   };
@@ -99,4 +120,3 @@ export const useProposalForm = () => {
     isPending
   };
 };
-

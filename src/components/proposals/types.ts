@@ -28,6 +28,7 @@ export type ProposalFormData = {
   scope: string;
   timeline: string;
   notes: string;
+  formattedContent?: string; // Added for better section handling
 };
 
 export type ProposalItem = {
@@ -40,4 +41,3 @@ export type ProposalItem = {
   created_at?: string;
   updated_at?: string;
 };
-

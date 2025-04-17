@@ -55,7 +55,7 @@ export const useProposals = () => {
       const proposalData = {
         user_id: session.user.id,
         title: `Proposal for ${formData.client}`,
-        content: formData.scope,
+        content: formData.formattedContent || formData.scope, // Use formatted content if available
         amount,
         issue_date: formData.proposalDate,
         valid_until: formData.expirationDate,
