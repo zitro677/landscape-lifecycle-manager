@@ -21,7 +21,7 @@ export const addContentSections = (
     }
 
     // Section header highlight
-    doc.setFillColor(...sectionBg);
+    doc.setFillColor(sectionBg[0], sectionBg[1], sectionBg[2]);
     doc.roundedRect(margin, yPosition, contentWidth, 11, 3, 3, "F");
     doc.setFontSize(12);
     doc.setFont(undefined, "bold");
