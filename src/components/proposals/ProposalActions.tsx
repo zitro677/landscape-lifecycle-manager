@@ -32,25 +32,50 @@ const ProposalActions: React.FC<ProposalActionsProps> = ({ proposal }) => {
   const printService = ProposalPrintService({ proposal });
 
   const handleViewProposal = () => {
-    console.log("Viewing proposal:", proposal.id);
-    setViewDialogOpen(true);
+    try {
+      console.log("Viewing proposal:", proposal);
+      setViewDialogOpen(true);
+    } catch (error) {
+      console.error("Error opening preview dialog:", error);
+      toast.error("Error opening preview");
+    }
   };
 
   const handleDownloadPDF = () => {
-    pdfGenerator.generatePDF();
+    try {
+      pdfGenerator.generatePDF();
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Error generating PDF");
+    }
   };
 
   const handlePrintProposal = () => {
-    printService.printProposal();
+    try {
+      printService.printProposal();
+    } catch (error) {
+      console.error("Error printing proposal:", error);
+      toast.error("Error printing proposal");
+    }
   };
 
   const handleSendEmail = () => {
-    emailService.sendEmail();
+    try {
+      emailService.sendEmail();
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Error sending email");
+    }
   };
 
   const handleEditProposal = () => {
-    // Navigate to the edit proposal page with the proposal ID
-    navigate(`/proposals/edit/${proposal.id}`);
+    try {
+      // Navigate to the edit proposal page with the proposal ID
+      navigate(`/proposals/edit/${proposal.id}`);
+    } catch (error) {
+      console.error("Error navigating to edit page:", error);
+      toast.error("Error navigating to edit page");
+    }
   };
 
   return (

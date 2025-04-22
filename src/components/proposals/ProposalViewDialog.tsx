@@ -37,19 +37,27 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
   
   // Update sections whenever proposal changes
   useEffect(() => {
-    console.log("Proposal content:", proposal.content);
-    if (proposal.content) {
-      const parsedSections = parseProposalContent(proposal.content);
-      console.log("Parsed sections in dialog:", parsedSections);
-      setSections(parsedSections);
+    if (proposal?.content) {
+      try {
+        const parsedSections = parseProposalContent(proposal.content);
+        setSections(parsedSections);
+      } catch (error) {
+        console.error("Error parsing proposal content:", error);
+        setSections({
+          "Project Scope": "Error parsing content",
+          "Project Timeline": "",
+          "Items & Services": "",
+          "Terms & Notes": ""
+        });
+      }
     }
-  }, [proposal.content]);
+  }, [proposal?.content]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Proposal {proposal.id?.substring(0, 8)}</DialogTitle>
+          <DialogTitle>Proposal {proposal?.id?.substring(0, 8) || "Preview"}</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -66,14 +74,14 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
           {/* Header Information */}
           <div className="flex flex-col md:flex-row justify-between">
             <div>
-              <h2 className="text-xl font-bold">{proposal.title || "Proposal"}</h2>
+              <h2 className="text-xl font-bold">{proposal?.title || "Proposal"}</h2>
               <p className="text-muted-foreground">
-                {formatDate(proposal.issue_date)}
+                {formatDate(proposal?.issue_date)}
               </p>
             </div>
             <div className="mt-2 md:mt-0 md:text-right">
               <div className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {proposal.status || "Draft"}
+                {proposal?.status || "Draft"}
               </div>
             </div>
           </div>
@@ -81,9 +89,9 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
           {/* Client Info */}
           <div className="p-4 border rounded-md bg-muted/20">
             <h3 className="text-sm font-medium mb-2">Client Information</h3>
-            <p>{proposal.client_name || "No client specified"}</p>
-            <p>{proposal.clients?.email || ""}</p>
-            <p>{proposal.clients?.address || ""}</p>
+            <p>{proposal?.client_name || "No client specified"}</p>
+            <p>{proposal?.clients?.email || ""}</p>
+            <p>{proposal?.clients?.address || ""}</p>
           </div>
 
           {/* Project Scope */}
@@ -133,12 +141,12 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
           {/* Amount */}
           <div className="flex justify-between font-medium text-lg">
             <span>Total Amount:</span>
-            <span>{formatCurrency(Number(proposal.amount))}</span>
+            <span>{formatCurrency(Number(proposal?.amount || 0))}</span>
           </div>
 
           {/* Valid Until */}
           <div className="text-sm text-muted-foreground">
-            Valid until: {formatDate(proposal.valid_until)}
+            Valid until: {formatDate(proposal?.valid_until)}
           </div>
         </div>
 
