@@ -81,8 +81,6 @@ export const useProposals = () => {
       return {
         ...proposal,
         client_name: proposal.clients?.name || proposal.title?.replace("Proposal for ", "") || "",
-        client_email: proposal.clients?.email || "",
-        client_address: proposal.clients?.address || "",
         scope,
         timeline,
         notes,

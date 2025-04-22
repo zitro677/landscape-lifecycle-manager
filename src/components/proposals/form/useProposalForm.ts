@@ -63,7 +63,7 @@ export const useProposalForm = () => {
             description: item.description || "",
             quantity: item.quantity || 1,
             unitPrice: item.unit_price || 0
-          })) || [];
+          } as ProposalItemType)) || [];
           
           // If no items found, add a default empty one
           if (items.length === 0) {
@@ -77,8 +77,8 @@ export const useProposalForm = () => {
           // Set form values
           form.reset({
             client: proposal.client_name || proposal.title?.replace("Proposal for ", "") || "",
-            email: proposal.client_email || "",
-            address: proposal.client_address || "",
+            email: proposal.clients?.email || "",
+            address: proposal.clients?.address || "",
             proposalDate: proposal.issue_date || today,
             expirationDate: proposal.valid_until || defaultExpirationDate,
             items: items,

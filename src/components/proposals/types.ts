@@ -9,6 +9,10 @@ export type Proposal = Database["public"]["Tables"]["proposals"]["Row"] & {
     address?: string;
   };
   items?: ProposalItem[];
+  // Add these fields to match what we're using in the code
+  scope?: string;
+  timeline?: string;
+  notes?: string;
 };
 
 // Updated to match exactly what the database accepts
