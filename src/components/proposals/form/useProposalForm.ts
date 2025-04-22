@@ -58,7 +58,7 @@ export const useProposalForm = () => {
         if (proposal) {
           console.log("Loaded proposal for editing:", proposal);
           
-          // Extract proposal items
+          // Extract proposal items with proper type assertion
           const items = proposal.items?.map(item => ({
             description: item.description || "",
             quantity: item.quantity || 1,
@@ -74,8 +74,9 @@ export const useProposalForm = () => {
             } as ProposalItemType);
           }
           
-          // Set form values
-          form.reset({
+          // Create a complete form data object before resetting the form
+          // This prevents partial updates that could cause flickering
+          const formData = {
             client: proposal.client_name || proposal.title?.replace("Proposal for ", "") || "",
             email: proposal.clients?.email || "",
             address: proposal.clients?.address || "",
@@ -85,7 +86,10 @@ export const useProposalForm = () => {
             scope: proposal.scope || "",
             timeline: proposal.timeline || "",
             notes: proposal.notes || ""
-          });
+          };
+          
+          // Use a single atomic update to prevent flickering
+          form.reset(formData);
         } else {
           console.error("Proposal not found:", id);
           navigate("/proposals");
@@ -97,8 +101,10 @@ export const useProposalForm = () => {
       }
     };
     
-    loadProposal();
-  }, [id, navigate, form, getProposalById]);
+    if (id) {
+      loadProposal();
+    }
+  }, [id, navigate, getProposalById]);
 
   const items = form.watch("items");
   
