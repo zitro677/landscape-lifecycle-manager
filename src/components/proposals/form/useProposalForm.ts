@@ -4,13 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { z } from "zod";
 import { proposalFormSchema, ProposalItemType } from "./formSchema";
-import { ProposalFormData } from "../types";
+import { Proposal, ProposalFormData } from "../types";
 import { useProposals } from "../useProposals";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export const useProposalForm = () => {
   const navigate = useNavigate();
-  const { createProposal, isPending } = useProposals();
+  const { id } = useParams<{ id: string }>();
+  const { createProposal, updateProposal, getProposalById, isPending } = useProposals();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(id ? true : false);
+  
   const today = format(new Date(), "yyyy-MM-dd");
   const defaultExpirationDate = format(
     new Date(new Date().setDate(new Date().getDate() + 30)),
@@ -38,6 +43,62 @@ export const useProposalForm = () => {
       notes: "",
     },
   });
+
+  // Effect to load existing proposal data if editing
+  useEffect(() => {
+    const loadProposal = async () => {
+      if (!id) return;
+      
+      setIsEditMode(true);
+      setIsLoading(true);
+      
+      try {
+        const proposal = await getProposalById(id);
+        
+        if (proposal) {
+          console.log("Loaded proposal for editing:", proposal);
+          
+          // Extract proposal items
+          const items = proposal.items?.map(item => ({
+            description: item.description || "",
+            quantity: item.quantity || 1,
+            unitPrice: item.unit_price || 0
+          })) || [];
+          
+          // If no items found, add a default empty one
+          if (items.length === 0) {
+            items.push({
+              description: "",
+              quantity: 1,
+              unitPrice: 0
+            } as ProposalItemType);
+          }
+          
+          // Set form values
+          form.reset({
+            client: proposal.client_name || proposal.title?.replace("Proposal for ", "") || "",
+            email: proposal.client_email || "",
+            address: proposal.client_address || "",
+            proposalDate: proposal.issue_date || today,
+            expirationDate: proposal.valid_until || defaultExpirationDate,
+            items: items,
+            scope: proposal.scope || "",
+            timeline: proposal.timeline || "",
+            notes: proposal.notes || ""
+          });
+        } else {
+          console.error("Proposal not found:", id);
+          navigate("/proposals");
+        }
+      } catch (error) {
+        console.error("Error loading proposal:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadProposal();
+  }, [id, navigate, form, getProposalById]);
 
   const items = form.watch("items");
   
@@ -104,7 +165,12 @@ export const useProposalForm = () => {
     // Update proposal content with the formatted string
     proposalData.formattedContent = formattedContent;
     
-    await createProposal(proposalData);
+    if (isEditMode && id) {
+      await updateProposal(id, proposalData);
+    } else {
+      await createProposal(proposalData);
+    }
+    
     navigate("/proposals");
   };
 
@@ -117,6 +183,8 @@ export const useProposalForm = () => {
     addItem,
     removeItem,
     onSubmit,
-    isPending
+    isPending,
+    isEditMode,
+    isLoading
   };
 };

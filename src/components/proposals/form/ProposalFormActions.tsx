@@ -13,12 +13,14 @@ interface ProposalFormActionsProps {
   form: UseFormReturn<FormData>;
   isPending: boolean;
   position: "top" | "bottom";
+  isEditMode?: boolean;
 }
 
 export const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({ 
   form, 
   isPending,
-  position 
+  position,
+  isEditMode = false
 }) => {
   const navigate = useNavigate();
   
@@ -34,6 +36,9 @@ export const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
         >
           <ArrowLeft className="h-4 w-4" /> Back to Proposals
         </Button>
+        <h1 className="text-2xl font-bold">
+          {isEditMode ? "Edit Proposal" : "Create New Proposal"}
+        </h1>
       </div>
     );
   }
@@ -45,7 +50,7 @@ export const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
         Cancel
       </Button>
       <Button type="submit" disabled={isPending}>
-        {isPending ? "Saving..." : "Save Proposal"}
+        {isPending ? "Saving..." : isEditMode ? "Update Proposal" : "Save Proposal"}
       </Button>
     </div>
   );

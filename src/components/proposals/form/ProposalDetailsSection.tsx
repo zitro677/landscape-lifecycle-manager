@@ -13,9 +13,13 @@ type FormData = z.infer<typeof proposalFormSchema>;
 
 interface ProposalDetailsSectionProps {
   form: UseFormReturn<FormData>;
+  isEditMode?: boolean;
 }
 
-export const ProposalDetailsSection: React.FC<ProposalDetailsSectionProps> = ({ form }) => {
+export const ProposalDetailsSection: React.FC<ProposalDetailsSectionProps> = ({ 
+  form,
+  isEditMode = false
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -27,8 +31,10 @@ export const ProposalDetailsSection: React.FC<ProposalDetailsSectionProps> = ({ 
           <h3 className="text-lg font-semibold mb-4">Proposal Details</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-lg font-medium">Proposal #</span>
-              <span className="font-mono">PRO-2023-001</span>
+              <span className="text-lg font-medium">Proposal Status</span>
+              <span className="px-2 py-1 rounded text-sm font-medium bg-amber-100 text-amber-800">
+                {isEditMode ? "Edit Mode" : "Draft"}
+              </span>
             </div>
             <FormField
               control={form.control}

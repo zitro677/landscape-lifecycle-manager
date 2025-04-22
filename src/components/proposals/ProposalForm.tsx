@@ -10,6 +10,7 @@ import { ItemsSection } from "./form/ItemsSection";
 import { NotesSection } from "./form/NotesSection";
 import { ProposalFormActions } from "./form/ProposalFormActions";
 import { useProposalForm } from "./form/useProposalForm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ProposalForm: React.FC = () => {
   const { 
@@ -21,20 +22,47 @@ const ProposalForm: React.FC = () => {
     addItem, 
     removeItem, 
     onSubmit,
-    isPending
+    isPending,
+    isEditMode,
+    isLoading
   } = useProposalForm();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-80 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <ProposalFormActions form={form} isPending={isPending} position="top" />
+        <ProposalFormActions 
+          form={form} 
+          isPending={isPending} 
+          position="top" 
+          isEditMode={isEditMode} 
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Client Information */}
           <ClientInfoSection form={form} />
 
           {/* Proposal Details */}
-          <ProposalDetailsSection form={form} />
+          <ProposalDetailsSection form={form} isEditMode={isEditMode} />
 
           {/* Summary */}
           <SummarySection 
@@ -61,7 +89,12 @@ const ProposalForm: React.FC = () => {
         {/* Terms & Notes */}
         <NotesSection form={form} />
 
-        <ProposalFormActions form={form} isPending={isPending} position="bottom" />
+        <ProposalFormActions 
+          form={form} 
+          isPending={isPending} 
+          position="bottom" 
+          isEditMode={isEditMode} 
+        />
       </form>
     </Form>
   );
