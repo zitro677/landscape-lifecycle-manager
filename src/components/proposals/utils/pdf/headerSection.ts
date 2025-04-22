@@ -55,19 +55,22 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
 
   // Instead of async/await, we use a workaround so this signature stays non-async for compatibility.
   // We'll use a hack: If window._PDF_LOGO_CACHE is set, use it. Else block and set it.
-  // @ts-ignore
-  const _window = typeof window !== "undefined" ? window : {};
-  // @ts-ignore
-  if (!_window._PDF_LOGO_CACHE) {
+  const _window = typeof window !== "undefined" ? window : {} as Window;
+  // Declare the type for the extended window
+  interface ExtendedWindow extends Window {
+    _PDF_LOGO_CACHE?: string | null;
+  }
+  const extWindow = _window as ExtendedWindow;
+  
+  if (!extWindow._PDF_LOGO_CACHE) {
     // Not loaded yet, block (synchronously) for this export.
     // NOTE: The first export will show the logo after a moment, next exports will be instant.
-    // @ts-ignore
-    _window._PDF_LOGO_CACHE = undefined;
+    extWindow._PDF_LOGO_CACHE = undefined;
     // Only synchronous in modern browsers (waiting till image loads).
     throw new Error("Logo not loaded for PDF; try again in a second.");
   }
-  // @ts-ignore
-  const logoBase64 = _window._PDF_LOGO_CACHE;
+  
+  const logoBase64 = extWindow._PDF_LOGO_CACHE;
   if (logoBase64) {
     try {
       doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
@@ -80,7 +83,7 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
   // Company name next to logo - left aligned, shifted right, or centered if logo invisible
   let companyY = yPosition + 10;
   let nameX = logoLoaded ? marginLeft + logoWidth + 10 : pageWidth / 2;
-  let align = logoLoaded ? "left" : "center";
+  let align: "left" | "center" | "right" | "justify" = logoLoaded ? "left" : "center";
 
   doc.setFontSize(18);
   doc.setTextColor(33, 53, 34);
@@ -112,14 +115,20 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
 
 // Patch: On app start, fire off loading the logo and put it in window._PDF_LOGO_CACHE
 // So that PDF export is instant on first click (ignoring SSR/hydration as PDF runs client-side)
-if (typeof window !== "undefined" && !window._PDF_LOGO_CACHE) {
-  getImageDataUrl(logoUrl)
-    .then((data) => {
-      // @ts-ignore
-      window._PDF_LOGO_CACHE = data;
-    })
-    .catch(() => {
-      // @ts-ignore
-      window._PDF_LOGO_CACHE = null;
-    });
+if (typeof window !== "undefined") {
+  // Define window with our custom property
+  interface ExtendedWindow extends Window {
+    _PDF_LOGO_CACHE?: string | null;
+  }
+  const extWindow = window as ExtendedWindow;
+  
+  if (!extWindow._PDF_LOGO_CACHE) {
+    getImageDataUrl(logoUrl)
+      .then((data) => {
+        extWindow._PDF_LOGO_CACHE = data;
+      })
+      .catch(() => {
+        extWindow._PDF_LOGO_CACHE = null;
+      });
+  }
 }
