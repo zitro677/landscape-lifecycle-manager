@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { Proposal } from "./types";
@@ -25,21 +24,20 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
 
-      // Header section
+      // Updated: More professional header style
       yPosition = addHeaderSection(doc, "PROPOSAL", yPosition, pageWidth);
 
-      // Key Information Box
-      doc.setDrawColor(200, 200, 200);
-      doc.setFillColor(245, 245, 245);
-      doc.rect(margin, yPosition, contentWidth, 60, 'FD');
-      yPosition += 10;
+      // Key Information row: client info and proposal info, now styled
+      const clientBoxY = yPosition;
+      const proposalBoxY = yPosition;
+      // Side-by-side boxes for client (left) and proposal (right)
+      addClientInformationSection(doc, proposal, clientBoxY, margin);
+      addProposalDetailsSection(doc, proposal, proposalBoxY, pageWidth);
 
-      // Client Information and Proposal Details
-      const clientInfoY = addClientInformationSection(doc, proposal, yPosition, margin);
-      addProposalDetailsSection(doc, proposal, clientInfoY, pageWidth);
+      // Drop position after both info boxes for pricing/summary
+      yPosition += 37;
 
-      // Reset position after the box and add pricing summary
-      yPosition = clientInfoY + 45;
+      // Updated: improved pricing summary section
       yPosition = addPricingSummarySection(
         doc,
         Number(proposal.amount || 0),
@@ -54,18 +52,20 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         yPosition = addContentSections(doc, proposal.content, margin, contentWidth, yPosition);
       }
 
-      // Add footer with page numbers
+      // Footer with page numbers and generated date
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
+        doc.setTextColor(160, 160, 160);
         doc.text(
-          `Generated on ${format(new Date(), 'MMM dd, yyyy')} - Page ${i} of ${pageCount}`,
+          `Generated on ${format(new Date(), 'MMM dd, yyyy')}   —   Page ${i} of ${pageCount}`,
           pageWidth / 2,
           doc.internal.pageSize.height - 10,
           { align: "center" }
         );
       }
+      doc.setTextColor(0, 0, 0);
 
       // Save the PDF
       doc.save(`Proposal_${proposal.id.substring(0, 8)}.pdf`);

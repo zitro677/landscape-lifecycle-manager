@@ -8,21 +8,30 @@ export const addClientInformationSection = (
   startY: number,
   margin: number
 ) => {
+  // Client info in a colored box
   let yPosition = startY;
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text("Client Information:", margin + 5, yPosition);
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(10);
+  doc.setFillColor(232, 237, 228);
+  doc.setDrawColor(181, 211, 174);
+  doc.roundedRect(margin, yPosition, 80, 32, 3, 3, 'FD');
+
   yPosition += 7;
-  doc.text(`${proposal.client_name || "Client"}`, margin + 5, yPosition);
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(93, 144, 73);
+  doc.text("Client Information", margin + 6, yPosition);
+
+  doc.setTextColor(0,0,0);
+  doc.setFont(undefined, "normal");
+  doc.setFontSize(10);
+  yPosition += 6;
+  doc.text(`${proposal.client_name || "Client"}`, margin + 6, yPosition);
   yPosition += 5;
   if (proposal.clients?.email) {
-    doc.text(`${proposal.clients.email}`, margin + 5, yPosition);
+    doc.text(`${proposal.clients.email}`, margin + 6, yPosition);
     yPosition += 5;
   }
   if (proposal.clients?.address) {
-    doc.text(`${proposal.clients.address}`, margin + 5, yPosition);
+    doc.text(`${proposal.clients.address}`, margin + 6, yPosition);
   }
-  return yPosition;
+  return startY;
 };
