@@ -15,15 +15,15 @@ export const addPricingSummarySection = (
   const total = subtotal + tax;
 
   // Outer box with pleasant highlight
-  doc.setDrawColor(93, 144, 73);
-  doc.setFillColor(240, 248, 237);
+  doc.setDrawColor(120, 120, 120);  // Changed from green to a neutral gray
+  doc.setFillColor(240, 240, 240);  // Changed from soft green to light gray
   doc.roundedRect(margin, yPosition, contentWidth, 40, 4, 4, 'FD');
   
   // Title
   yPosition += 8;
   doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(93, 144, 73);
+  doc.setTextColor(80, 80, 80);  // Changed from green to a dark gray
   doc.text("Pricing Summary", margin + 6, yPosition);
 
   doc.setTextColor(0,0,0);
