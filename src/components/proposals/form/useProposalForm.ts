@@ -172,7 +172,8 @@ export const useProposalForm = () => {
     proposalData.formattedContent = formattedContent;
     
     if (isEditMode && id) {
-      await updateProposal(id, proposalData);
+      // Fix: Pass an object with id and data properties instead of just id
+      await updateProposal({ id, data: proposalData });
     } else {
       await createProposal(proposalData);
     }
