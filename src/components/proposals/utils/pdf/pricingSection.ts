@@ -11,7 +11,7 @@ export const addPricingSummarySection = (
   contentWidth: number
 ) => {
   const subtotal = amount;
-  const tax = subtotal * 0.07;
+  const tax = subtotal * 0.07; // Corrected to 7%
   const total = subtotal + tax;
 
   doc.setDrawColor(200, 200, 200);

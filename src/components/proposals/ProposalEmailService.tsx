@@ -1,15 +1,9 @@
-
 import { Proposal } from "./types";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import ProposalPdfGenerator from "./ProposalPdfGenerator";
 import { formatCurrency, formatDate, parseProposalContent } from "./utils/formatters";
+import ProposalPdfGenerator from "./ProposalPdfGenerator";
 
-interface ProposalEmailServiceProps {
-  proposal: Proposal;
-}
-
-const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
+const ProposalEmailService = ({ proposal }: { proposal: Proposal }) => {
   const sendEmail = () => {
     try {
       // Create email subject
@@ -17,7 +11,7 @@ const ProposalEmailService = ({ proposal }: ProposalEmailServiceProps) => {
       
       // Calculate pricing
       const subtotal = Number(proposal.amount || 0);
-      const tax = subtotal * 0.07; // 7% tax rate
+      const tax = subtotal * 0.07; // Corrected to 7%
       const total = subtotal + tax;
       
       // Build email body with key information first

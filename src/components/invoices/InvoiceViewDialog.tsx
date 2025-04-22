@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -97,8 +96,8 @@ const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
             </div>
             {invoice.tax_rate && Number(invoice.tax_rate) > 0 && (
               <div className="flex justify-between items-center py-2 border-b">
-                <span>Tax ({invoice.tax_rate}%)</span>
-                <span>{formatCurrency(Number(invoice.amount) * (Number(invoice.tax_rate) / 100))}</span>
+                <span>Tax (7%)</span>
+                <span>{formatCurrency(Number(invoice.amount) * 0.07)}</span>
               </div>
             )}
             <div className="flex justify-between items-center py-2 font-bold">
