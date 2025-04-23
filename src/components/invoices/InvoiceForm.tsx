@@ -1,6 +1,6 @@
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -15,6 +15,9 @@ import { toast } from "sonner";
 
 const InvoiceForm: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = Boolean(id);
+  
   const {
     form,
     clients,
@@ -28,7 +31,15 @@ const InvoiceForm: React.FC = () => {
     onSubmit,
     addItem,
     removeItem,
-  } = useInvoiceForm();
+    loadInvoiceData,
+  } = useInvoiceForm(id);
+  
+  // Load invoice data when editing
+  useEffect(() => {
+    if (isEditMode && id) {
+      loadInvoiceData(id);
+    }
+  }, [isEditMode, id, loadInvoiceData]);
 
   if (authError) {
     return <AuthErrorAlert show={authError} />;
@@ -60,12 +71,15 @@ const InvoiceForm: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" /> Back to Invoices
           </Button>
+          <h1 className="text-2xl font-semibold">
+            {isEditMode ? "Edit Invoice" : "Create New Invoice"}
+          </h1>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => form.reset()}>
               Reset
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Invoice"}
+              {isLoading ? "Saving..." : isEditMode ? "Update Invoice" : "Save Invoice"}
             </Button>
           </div>
         </div>
@@ -95,7 +109,7 @@ const InvoiceForm: React.FC = () => {
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Invoice"}
+            {isLoading ? "Saving..." : isEditMode ? "Update Invoice" : "Save Invoice"}
           </Button>
         </div>
       </form>

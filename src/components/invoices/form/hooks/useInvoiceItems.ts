@@ -1,27 +1,37 @@
 
+import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { formSchema, InvoiceItemType } from "../formSchema";
 
-export const useInvoiceItems = (form: UseFormReturn<z.infer<typeof formSchema>>) => {
-  const items = form.watch("items") as InvoiceItemType[];
+export const useInvoiceItems = (form: UseFormReturn<any>) => {
+  const [items, setItems] = useState<Array<any>>(form.getValues("items") || []);
+
+  // Update items when form items change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (value.items) {
+        setItems(value.items);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const addItem = () => {
-    form.setValue("items", [
+    const updatedItems = [
       ...form.getValues("items"),
-      { description: "", quantity: 1, unitPrice: 0 } as InvoiceItemType,
-    ]);
+      { description: "", quantity: 1, unitPrice: 0 },
+    ];
+    form.setValue("items", updatedItems);
+    setItems(updatedItems);
   };
 
   const removeItem = (index: number) => {
     const currentItems = form.getValues("items");
     if (currentItems.length > 1) {
-      form.setValue(
-        "items",
-        currentItems.filter((_, i) => i !== index) as InvoiceItemType[]
-      );
+      const updatedItems = currentItems.filter((_, i) => i !== index);
+      form.setValue("items", updatedItems);
+      setItems(updatedItems);
     }
   };
 
-  return { items, addItem, removeItem };
+  return { items, addItem, removeItem, setItems };
 };

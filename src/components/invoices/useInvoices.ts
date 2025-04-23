@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceItem, InvoiceStatus } from "./types";
@@ -121,6 +120,74 @@ export const useCreateInvoice = () => {
     onError: (error) => {
       console.error("Error creating invoice:", error);
       toast.error("Failed to create invoice");
+    },
+  });
+};
+
+// Update an existing invoice
+export const useUpdateInvoice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      invoice,
+      items,
+    }: {
+      id: string;
+      invoice: Partial<Invoice>;
+      items: Omit<InvoiceItem, "id" | "invoice_id" | "created_at" | "updated_at">[];
+    }) => {
+      // 1. Update the invoice
+      const { data: updatedInvoice, error: invoiceError } = await supabase
+        .from("invoices")
+        .update({
+          ...invoice,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (invoiceError) {
+        throw invoiceError;
+      }
+
+      // 2. Delete existing items for this invoice
+      const { error: deleteError } = await supabase
+        .from("invoice_items")
+        .delete()
+        .eq("invoice_id", id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // 3. Insert the new invoice items
+      if (items.length > 0) {
+        const itemsWithInvoiceId = items.map((item) => ({
+          ...item,
+          invoice_id: id,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("invoice_items")
+          .insert(itemsWithInvoiceId);
+
+        if (itemsError) {
+          throw itemsError;
+        }
+      }
+
+      return updatedInvoice;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success("Invoice updated successfully");
+    },
+    onError: (error) => {
+      console.error("Error updating invoice:", error);
+      toast.error("Failed to update invoice");
     },
   });
 };
