@@ -79,8 +79,8 @@ export const useProjectActions = (projectId: string, projectName: string) => {
     }
   };
 
-  // New function to update project progress
-  const handleUpdateProgress = (newProgress: number) => {
+  // Updated function to handle progress changes
+  const handleUpdateProgress = async (newProgress: number) => {
     if (newProgress < 0 || newProgress > 100) {
       toast({
         title: "Invalid Progress Value",
@@ -90,23 +90,36 @@ export const useProjectActions = (projectId: string, projectName: string) => {
       return;
     }
 
-    // Update the project with the new progress
-    const result = updateProject(projectId, { progress: newProgress });
-    
-    if (result) {
-      toast({
-        title: "Project Updated",
-        description: `Project progress updated to ${newProgress}%.`,
-      });
+    console.log("Updating project progress:", projectId, newProgress);
+
+    try {
+      // Update the project with the new progress
+      const result = await updateProject(projectId, { progress: newProgress });
       
-      // Force reload to see changes
-      window.location.reload();
-    } else {
+      if (result) {
+        toast({
+          title: "Project Updated",
+          description: `Project progress updated to ${newProgress}%.`,
+        });
+        
+        // Return true to indicate success - this allows the component to update UI accordingly
+        return true;
+      } else {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update project progress.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error updating project progress:", error);
       toast({
-        title: "Update Failed",
-        description: "Failed to update project progress.",
+        title: "Update Error",
+        description: "An error occurred while updating progress.",
         variant: "destructive"
       });
+      return false;
     }
   };
 
@@ -117,4 +130,3 @@ export const useProjectActions = (projectId: string, projectName: string) => {
     handleUpdateProgress
   };
 };
-

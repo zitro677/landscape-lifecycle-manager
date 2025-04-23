@@ -26,52 +26,58 @@ const ProjectDetail: React.FC = () => {
   const projectData = id ? useProjectData(id) : null;
   
   // Load project data
-  useEffect(() => {
-    const loadProject = () => {
-      console.log("Loading project with ID:", id);
-      
-      // Check localStorage first (for user-created projects)
-      const storedUserProjects = localStorage.getItem("landscape_projects");
-      const userProjects = storedUserProjects ? JSON.parse(storedUserProjects) : [];
-      
-      // Check default projects
-      let foundProject = null;
-      
-      try {
-        // First check if we have it in user projects
-        if (userProjects.length > 0) {
-          foundProject = userProjects.find((p: any) => String(p.id) === String(id));
-        }
-        
-        // If not found in user projects, check the projectsData
-        if (!foundProject) {
-          const projectsData = localStorage.getItem("projectsData");
-          if (projectsData) {
-            const projects = JSON.parse(projectsData);
-            foundProject = projects.find((p: any) => String(p.id) === String(id));
-          }
-        }
-        
-        // Also check static project data
-        if (!foundProject) {
-          // Import the static projects for fallback
-          const { projects } = require("./hooks/useProjects");
-          foundProject = projects.find((p: any) => String(p.id) === String(id));
-        }
-        
-        if (foundProject) {
-          console.log("Project found:", foundProject);
-          setProject(foundProject);
-        } else {
-          console.error("Project not found with ID:", id);
-        }
-      } catch (error) {
-        console.error("Error loading project:", error);
+  const loadProject = () => {
+    console.log("Loading project with ID:", id);
+    
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    
+    // Check localStorage first (for user-created projects)
+    const storedUserProjects = localStorage.getItem("landscape_projects");
+    const userProjects = storedUserProjects ? JSON.parse(storedUserProjects) : [];
+    
+    // Check default projects
+    let foundProject = null;
+    
+    try {
+      // First check if we have it in user projects
+      if (userProjects.length > 0) {
+        foundProject = userProjects.find((p: any) => String(p.id) === String(id));
       }
       
-      setLoading(false);
-    };
+      // If not found in user projects, check the projectsData
+      if (!foundProject) {
+        const projectsData = localStorage.getItem("projectsData");
+        if (projectsData) {
+          const projects = JSON.parse(projectsData);
+          foundProject = projects.find((p: any) => String(p.id) === String(id));
+        }
+      }
+      
+      // Also check static project data
+      if (!foundProject) {
+        // Import the static projects for fallback
+        const { projects } = require("./hooks/useProjects");
+        foundProject = projects.find((p: any) => String(p.id) === String(id));
+      }
+      
+      if (foundProject) {
+        console.log("Project found:", foundProject);
+        setProject(foundProject);
+      } else {
+        console.error("Project not found with ID:", id);
+      }
+    } catch (error) {
+      console.error("Error loading project:", error);
+    }
     
+    setLoading(false);
+  };
+  
+  // Load project when component mounts or ID changes
+  useEffect(() => {
     loadProject();
   }, [id]);
 
@@ -91,6 +97,12 @@ const ProjectDetail: React.FC = () => {
       );
     }
   }, [project]);
+
+  // Handle project updates (like progress changes)
+  const handleProjectUpdate = () => {
+    // Reload the project to get the latest data
+    loadProject();
+  };
 
   if (loading) {
     return (
@@ -167,6 +179,7 @@ const ProjectDetail: React.FC = () => {
             extraData={extraData} 
             teamSize={teamMembers.length}
             saveExtraData={saveExtraData}
+            onProjectUpdate={handleProjectUpdate}
           />
 
           {/* Team Members */}

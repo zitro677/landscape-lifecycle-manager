@@ -17,6 +17,7 @@ interface ProjectOverviewProps {
   extraData: any;
   teamSize: number;
   saveExtraData: (data: any) => void;
+  onProjectUpdate?: () => void; // Optional callback for project updates
 }
 
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({
@@ -24,6 +25,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   extraData,
   teamSize,
   saveExtraData,
+  onProjectUpdate
 }) => {
   const { handleUpdateProgress } = useProjectActions(project.id, project.name);
 
@@ -64,8 +66,21 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     };
     saveExtraData(updatedExtraData);
     
-    // Refresh to see changes
-    window.location.reload();
+    // Notify parent component of update if callback exists
+    if (onProjectUpdate) {
+      onProjectUpdate();
+    }
+  };
+
+  const handleProgressUpdate = async (newProgress: number) => {
+    const success = await handleUpdateProgress(newProgress);
+    
+    // If progress was updated successfully and callback exists
+    if (success && onProjectUpdate) {
+      onProjectUpdate();
+    }
+    
+    return success;
   };
   
   return (
@@ -108,7 +123,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 
           <ProgressSection 
             progress={project.progress} 
-            onUpdateProgress={handleUpdateProgress} 
+            onUpdateProgress={handleProgressUpdate} 
           />
         </CardContent>
       </Card>

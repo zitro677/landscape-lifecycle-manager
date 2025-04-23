@@ -1,12 +1,11 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 
 interface ProgressSectionProps {
   progress: number;
-  onUpdateProgress: (newProgress: number) => void;
+  onUpdateProgress: (newProgress: number) => Promise<boolean>;
 }
 
 const ProgressSection: React.FC<ProgressSectionProps> = ({ 
@@ -15,9 +14,33 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
 }) => {
   const [showProgressEdit, setShowProgressEdit] = useState(false);
   const [progressValue, setProgressValue] = useState(progress);
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  useEffect(() => {
+    setProgressValue(progress);
+  }, [progress]);
 
-  const saveProgress = () => {
-    onUpdateProgress(progressValue);
+  const saveProgress = async () => {
+    setIsUpdating(true);
+    
+    try {
+      const success = await onUpdateProgress(progressValue);
+      
+      if (success) {
+        setShowProgressEdit(false);
+      } else {
+        setProgressValue(progress);
+      }
+    } catch (error) {
+      console.error("Error saving progress:", error);
+      setProgressValue(progress);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const cancelEdit = () => {
+    setProgressValue(progress);
     setShowProgressEdit(false);
   };
 
@@ -29,6 +52,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
           variant="outline" 
           size="sm" 
           onClick={() => setShowProgressEdit(!showProgressEdit)}
+          disabled={isUpdating}
         >
           {showProgressEdit ? "Cancel" : "Edit Progress"}
         </Button>
@@ -44,12 +68,29 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
               step={1}
               onValueChange={(value) => setProgressValue(value[0])}
               className="flex-1"
+              disabled={isUpdating}
             />
             <span className="text-sm font-medium min-w-10 text-right">
               {progressValue}%
             </span>
           </div>
-          <Button size="sm" onClick={saveProgress}>Save Progress</Button>
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              onClick={saveProgress} 
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Saving..." : "Save Progress"}
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={cancelEdit}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="space-y-1">
