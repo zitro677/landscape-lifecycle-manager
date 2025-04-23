@@ -99,16 +99,22 @@ export const updateProject = (projectId: string, projectData: any) => {
       const updatedProject = {
         ...existingProject,
         ...projectData,
-        budget: formatBudget(projectData.budget),
+        budget: projectData.budget ? formatBudget(projectData.budget) : existingProject.budget,
         updatedAt: new Date().toISOString(),
         // Preserve these fields from the original
         id: existingProject.id,
         createdAt: existingProject.createdAt,
-        // Update progress based on status if it changed
-        progress: projectData.status !== existingProject.status 
-          ? calculateInitialProgress(projectData.status) 
-          : existingProject.progress
       };
+      
+      // Handle progress update specifically
+      if (projectData.progress !== undefined) {
+        updatedProject.progress = projectData.progress;
+      } else if (projectData.status !== existingProject.status) {
+        // Update progress based on status if it changed
+        updatedProject.progress = calculateInitialProgress(projectData.status);
+      }
+      
+      console.log("Updated project will be:", updatedProject);
       
       // Update project in array
       localProjects[projectIndex] = updatedProject;
@@ -131,7 +137,7 @@ export const updateProject = (projectId: string, projectData: any) => {
         id: projectId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        progress: calculateInitialProgress(projectData.status),
+        progress: projectData.progress !== undefined ? projectData.progress : calculateInitialProgress(projectData.status || 'Planning'),
       };
       
       localProjects.push(newProjectData);

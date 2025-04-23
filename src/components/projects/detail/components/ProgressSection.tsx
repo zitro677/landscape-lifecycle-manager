@@ -23,19 +23,23 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
   useEffect(() => {
     setProgressValue(progress);
     setDisplayProgress(progress);
+    console.log("Progress prop updated:", progress);
   }, [progress]);
 
   const saveProgress = async () => {
     setIsUpdating(true);
     
     try {
+      console.log("Saving progress:", progressValue);
       const success = await onUpdateProgress(progressValue);
       
       if (success) {
+        console.log("Progress saved successfully");
         // Update the display progress right away for immediate feedback
         setDisplayProgress(progressValue);
         setShowProgressEdit(false);
       } else {
+        console.error("Failed to save progress");
         // Reset to original value if update failed
         setProgressValue(progress);
       }

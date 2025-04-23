@@ -73,10 +73,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   };
 
   const handleProgressUpdate = async (newProgress: number) => {
+    console.log("Handling progress update in ProjectOverview:", newProgress);
     const success = await handleUpdateProgress(newProgress);
     
     // If progress was updated successfully and callback exists
     if (success && onProjectUpdate) {
+      console.log("Progress updated successfully, calling onProjectUpdate");
       onProjectUpdate();
     }
     
@@ -122,7 +124,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           </div>
 
           <ProgressSection 
-            progress={project.progress} 
+            progress={project.progress || 0} 
             onUpdateProgress={handleProgressUpdate} 
           />
         </CardContent>

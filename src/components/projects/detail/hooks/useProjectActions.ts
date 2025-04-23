@@ -87,7 +87,7 @@ export const useProjectActions = (projectId: string, projectName: string) => {
         description: "Progress must be between 0 and 100.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     console.log("Updating project progress:", projectId, newProgress);
