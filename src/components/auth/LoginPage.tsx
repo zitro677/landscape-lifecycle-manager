@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "./AuthProvider";
@@ -19,6 +19,26 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [userCount, setUserCount] = useState<number>(0);
+
+  // Check if this is the first user to sign up
+  useEffect(() => {
+    const checkUserCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('user_roles')
+          .select('*', { count: 'exact', head: true });
+        
+        if (!error) {
+          setUserCount(count || 0);
+        }
+      } catch (error) {
+        console.error("Error checking user count:", error);
+      }
+    };
+
+    checkUserCount();
+  }, []);
 
   const handleGuestLogin = async () => {
     try {
@@ -98,6 +118,9 @@ const LoginPage: React.FC = () => {
       setIsLoading(true);
       setErrorMessage(null);
       
+      // Check if this is the first user to sign up
+      const isFirstUser = userCount === 0;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password
@@ -105,7 +128,15 @@ const LoginPage: React.FC = () => {
       
       if (error) throw error;
       
-      toast.success("Registration successful! Please check your email for confirmation.");
+      // If this is the first user, make them an admin
+      if (isFirstUser && data?.user) {
+        console.log("First user detected, setting as admin");
+        // We don't need to explicitly set the role here since the trigger will handle it
+        // and we'll update it on the next sign-in
+        toast.success("Registration successful! You will be the administrator.");
+      } else {
+        toast.success("Registration successful! Please check your email for confirmation.");
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
       setErrorMessage(error.message || "Registration failed. Please try again.");

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ import {
   FolderKanban,
   Settings,
   LogOut,
+  Users,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ interface NavItem {
   name: string;
   path: string;
   icon: React.ReactNode;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -53,6 +56,11 @@ const navItems: NavItem[] = [
     path: "/projects",
     icon: <FolderKanban className="h-5 w-5" />,
   },
+  {
+    name: "Clients",
+    path: "/clients",
+    icon: <Users className="h-5 w-5" />,
+  },
 ];
 
 const sidebarVariants = {
@@ -77,7 +85,7 @@ const sidebarVariants = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
-  const { signOut } = useAuth();
+  const { signOut, isAdmin, userRole } = useAuth();
 
   const handleSignOut = async () => {
     try {
@@ -88,6 +96,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
       toast.error("Failed to log out");
     }
   };
+
+  // Filter navigation items based on user role
+  const visibleNavItems = navItems.filter(item => 
+    !item.adminOnly || (item.adminOnly && isAdmin)
+  );
 
   return (
     <>
@@ -121,7 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <div className="px-3 py-2">
             <nav className="flex flex-col gap-1">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
@@ -166,6 +179,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
                 </NavLink>
               </nav>
             </div>
+
+            {userRole && (
+              <div className="mt-6 px-3">
+                <div className="rounded-md bg-primary/10 px-3 py-2">
+                  <p className="text-xs font-medium">Logged in as:</p>
+                  <p className="text-sm">{isAdmin ? 'Administrator' : 'Read-Only User'}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="absolute bottom-4 left-0 right-0 px-3">

@@ -1,83 +1,54 @@
 
-import React, { useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { motion } from "framer-motion";
-import { Bell, User, Sliders } from "lucide-react";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { useSettings } from "./hooks/useSettings";
 import AccountTab from "./tabs/AccountTab";
-import PreferencesTab from "./tabs/PreferencesTab";
 import NotificationsTab from "./tabs/NotificationsTab";
-import { UserSettings } from "./types";
+import PreferencesTab from "./tabs/PreferencesTab";
+import UserManagementTab from "./tabs/UserManagementTab";
+import AnimatedPage from "../shared/AnimatedPage";
+import { useAuth } from "../auth/AuthProvider";
 
 const SettingsPage = () => {
-  const { user } = useAuth();
-  const { loadUserSettings, isLoading, onSubmitAccount, onSubmitPreferences, onSubmitNotifications } = useSettings();
-  const [settings, setSettings] = React.useState<UserSettings | null>(null);
-  
-  // Load settings from localStorage
-  useEffect(() => {
-    const userSettings = loadUserSettings();
-    setSettings(userSettings);
-  }, [user?.email]);
-
-  if (!settings) {
-    return <div>Loading settings...</div>;
-  }
+  const [activeTab, setActiveTab] = useState("account");
+  const { isAdmin } = useAuth();
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="container py-6 md:py-8 space-y-6"
-    >
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your app preferences and account settings</p>
-      </div>
+    <AnimatedPage>
+      <div className="container mx-auto py-6 space-y-4 max-w-5xl">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences
+          </p>
+        </div>
 
-      <Tabs defaultValue="account" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span>Account</span>
-          </TabsTrigger>
-          <TabsTrigger value="preferences" className="flex items-center gap-2">
-            <Sliders className="h-4 w-4" />
-            <span>Preferences</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            <span>Notifications</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="account" className="space-y-4">
-          <AccountTab 
-            initialSettings={settings} 
-            onSave={onSubmitAccount} 
-            isLoading={isLoading} 
-          />
-        </TabsContent>
-        
-        <TabsContent value="preferences" className="space-y-4">
-          <PreferencesTab 
-            initialSettings={settings} 
-            onSave={onSubmitPreferences} 
-            isLoading={isLoading} 
-          />
-        </TabsContent>
-        
-        <TabsContent value="notifications" className="space-y-4">
-          <NotificationsTab 
-            initialSettings={settings} 
-            onSave={onSubmitNotifications} 
-            isLoading={isLoading}
-          />
-        </TabsContent>
-      </Tabs>
-    </motion.div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full max-w-2xl">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
+          </TabsList>
+          
+          <div className="mt-6">
+            <TabsContent value="account">
+              <AccountTab />
+            </TabsContent>
+            <TabsContent value="preferences">
+              <PreferencesTab />
+            </TabsContent>
+            <TabsContent value="notifications">
+              <NotificationsTab />
+            </TabsContent>
+            {isAdmin && (
+              <TabsContent value="users">
+                <UserManagementTab />
+              </TabsContent>
+            )}
+          </div>
+        </Tabs>
+      </div>
+    </AnimatedPage>
   );
 };
 
