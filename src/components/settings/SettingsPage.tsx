@@ -7,10 +7,21 @@ import PreferencesTab from "./tabs/PreferencesTab";
 import UserManagementTab from "./tabs/UserManagementTab";
 import AnimatedPage from "../shared/AnimatedPage";
 import { useAuth } from "../auth/AuthProvider";
+import { useSettings } from "./hooks/useSettings";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("account");
   const { isAdmin } = useAuth();
+  const { 
+    loadUserSettings, 
+    isLoading, 
+    onSubmitAccount, 
+    onSubmitPreferences, 
+    onSubmitNotifications 
+  } = useSettings();
+  
+  // Load user settings
+  const userSettings = loadUserSettings();
 
   return (
     <AnimatedPage>
@@ -32,13 +43,25 @@ const SettingsPage = () => {
           
           <div className="mt-6">
             <TabsContent value="account">
-              <AccountTab />
+              <AccountTab 
+                initialSettings={userSettings} 
+                onSave={onSubmitAccount} 
+                isLoading={isLoading} 
+              />
             </TabsContent>
             <TabsContent value="preferences">
-              <PreferencesTab />
+              <PreferencesTab 
+                initialSettings={userSettings} 
+                onSave={onSubmitPreferences} 
+                isLoading={isLoading} 
+              />
             </TabsContent>
             <TabsContent value="notifications">
-              <NotificationsTab />
+              <NotificationsTab 
+                initialSettings={userSettings} 
+                onSave={onSubmitNotifications} 
+                isLoading={isLoading} 
+              />
             </TabsContent>
             {isAdmin && (
               <TabsContent value="users">

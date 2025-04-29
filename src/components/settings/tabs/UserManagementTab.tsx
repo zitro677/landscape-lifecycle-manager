@@ -40,31 +40,43 @@ const UserManagementTab = () => {
     try {
       setLoading(true);
       
-      // We need to get users from the auth schema
-      // But since we can't access auth.users directly via the JS client,
-      // we'll use the user_roles table and join with profiles
-      const { data, error } = await supabase
+      // First get all user roles
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select(`
-          user_id,
-          role,
-          profiles:user_id(email)
-        `);
+        .select('user_id, role');
 
-      if (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
+      if (roleError) {
+        console.error("Error fetching user roles:", roleError);
+        toast.error("Failed to load user roles");
         return;
       }
 
-      if (data) {
-        const formattedUsers = data.map(item => ({
-          id: item.user_id,
-          email: item.profiles?.email || 'Unknown email',
-          role: item.role
-        }));
+      if (roleData) {
+        const userIds = roleData.map(item => item.user_id);
         
-        setUsers(formattedUsers);
+        // Then fetch user profiles separately
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .in('id', userIds);
+
+        if (profileError) {
+          console.error("Error fetching user profiles:", profileError);
+          toast.error("Failed to load user profiles");
+          return;
+        }
+
+        // Combine the data from both queries
+        const userList: UserWithRole[] = roleData.map(role => {
+          const profile = profileData?.find(p => p.id === role.user_id);
+          return {
+            id: role.user_id,
+            email: profile?.email || 'Unknown email',
+            role: role.role as 'admin' | 'read_only'
+          };
+        });
+        
+        setUsers(userList);
       }
     } catch (error) {
       console.error("Error in fetchUsers:", error);
