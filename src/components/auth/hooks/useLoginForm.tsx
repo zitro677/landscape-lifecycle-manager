@@ -31,6 +31,31 @@ export const useLoginForm = () => {
     checkUserCount();
   }, []);
 
+  // Handle Google login
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        }
+      });
+      
+      if (error) throw error;
+      
+      // The redirect will happen automatically
+      // We don't need to navigate or show success here
+    } catch (error: any) {
+      console.error("Google login error:", error);
+      setErrorMessage(error.message || "Failed to login with Google");
+      toast.error("Failed to login with Google");
+      setIsLoading(false);
+    }
+  };
+
   const handleGuestLogin = async () => {
     try {
       setIsLoading(true);
@@ -144,6 +169,7 @@ export const useLoginForm = () => {
     errorMessage,
     handleGuestLogin,
     handleEmailLogin,
-    handleSignUp
+    handleSignUp,
+    handleGoogleLogin
   };
 };
