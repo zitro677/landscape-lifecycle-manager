@@ -91,7 +91,7 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
       0
     );
 
-    // Create the proposal with client information
+    // Create the proposal with client information - specifically use fk_proposals_client_id to resolve ambiguity
     const { data: proposal, error: proposalError } = await supabase
       .from('proposals')
       .insert({
@@ -104,15 +104,7 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
         status: 'Draft' as ProposalStatus,
         user_id: user_id
       })
-      .select(`
-        *,
-        clients!client_id (
-          name,
-          email,
-          phone,
-          address
-        )
-      `)
+      .select()
       .single();
 
     if (proposalError) {
@@ -126,6 +118,18 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     }
 
     console.log('Proposal created:', proposal);
+
+    // Now fetch the client details separately to avoid the relationship conflict
+    const { data: clientData, error: clientDataError } = await supabase
+      .from('clients')
+      .select('name, email, phone, address')
+      .eq('id', client.id)
+      .single();
+
+    if (clientDataError) {
+      console.error('Error fetching client details:', clientDataError);
+      // Continue despite client fetch errors, as the main proposal is created
+    }
 
     // Add proposal items
     if (proposalData.items.length > 0) {
@@ -183,11 +187,16 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
       // Continue despite additional item errors
     }
 
-    // Return the created proposal with client name
+    // Return the created proposal with client details manually attached
     return {
       ...proposal,
       client_name: client.name,
-      clients: {
+      clients: clientData ? {
+        name: clientData.name,
+        email: clientData.email,
+        phone: clientData.phone,
+        address: clientData.address
+      } : {
         name: client.name,
         email: client.email,
         phone: client.phone,

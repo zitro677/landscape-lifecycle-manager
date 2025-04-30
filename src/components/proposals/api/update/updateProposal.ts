@@ -5,8 +5,14 @@ import { Proposal, ProposalFormData } from "../../types";
 export const updateProposal = async ({ id, data }: { id: string, data: ProposalFormData }): Promise<Proposal | null> => {
   try {
     // Get the current user session
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error('Error getting session:', sessionError);
+      throw new Error('Authentication error: ' + sessionError.message);
+    }
+    
     if (!sessionData?.session?.user?.id) {
+      console.error('No authenticated user found');
       throw new Error('No authenticated user found');
     }
     
@@ -128,7 +134,7 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
         });
     }
 
-    // Return the updated proposal
+    // Return the updated proposal with client info
     return {
       ...proposal,
       client_name: client.name,
@@ -141,6 +147,6 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
     };
   } catch (error) {
     console.error('Error in updateProposal:', error);
-    return null;
+    throw error;
   }
 };
