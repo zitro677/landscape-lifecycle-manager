@@ -15,6 +15,7 @@ export function useProposalMutations() {
         // Force an immediate refetch of the proposals
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
         toast.success("Proposal created successfully");
+        console.log("Proposal created successfully:", data);
       }
     },
     onError: (error: any) => {
@@ -32,6 +33,7 @@ export function useProposalMutations() {
         // Force an immediate refetch of the proposals
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
         toast.success("Proposal updated successfully");
+        console.log("Proposal updated successfully:", data);
       }
     },
     onError: (error: any) => {

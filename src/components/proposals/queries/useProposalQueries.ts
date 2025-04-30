@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { getProposals, getProposalById } from "../api/proposalApi";
 
@@ -11,9 +10,12 @@ export function useProposalQueries() {
       // Only retry a few times to avoid infinite loops
       return failureCount < 3;
     },
-    // Add this to make sure data is always up to date
+    // Keep staleTime at 0 to ensure fresh data
     staleTime: 0,
-    refetchOnWindowFocus: true
+    // Always refetch when window is focused
+    refetchOnWindowFocus: true,
+    // Add refetchOnMount to ensure data is fetched when component mounts
+    refetchOnMount: true
   });
 
   return {

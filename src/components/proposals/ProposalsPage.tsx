@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
 import { useProposalQueries } from "./queries/useProposalQueries";
 import ProposalFilters from "./ProposalFilters";
@@ -15,7 +15,20 @@ const ProposalsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("newest");
   
-  const { proposals, isLoading, isError, error } = useProposalQueries();
+  const { proposals, isLoading, isError, error, refetch } = useProposalQueries();
+
+  // Force a refetch when the component mounts
+  useEffect(() => {
+    refetch();
+    console.log("ProposalsPage mounted, refetching data");
+  }, [refetch]);
+
+  // Log the proposals data to help debug
+  useEffect(() => {
+    if (!isLoading) {
+      console.log("Proposals data in ProposalsPage:", proposals);
+    }
+  }, [proposals, isLoading]);
 
   // Ensure proposals is an array before filtering
   const filteredProposals = Array.isArray(proposals) ? proposals.filter((proposal) => {

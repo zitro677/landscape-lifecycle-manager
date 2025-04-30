@@ -16,6 +16,9 @@ const ProposalsList: React.FC<ProposalsListProps> = ({
   isLoading,
   isError
 }) => {
+  // Log the number of proposals to debug
+  console.log(`Rendering ProposalsList with ${filteredAndSortedProposals.length} proposals`);
+  
   if (isLoading) {
     return (
       <div className="text-center py-12">
