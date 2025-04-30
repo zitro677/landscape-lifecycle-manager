@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Proposal, ProposalFormData } from "../types";
+import { Proposal, ProposalFormData, ProposalStatus } from "../types";
 
 export const getProposals = async (): Promise<Proposal[]> => {
   try {
@@ -8,7 +7,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
       .from('proposals')
       .select(`
         *,
-        clients (
+        clients:client_id (
           name,
           email,
           address,
@@ -27,7 +26,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
       client_name: proposal.clients?.name || 'Unknown Client', // Default to 'Unknown Client' if no name
     }));
 
-    return proposalsWithClientNames;
+    return proposalsWithClientNames as Proposal[];
   } catch (error) {
     console.error("Unexpected error fetching proposals:", error);
     return [];
@@ -40,7 +39,7 @@ export const getProposalById = async (id: string): Promise<Proposal | null> => {
       .from('proposals')
       .select(`
         *,
-        clients (
+        clients:client_id (
           name,
           email,
           address,
@@ -62,7 +61,7 @@ export const getProposalById = async (id: string): Promise<Proposal | null> => {
       client_name: data.clients?.name || 'Unknown Client', // Default to 'Unknown Client' if no name
     };
 
-    return proposalWithClientName;
+    return proposalWithClientName as Proposal;
   } catch (error) {
     console.error("Unexpected error fetching proposal:", error);
     return null;
@@ -71,6 +70,15 @@ export const getProposalById = async (id: string): Promise<Proposal | null> => {
 
 export const createProposal = async (proposalData: ProposalFormData): Promise<Proposal | null> => {
   try {
+    // Get the current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.user?.id) {
+      throw new Error('No authenticated user found');
+    }
+    
+    const user_id = sessionData.session.user.id;
+    
+    // Create or update the client
     const { data: client, error: clientError } = await supabase
       .from('clients')
       .upsert(
@@ -78,7 +86,8 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
           name: proposalData.client,
           email: proposalData.email,
           phone: proposalData.phone,  // Ensure phone is included in the client data
-          address: proposalData.address
+          address: proposalData.address,
+          user_id: user_id // Add user_id to match the required schema
         },
         { onConflict: 'email' }
       )
@@ -99,17 +108,16 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     // Create the proposal with client information
     const { data: proposal, error: proposalError } = await supabase
       .from('proposals')
-      .insert([
-        {
-          client_id: client.id,
-          title: `Proposal for ${proposalData.client}`,
-          issue_date: proposalData.proposalDate,
-          valid_until: proposalData.expirationDate,
-          amount: totalAmount,
-          content: proposalData.formattedContent || proposalData.scope,
-          status: 'Draft'
-        }
-      ])
+      .insert({
+        client_id: client.id,
+        title: `Proposal for ${proposalData.client}`,
+        issue_date: proposalData.proposalDate,
+        valid_until: proposalData.expirationDate,
+        amount: totalAmount,
+        content: proposalData.formattedContent || proposalData.scope,
+        status: 'Draft' as ProposalStatus,
+        user_id: user_id // Add user_id to match the required schema
+      })
       .select()
       .single();
 
@@ -119,15 +127,15 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     }
 
     // Add proposal items
-    const proposalItemsData = proposalData.items.map(item => ({
-      proposal_id: proposal.id,
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      type: 'item'
-    }));
+    if (proposalData.items.length > 0) {
+      const proposalItemsData = proposalData.items.map(item => ({
+        proposal_id: proposal.id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        type: 'item' as const // Using const assertion to match the enum type
+      }));
 
-    if (proposalItemsData.length > 0) {
       const { error: itemsError } = await supabase
         .from('proposal_items')
         .insert(proposalItemsData);
@@ -144,7 +152,7 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
         .insert({
           proposal_id: proposal.id,
           description: proposalData.scope,
-          type: 'scope'
+          type: 'scope' as const
         });
     }
 
@@ -154,7 +162,7 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
         .insert({
           proposal_id: proposal.id,
           description: proposalData.timeline,
-          type: 'timeline'
+          type: 'timeline' as const
         });
     }
 
@@ -164,7 +172,7 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
         .insert({
           proposal_id: proposal.id,
           description: proposalData.notes,
-          type: 'note'
+          type: 'note' as const
         });
     }
 
@@ -187,6 +195,12 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
 
 export const updateProposal = async ({ id, data }: { id: string, data: ProposalFormData }): Promise<Proposal | null> => {
   try {
+    // Get the current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.user?.id) {
+      throw new Error('No authenticated user found');
+    }
+    
     // First, get the current proposal to access the client_id
     const { data: currentProposal, error: fetchError } = await supabase
       .from('proposals')
@@ -255,15 +269,15 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
     }
 
     // Re-add all items
-    const proposalItemsData = data.items.map(item => ({
-      proposal_id: id,
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      type: 'item'
-    }));
+    if (data.items.length > 0) {
+      const proposalItemsData = data.items.map(item => ({
+        proposal_id: id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        type: 'item' as const // Using const assertion to match the enum type
+      }));
 
-    if (proposalItemsData.length > 0) {
       const { error: itemsError } = await supabase
         .from('proposal_items')
         .insert(proposalItemsData);
@@ -281,7 +295,7 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
         .insert({
           proposal_id: id,
           description: data.scope,
-          type: 'scope'
+          type: 'scope' as const
         });
     }
 
@@ -291,7 +305,7 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
         .insert({
           proposal_id: id,
           description: data.timeline,
-          type: 'timeline'
+          type: 'timeline' as const
         });
     }
 
@@ -301,7 +315,7 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
         .insert({
           proposal_id: id,
           description: data.notes,
-          type: 'note'
+          type: 'note' as const
         });
     }
 

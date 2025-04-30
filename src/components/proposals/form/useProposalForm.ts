@@ -5,14 +5,15 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { proposalFormSchema, ProposalItemType } from "./formSchema";
 import { Proposal, ProposalFormData } from "../types";
-import { useProposals } from "../useProposals";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useProposalMutations } from "../mutations/useProposalMutations";
+import { getProposalById } from "../queries/useProposalQueries";
 
 export const useProposalForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { createProposal, updateProposal, getProposalById, isPending } = useProposals();
+  const { createProposal, updateProposalMutation, isPending } = useProposalMutations();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(id ? true : false);
   
@@ -60,7 +61,7 @@ export const useProposalForm = () => {
           console.log("Loaded proposal for editing:", proposal);
           
           // Extract proposal items with proper type assertion
-          const items = proposal.items?.map(item => ({
+          const items = proposal.items?.filter(item => item.type === 'item').map(item => ({
             description: item.description || "",
             quantity: item.quantity || 1,
             unitPrice: item.unit_price || 0
@@ -75,6 +76,11 @@ export const useProposalForm = () => {
             } as ProposalItemType);
           }
           
+          // Find scope, timeline and notes items
+          const scopeItem = proposal.items?.find(item => item.type === 'scope');
+          const timelineItem = proposal.items?.find(item => item.type === 'timeline');
+          const notesItem = proposal.items?.find(item => item.type === 'note');
+          
           // Create a complete form data object before resetting the form
           // This prevents partial updates that could cause flickering
           const formData = {
@@ -85,9 +91,9 @@ export const useProposalForm = () => {
             proposalDate: proposal.issue_date || today,
             expirationDate: proposal.valid_until || defaultExpirationDate,
             items: items,
-            scope: proposal.scope || "",
-            timeline: proposal.timeline || "",
-            notes: proposal.notes || ""
+            scope: scopeItem?.description || "",
+            timeline: timelineItem?.description || "",
+            notes: notesItem?.description || ""
           };
           
           // Use a single atomic update to prevent flickering
@@ -106,7 +112,7 @@ export const useProposalForm = () => {
     if (id) {
       loadProposal();
     }
-  }, [id, navigate, getProposalById]);
+  }, [id, navigate, form]);
 
   const items = form.watch("items");
   
@@ -175,8 +181,7 @@ export const useProposalForm = () => {
     proposalData.formattedContent = formattedContent;
     
     if (isEditMode && id) {
-      // Fix: Pass an object with id and data properties instead of just id
-      await updateProposal({ id, data: proposalData });
+      await updateProposalMutation.mutateAsync({ id, data: proposalData });
     } else {
       await createProposal(proposalData);
     }

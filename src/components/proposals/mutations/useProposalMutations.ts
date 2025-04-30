@@ -19,7 +19,7 @@ export function useProposalMutations() {
     }
   });
 
-  // For updating a proposal - fix the argument structure
+  // For updating a proposal - fixed to match the updated API
   const updateProposalMutation = useMutation({
     mutationFn: updateProposal,
     onSuccess: () => {
