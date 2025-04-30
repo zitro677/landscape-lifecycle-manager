@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal, ProposalFormData, ProposalStatus } from "../types";
 
@@ -39,7 +40,7 @@ export const getProposalById = async (id: string): Promise<Proposal | null> => {
       .from('proposals')
       .select(`
         *,
-        clients:client_id (
+        clients!client_id (
           name,
           email,
           address,
