@@ -28,6 +28,7 @@ export const useProposalForm = () => {
     defaultValues: {
       client: "",
       email: "",
+      phone: "",
       address: "",
       proposalDate: today,
       expirationDate: defaultExpirationDate,
@@ -79,6 +80,7 @@ export const useProposalForm = () => {
           const formData = {
             client: proposal.client_name || proposal.title?.replace("Proposal for ", "") || "",
             email: proposal.clients?.email || "",
+            phone: proposal.clients?.phone || "",
             address: proposal.clients?.address || "",
             proposalDate: proposal.issue_date || today,
             expirationDate: proposal.valid_until || defaultExpirationDate,
@@ -137,6 +139,7 @@ export const useProposalForm = () => {
     const proposalData: ProposalFormData = {
       client: values.client,
       email: values.email,
+      phone: values.phone,
       address: values.address,
       proposalDate: values.proposalDate,
       expirationDate: values.expirationDate,
@@ -183,10 +186,13 @@ export const useProposalForm = () => {
 
   return {
     form,
-    items,
-    subtotal,
-    tax,
-    total,
+    items: form.watch("items"),
+    subtotal: items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0
+    ),
+    tax: subtotal * taxRate,
+    total: subtotal + tax,
     addItem,
     removeItem,
     onSubmit,

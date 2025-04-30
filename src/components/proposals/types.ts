@@ -22,6 +22,7 @@ export type ProposalStatus = "Draft" | "Sent" | "Approved" | "Rejected";
 export type ProposalFormData = {
   client: string;
   email: string;
+  phone?: string;
   address: string;
   proposalDate: string;
   expirationDate: string;
