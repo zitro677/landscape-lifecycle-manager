@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "./AuthProvider";
@@ -8,6 +8,12 @@ import { useLoginForm } from "./hooks/useLoginForm";
 import EmailLoginForm from "./components/EmailLoginForm";
 import GuestLoginButton from "./components/GuestLoginButton";
 import LoginErrorMessage from "./components/LoginErrorMessage";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const LoginPage: React.FC = () => {
   const { user, loading } = useAuth();
@@ -22,6 +28,57 @@ const LoginPage: React.FC = () => {
     handleEmailLogin,
     handleSignUp
   } = useLoginForm();
+  
+  // Admin registration dialog state
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  // Handle admin registration
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!adminEmail || !adminPassword) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+    
+    try {
+      setAdminLoading(true);
+      
+      // First register the user
+      const { data, error } = await supabase.auth.signUp({
+        email: adminEmail,
+        password: adminPassword
+      });
+      
+      if (error) throw error;
+      
+      if (data?.user) {
+        // Then manually set their role to admin
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .upsert({ 
+            user_id: data.user.id, 
+            role: 'admin' 
+          })
+          .select();
+        
+        if (roleError) throw roleError;
+        
+        toast.success(`Admin ${adminEmail} registered successfully!`);
+        setAdminDialogOpen(false);
+        setAdminEmail("");
+        setAdminPassword("");
+      }
+    } catch (error: any) {
+      console.error("Admin registration error:", error);
+      toast.error(error.message || "Failed to register admin");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
 
   // Redirect if already logged in
   if (user && !loading) {
@@ -64,7 +121,8 @@ const LoginPage: React.FC = () => {
             
             <GuestLoginButton 
               onClick={handleGuestLogin} 
-              isLoading={isLoading} 
+              isLoading={isLoading}
+              onAddAdmin={() => setAdminDialogOpen(true)}
             />
           </CardContent>
           
@@ -75,6 +133,61 @@ const LoginPage: React.FC = () => {
           </CardFooter>
         </Card>
       </motion.div>
+      
+      {/* Admin Registration Dialog */}
+      <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Register New Admin</DialogTitle>
+            <DialogDescription>
+              Create a new administrator account with full permissions.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleAddAdmin} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="admin-email">Admin Email</Label>
+              <Input
+                id="admin-email"
+                type="email"
+                placeholder="Enter admin email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="admin-password">Admin Password</Label>
+              <Input
+                id="admin-password"
+                type="password"
+                placeholder="Create a strong password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex justify-end">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setAdminDialogOpen(false)}
+                className="mr-2"
+                disabled={adminLoading}
+              >
+                Cancel
+              </Button>
+              
+              <Button 
+                type="submit"
+                disabled={adminLoading}
+              >
+                {adminLoading ? "Registering..." : "Register Admin"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
