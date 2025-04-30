@@ -1,7 +1,6 @@
 
 import { jsPDF } from "jspdf";
 import { Proposal } from "../../types";
-import { MapPin, Phone } from "lucide-react";
 
 export const addClientInformationSection = (
   doc: jsPDF, 
@@ -36,12 +35,14 @@ export const addClientInformationSection = (
   
   // Add phone if available
   if (proposal.clients?.phone) {
+    // Using emoji instead of Lucide icon since jsPDF doesn't support SVG icons directly
     doc.text(`📱 ${proposal.clients.phone}`, margin + 6, yPosition);
     yPosition += 5;
   }
   
   // Add address if available
   if (proposal.clients?.address) {
+    // Using emoji instead of Lucide icon
     doc.text(`📍 ${proposal.clients.address}`, margin + 6, yPosition);
   }
   
