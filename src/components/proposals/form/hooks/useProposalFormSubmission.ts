@@ -3,7 +3,6 @@ import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { proposalFormSchema } from "../formSchema";
 import { ProposalFormData } from "../../types";
-import { toast } from "sonner";
 import { useProposalMutations } from "../../mutations/useProposalMutations";
 import { useNavigate } from "react-router-dom";
 
@@ -59,16 +58,16 @@ export function useProposalFormSubmission(
       
       if (isEditMode && id) {
         await updateProposalMutation.mutateAsync({ id, data: proposalData });
-        toast.success("Proposal updated successfully");
+        // Toast is now handled in the mutation
       } else {
         await createProposal(proposalData);
-        toast.success("Proposal created successfully");
+        // Toast is now handled in the mutation
       }
       
       navigate("/proposals");
     } catch (error: any) {
       console.error("Error in form submission:", error);
-      toast.error(`Error creating proposal: ${error.message || "Unknown error"}`);
+      // Error toast is now handled in the mutation
     }
   };
 

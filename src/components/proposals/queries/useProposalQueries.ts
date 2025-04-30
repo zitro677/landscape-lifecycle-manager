@@ -10,7 +10,10 @@ export function useProposalQueries() {
     retry: (failureCount, error) => {
       // Only retry a few times to avoid infinite loops
       return failureCount < 3;
-    }
+    },
+    // Add this to make sure data is always up to date
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   return {
