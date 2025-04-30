@@ -33,16 +33,14 @@ export const addClientInformationSection = (
     yPosition += 5;
   }
   
-  // Add phone if available
+  // Add phone if available - using phone property directly
   if (proposal.clients?.phone) {
-    // Using emoji instead of Lucide icon since jsPDF doesn't support SVG icons directly
     doc.text(`📱 ${proposal.clients.phone}`, margin + 6, yPosition);
     yPosition += 5;
   }
   
   // Add address if available
   if (proposal.clients?.address) {
-    // Using emoji instead of Lucide icon
     doc.text(`📍 ${proposal.clients.address}`, margin + 6, yPosition);
   }
   

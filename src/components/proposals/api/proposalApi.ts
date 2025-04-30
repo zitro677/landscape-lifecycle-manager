@@ -1,157 +1,376 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/supabase";
 import { Proposal, ProposalFormData } from "../types";
-import { toast } from "sonner";
 
-// Fetches all proposals
-export const fetchProposals = async (): Promise<Proposal[]> => {
-  const { data: proposals, error } = await supabase
-    .from("proposals")
-    .select(`
-      *,
-      clients!fk_proposals_client_id (
-        name,
-        email,
-        address
-      )
-    `)
-    .order("created_at", { ascending: false });
+export const getProposals = async (): Promise<Proposal[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('proposals')
+      .select(`
+        *,
+        clients (
+          name,
+          email,
+          address,
+          phone
+        )
+      `);
 
-  if (error) throw error;
-  return proposals.map(proposal => ({
-    ...proposal,
-    client_name: proposal.clients?.name || proposal.title?.replace("Proposal for ", "") || ""
-  }));
-};
+    if (error) {
+      console.error("Error fetching proposals:", error);
+      return [];
+    }
 
-// Fetches a single proposal by id
-export const getProposalById = async (id: string): Promise<Proposal | null> => {
-  const { data: proposal, error } = await supabase
-    .from("proposals")
-    .select(`
-      *,
-      clients!fk_proposals_client_id (
-        name,
-        email,
-        address
-      ),
-      proposal_items(*)
-    `)
-    .eq("id", id)
-    .single();
+    // Enhance each proposal with client details directly in the proposal object
+    const proposalsWithClientNames = data.map(proposal => ({
+      ...proposal,
+      client_name: proposal.clients?.name || 'Unknown Client', // Default to 'Unknown Client' if no name
+    }));
 
-  if (error) throw error;
-  if (!proposal) return null;
-
-  let scope = "";
-  let timeline = "";
-  let notes = "";
-  const items: any[] = [];
-  if (proposal.proposal_items) {
-    proposal.proposal_items.forEach((item: any) => {
-      if (item.type === "scope") scope = item.description || "";
-      else if (item.type === "timeline") timeline = item.description || "";
-      else if (item.type === "note") notes = item.description || "";
-      else if (item.type === "item") items.push(item);
-    });
+    return proposalsWithClientNames;
+  } catch (error) {
+    console.error("Unexpected error fetching proposals:", error);
+    return [];
   }
-  return {
-    ...proposal,
-    client_name: proposal.clients?.name || proposal.title?.replace("Proposal for ", "") || "",
-    scope,
-    timeline,
-    notes,
-    items
-  };
 };
 
-// Creates a new proposal
-export const createProposal = async (formData: ProposalFormData) => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) throw new Error("You must be logged in to create a proposal");
+export const getProposalById = async (id: string): Promise<Proposal | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('proposals')
+      .select(`
+        *,
+        clients (
+          name,
+          email,
+          address,
+          phone
+        ),
+        items: proposal_items (*)
+      `)
+      .eq('id', id)
+      .single();
 
-  const amount = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-  const timestamp = new Date().getTime().toString().slice(-6);
+    if (error) {
+      console.error("Error fetching proposal:", error);
+      return null;
+    }
 
-  const proposalData = {
-    user_id: session.user.id,
-    title: `Proposal for ${formData.client}`,
-    content: formData.formattedContent || formData.scope,
-    amount,
-    issue_date: formData.proposalDate,
-    valid_until: formData.expirationDate,
-    status: "Draft",
-  };
+    // Enhance the proposal with client details directly in the proposal object
+    const proposalWithClientName = {
+      ...data,
+      client_name: data.clients?.name || 'Unknown Client', // Default to 'Unknown Client' if no name
+    };
 
-  const { data: proposal, error: proposalError } = await supabase
-    .from("proposals")
-    .insert(proposalData)
-    .select()
-    .single();
-  if (proposalError) throw proposalError;
+    return proposalWithClientName;
+  } catch (error) {
+    console.error("Unexpected error fetching proposal:", error);
+    return null;
+  }
+};
 
-  const itemsToInsert = [
-    { proposal_id: proposal.id, type: "scope" as const, description: formData.scope },
-    { proposal_id: proposal.id, type: "timeline" as const, description: formData.timeline },
-    { proposal_id: proposal.id, type: "note" as const, description: formData.notes },
-    ...formData.items.map(item => ({
+export const createProposal = async (proposalData: ProposalFormData): Promise<Proposal | null> => {
+  try {
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .upsert(
+        {
+          name: proposalData.client,
+          email: proposalData.email,
+          phone: proposalData.phone,  // Ensure phone is included in the client data
+          address: proposalData.address
+        },
+        { onConflict: 'email' }
+      )
+      .select('id, name, email, phone, address')
+      .single();
+
+    if (clientError) {
+      console.error('Error creating client:', clientError);
+      throw clientError;
+    }
+
+    // Calculate total amount from items
+    const totalAmount = proposalData.items.reduce(
+      (sum, item) => sum + (item.quantity * item.unitPrice),
+      0
+    );
+
+    // Create the proposal with client information
+    const { data: proposal, error: proposalError } = await supabase
+      .from('proposals')
+      .insert([
+        {
+          client_id: client.id,
+          title: `Proposal for ${proposalData.client}`,
+          issue_date: proposalData.proposalDate,
+          valid_until: proposalData.expirationDate,
+          amount: totalAmount,
+          content: proposalData.formattedContent || proposalData.scope,
+          status: 'Draft'
+        }
+      ])
+      .select()
+      .single();
+
+    if (proposalError) {
+      console.error('Error creating proposal:', proposalError);
+      throw proposalError;
+    }
+
+    // Add proposal items
+    const proposalItemsData = proposalData.items.map(item => ({
       proposal_id: proposal.id,
-      type: "item" as const,
       description: item.description,
       quantity: item.quantity,
-      unit_price: item.unitPrice
-    }))
-  ];
+      unit_price: item.unitPrice,
+      type: 'item'
+    }));
 
-  const { error: itemsError } = await supabase.from("proposal_items").insert(itemsToInsert);
-  if (itemsError) throw itemsError;
+    if (proposalItemsData.length > 0) {
+      const { error: itemsError } = await supabase
+        .from('proposal_items')
+        .insert(proposalItemsData);
 
-  toast.success("Proposal created successfully");
-  return proposal;
+      if (itemsError) {
+        console.error('Error adding proposal items:', itemsError);
+      }
+    }
+
+    // Add scope and timeline as separate items for better organization
+    if (proposalData.scope) {
+      await supabase
+        .from('proposal_items')
+        .insert({
+          proposal_id: proposal.id,
+          description: proposalData.scope,
+          type: 'scope'
+        });
+    }
+
+    if (proposalData.timeline) {
+      await supabase
+        .from('proposal_items')
+        .insert({
+          proposal_id: proposal.id,
+          description: proposalData.timeline,
+          type: 'timeline'
+        });
+    }
+
+    if (proposalData.notes) {
+      await supabase
+        .from('proposal_items')
+        .insert({
+          proposal_id: proposal.id,
+          description: proposalData.notes,
+          type: 'note'
+        });
+    }
+
+    // Return the created proposal
+    return {
+      ...proposal,
+      client_name: client.name,
+      clients: {
+        name: client.name,
+        email: client.email,
+        phone: client.phone, // Ensure phone is included
+        address: client.address
+      }
+    };
+  } catch (error) {
+    console.error('Error in createProposal:', error);
+    return null;
+  }
 };
 
-// Updates an existing proposal
-export const updateProposal = async (id: string, formData: ProposalFormData) => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) throw new Error("You must be logged in to update a proposal");
+export const updateProposal = async ({ id, data }: { id: string, data: ProposalFormData }): Promise<Proposal | null> => {
+  try {
+    // First, get the current proposal to access the client_id
+    const { data: currentProposal, error: fetchError } = await supabase
+      .from('proposals')
+      .select('client_id')
+      .eq('id', id)
+      .single();
 
-  const amount = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    if (fetchError) {
+      console.error('Error fetching current proposal:', fetchError);
+      throw fetchError;
+    }
 
-  const proposalData = {
-    title: `Proposal for ${formData.client}`,
-    content: formData.formattedContent || formData.scope,
-    amount,
-    issue_date: formData.proposalDate,
-    valid_until: formData.expirationDate,
-    updated_at: new Date().toISOString(),
-  };
+    // Update client information
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .update({
+        name: data.client,
+        email: data.email,
+        phone: data.phone, // Ensure phone is updated
+        address: data.address
+      })
+      .eq('id', currentProposal.client_id)
+      .select('id, name, email, phone, address')
+      .single();
 
-  const { data: proposal, error: proposalError } = await supabase
-    .from("proposals")
-    .update(proposalData)
-    .eq("id", id)
-    .select()
-    .single();
-  if (proposalError) throw proposalError;
+    if (clientError) {
+      console.error('Error updating client:', clientError);
+      throw clientError;
+    }
 
-  await supabase.from("proposal_items").delete().eq("proposal_id", id);
+    // Calculate total amount from items
+    const totalAmount = data.items.reduce(
+      (sum, item) => sum + (item.quantity * item.unitPrice),
+      0
+    );
 
-  const itemsToInsert = [
-    { proposal_id: id, type: "scope" as const, description: formData.scope },
-    { proposal_id: id, type: "timeline" as const, description: formData.timeline },
-    { proposal_id: id, type: "note" as const, description: formData.notes },
-    ...formData.items.map(item => ({
+    // Update the proposal
+    const { data: proposal, error: proposalError } = await supabase
+      .from('proposals')
+      .update({
+        title: `Proposal for ${data.client}`,
+        issue_date: data.proposalDate,
+        valid_until: data.expirationDate,
+        amount: totalAmount,
+        content: data.formattedContent || data.scope,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (proposalError) {
+      console.error('Error updating proposal:', proposalError);
+      throw proposalError;
+    }
+
+    // Delete all existing items for this proposal
+    const { error: deleteError } = await supabase
+      .from('proposal_items')
+      .delete()
+      .eq('proposal_id', id);
+
+    if (deleteError) {
+      console.error('Error deleting existing items:', deleteError);
+      throw deleteError;
+    }
+
+    // Re-add all items
+    const proposalItemsData = data.items.map(item => ({
       proposal_id: id,
-      type: "item" as const,
       description: item.description,
       quantity: item.quantity,
-      unit_price: item.unitPrice
-    }))
-  ];
+      unit_price: item.unitPrice,
+      type: 'item'
+    }));
 
-  const { error: itemsError } = await supabase.from("proposal_items").insert(itemsToInsert);
-  if (itemsError) throw itemsError;
+    if (proposalItemsData.length > 0) {
+      const { error: itemsError } = await supabase
+        .from('proposal_items')
+        .insert(proposalItemsData);
 
-  toast.success("Proposal updated successfully");
-  return proposal;
+      if (itemsError) {
+        console.error('Error adding proposal items:', itemsError);
+        throw itemsError;
+      }
+    }
+
+    // Add scope and timeline as separate items for better organization
+    if (data.scope) {
+      await supabase
+        .from('proposal_items')
+        .insert({
+          proposal_id: id,
+          description: data.scope,
+          type: 'scope'
+        });
+    }
+
+    if (data.timeline) {
+      await supabase
+        .from('proposal_items')
+        .insert({
+          proposal_id: id,
+          description: data.timeline,
+          type: 'timeline'
+        });
+    }
+
+    if (data.notes) {
+      await supabase
+        .from('proposal_items')
+        .insert({
+          proposal_id: id,
+          description: data.notes,
+          type: 'note'
+        });
+    }
+
+    // Return the updated proposal
+    return {
+      ...proposal,
+      client_name: client.name,
+      clients: {
+        name: client.name,
+        email: client.email,
+        phone: client.phone, // Ensure phone is included
+        address: client.address
+      }
+    };
+  } catch (error) {
+    console.error('Error in updateProposal:', error);
+    return null;
+  }
+};
+
+export const deleteProposal = async (id: string): Promise<boolean> => {
+  try {
+    // Get the proposal to retrieve client_id
+    const { data: proposalData, error: proposalError } = await supabase
+      .from('proposals')
+      .select('client_id')
+      .eq('id', id)
+      .single();
+
+    if (proposalError) {
+      console.error('Error fetching proposal for deletion:', proposalError);
+      return false;
+    }
+
+    // Delete proposal_items associated with the proposal
+    const { error: deleteItemsError } = await supabase
+      .from('proposal_items')
+      .delete()
+      .eq('proposal_id', id);
+
+    if (deleteItemsError) {
+      console.error('Error deleting proposal items:', deleteItemsError);
+      return false;
+    }
+
+    // Delete the proposal
+    const { error: deleteProposalError } = await supabase
+      .from('proposals')
+      .delete()
+      .eq('id', id);
+
+    if (deleteProposalError) {
+      console.error('Error deleting proposal:', deleteProposalError);
+      return false;
+    }
+
+    // Delete the client (assuming no other proposals are linked to this client)
+    const { error: deleteClientError } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', proposalData.client_id);
+
+    if (deleteClientError) {
+      console.error('Error deleting client:', deleteClientError);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in deleteProposal:', error);
+    return false;
+  }
 };

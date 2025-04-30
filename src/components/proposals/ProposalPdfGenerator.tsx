@@ -37,7 +37,7 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
 
       // Drop position after both info boxes for pricing/summary
       // Increase spacing to account for additional client info (phone & address)
-      yPosition += 47;
+      yPosition += 50; // Increased from 47 to give more space for the client info
 
       // Updated: improved pricing summary section
       yPosition = addPricingSummarySection(
