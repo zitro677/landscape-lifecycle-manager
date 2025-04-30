@@ -19,11 +19,9 @@ export function useProposalMutations() {
     }
   });
 
-  // For updating a proposal
+  // For updating a proposal - fix the argument structure
   const updateProposalMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: ProposalFormData }) => {
-      return updateProposal(id, data);
-    },
+    mutationFn: updateProposal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
       toast.success("Proposal updated successfully");

@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
-import { useProposals } from "./useProposals";
+import { useProposalQueries } from "./queries/useProposalQueries";
 import ProposalFilters from "./ProposalFilters";
 import ProposalStats from "./ProposalStats";
 import ProposalsList from "./ProposalsList";
@@ -9,18 +9,21 @@ import ProposalsHeader from "./ProposalsHeader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Proposal } from "./types";
 
 const ProposalsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("newest");
   
-  const { proposals, isLoading, isError, error } = useProposals();
+  const { proposals, isLoading, isError, error } = useProposalQueries();
 
-  const filteredProposals = proposals.filter((proposal) => {
+  // Ensure proposals is an array before filtering
+  const filteredProposals = Array.isArray(proposals) ? proposals.filter((proposal) => {
     if (statusFilter === "all") return true;
     return proposal.status?.toLowerCase() === statusFilter.toLowerCase();
-  });
+  }) : [];
 
+  // Ensure proposals is an array before sorting
   const sortedProposals = [...filteredProposals].sort((a, b) => {
     const dateA = new Date(a.issue_date || a.created_at || "").getTime();
     const dateB = new Date(b.issue_date || b.created_at || "").getTime();
@@ -61,7 +64,7 @@ const ProposalsPage: React.FC = () => {
           </div>
         ) : (
           <>
-            <ProposalStats proposals={proposals} />
+            <ProposalStats proposals={proposals as Proposal[]} />
             
             <ProposalFilters
               statusFilter={statusFilter}
@@ -71,7 +74,7 @@ const ProposalsPage: React.FC = () => {
             />
             
             <ProposalsList
-              proposals={proposals}
+              proposals={proposals as Proposal[]}
               isLoading={isLoading}
               isError={isError}
               filteredAndSortedProposals={sortedProposals}

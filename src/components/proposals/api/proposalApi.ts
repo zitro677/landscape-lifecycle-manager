@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/supabase";
+
+import { supabase } from "@/integrations/supabase/client";
 import { Proposal, ProposalFormData } from "../types";
 
 export const getProposals = async (): Promise<Proposal[]> => {

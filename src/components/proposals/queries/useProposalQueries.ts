@@ -1,11 +1,11 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchProposals, getProposalById } from "../api/proposalApi";
+import { getProposals, getProposalById } from "../api/proposalApi";
 
 export function useProposalQueries() {
   const proposalsQuery = useQuery({
     queryKey: ["proposals"],
-    queryFn: fetchProposals,
+    queryFn: getProposals,
   });
 
   return {
