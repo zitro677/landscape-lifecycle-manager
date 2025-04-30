@@ -13,3 +13,6 @@ export { updateProposal } from './update/updateProposal';
 
 // Delete operations
 export { deleteProposal } from './delete/deleteProposal';
+
+// Utility functions
+export { calculateTotalAmount, formatProposalContent } from './create/proposalCreation';

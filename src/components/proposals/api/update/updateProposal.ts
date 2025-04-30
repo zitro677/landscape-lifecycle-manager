@@ -1,20 +1,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal, ProposalFormData } from "../../types";
+import { getAuthenticatedUserId } from "../utils/sessionUtils";
+import { updateClient, getClientById } from "../create/clientOperations";
+import { calculateTotalAmount, formatProposalContent } from "../create/proposalCreation";
+import { addProposalLineItems, addProposalContentSections } from "../create/proposalItemOperations";
 
 export const updateProposal = async ({ id, data }: { id: string, data: ProposalFormData }): Promise<Proposal | null> => {
   try {
-    // Get the current user session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      console.error('Error getting session:', sessionError);
-      throw new Error('Authentication error: ' + sessionError.message);
-    }
-    
-    if (!sessionData?.session?.user?.id) {
-      console.error('No authenticated user found');
-      throw new Error('No authenticated user found');
-    }
+    // Get the authenticated user ID
+    const userId = await getAuthenticatedUserId();
     
     // First, get the current proposal to access the client_id
     const { data: currentProposal, error: fetchError } = await supabase
@@ -29,28 +24,24 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
     }
 
     // Update client information
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .update({
-        name: data.client,
-        email: data.email,
-        phone: data.phone,
-        address: data.address
-      })
-      .eq('id', currentProposal.client_id)
-      .select('id, name, email, phone, address')
-      .single();
-
-    if (clientError) {
-      console.error('Error updating client:', clientError);
-      throw clientError;
-    }
+    const client = await updateClient(currentProposal.client_id, {
+      name: data.client,
+      email: data.email,
+      phone: data.phone,
+      address: data.address
+    }, userId);
 
     // Calculate total amount from items
-    const totalAmount = data.items.reduce(
-      (sum, item) => sum + (item.quantity * item.unitPrice),
-      0
-    );
+    const totalAmount = calculateTotalAmount(data.items);
+
+    // Format content for better organization
+    const formattedContent = data.formattedContent || 
+      formatProposalContent({
+        scope: data.scope,
+        timeline: data.timeline,
+        items: data.items,
+        notes: data.notes
+      });
 
     // Update the proposal
     const { data: proposal, error: proposalError } = await supabase
@@ -60,7 +51,7 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
         issue_date: data.proposalDate,
         valid_until: data.expirationDate,
         amount: totalAmount,
-        content: data.formattedContent || data.scope,
+        content: formattedContent,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -83,56 +74,15 @@ export const updateProposal = async ({ id, data }: { id: string, data: ProposalF
       throw deleteError;
     }
 
-    // Re-add all items
-    if (data.items.length > 0) {
-      const proposalItemsData = data.items.map(item => ({
-        proposal_id: id,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        type: 'item' as const
-      }));
+    // Add new line items
+    await addProposalLineItems(id, data.items);
 
-      const { error: itemsError } = await supabase
-        .from('proposal_items')
-        .insert(proposalItemsData);
-
-      if (itemsError) {
-        console.error('Error adding proposal items:', itemsError);
-        throw itemsError;
-      }
-    }
-
-    // Add scope and timeline as separate items for better organization
-    if (data.scope) {
-      await supabase
-        .from('proposal_items')
-        .insert({
-          proposal_id: id,
-          description: data.scope,
-          type: 'scope' as const
-        });
-    }
-
-    if (data.timeline) {
-      await supabase
-        .from('proposal_items')
-        .insert({
-          proposal_id: id,
-          description: data.timeline,
-          type: 'timeline' as const
-        });
-    }
-
-    if (data.notes) {
-      await supabase
-        .from('proposal_items')
-        .insert({
-          proposal_id: id,
-          description: data.notes,
-          type: 'note' as const
-        });
-    }
+    // Add content sections
+    await addProposalContentSections(id, {
+      scope: data.scope,
+      timeline: data.timeline,
+      notes: data.notes
+    });
 
     // Return the updated proposal with client info
     return {

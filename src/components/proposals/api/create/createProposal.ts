@@ -1,187 +1,102 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Proposal, ProposalFormData, ProposalStatus } from "../../types";
+import { Proposal, ProposalFormData } from "../../types";
+import { getAuthenticatedUserId } from "../utils/sessionUtils";
+import { findClientByEmail, updateClient, createClient, getClientById } from "./clientOperations";
+import { addProposalLineItems, addProposalContentSections } from "./proposalItemOperations";
+import { createProposalRecord, calculateTotalAmount, formatProposalContent } from "./proposalCreation";
 
+/**
+ * Creates a new proposal with all associated data (client, items, etc.)
+ */
 export const createProposal = async (proposalData: ProposalFormData): Promise<Proposal | null> => {
   try {
-    // Get the current user session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      console.error('Error getting session:', sessionError);
-      throw new Error('Authentication error: ' + sessionError.message);
-    }
-    
-    if (!sessionData?.session?.user?.id) {
-      console.error('No authenticated user found');
-      throw new Error('No authenticated user found');
-    }
-    
-    const user_id = sessionData.session.user.id;
-    console.log('Creating proposal for user:', user_id);
+    // Get the authenticated user ID
+    const userId = await getAuthenticatedUserId();
+    console.log('Creating proposal for user:', userId);
     console.log('Proposal data:', proposalData);
     
-    // First check if client with this email already exists
-    const { data: existingClients, error: clientFetchError } = await supabase
-      .from('clients')
-      .select('id, name, email, phone, address')
-      .eq('email', proposalData.email)
-      .eq('user_id', user_id);
+    // Find or create client
+    let client = await findClientByEmail(proposalData.email, userId);
     
-    if (clientFetchError) {
-      console.error('Error fetching existing clients:', clientFetchError);
-      throw clientFetchError;
-    }
-    
-    let client;
-    
-    if (existingClients && existingClients.length > 0) {
+    if (client) {
       // Update existing client
-      client = existingClients[0];
-      const { data: updatedClient, error: updateError } = await supabase
-        .from('clients')
-        .update({
-          name: proposalData.client,
-          email: proposalData.email,
-          phone: proposalData.phone,
-          address: proposalData.address
-        })
-        .eq('id', client.id)
-        .eq('user_id', user_id)
-        .select('id, name, email, phone, address')
-        .single();
-        
-      if (updateError) {
-        console.error('Error updating client:', updateError);
-        throw updateError;
-      }
-      
-      client = updatedClient;
+      client = await updateClient(client.id, {
+        name: proposalData.client,
+        email: proposalData.email,
+        phone: proposalData.phone,
+        address: proposalData.address
+      }, userId);
     } else {
       // Create new client
-      const { data: newClient, error: createError } = await supabase
-        .from('clients')
-        .insert({
-          name: proposalData.client,
-          email: proposalData.email,
-          phone: proposalData.phone,
-          address: proposalData.address,
-          user_id: user_id
-        })
-        .select('id, name, email, phone, address')
-        .single();
-        
-      if (createError) {
-        console.error('Error creating client:', createError);
-        throw createError;
-      }
-      
-      client = newClient;
+      client = await createClient({
+        name: proposalData.client,
+        email: proposalData.email,
+        phone: proposalData.phone,
+        address: proposalData.address
+      }, userId);
     }
 
     if (!client) {
-      console.error('Client not created');
       throw new Error('Client could not be created or retrieved');
     }
-
+    
     console.log('Client created/updated:', client);
 
     // Calculate total amount from items
-    const totalAmount = proposalData.items.reduce(
-      (sum, item) => sum + (item.quantity * item.unitPrice),
-      0
-    );
+    const totalAmount = calculateTotalAmount(proposalData.items);
 
-    // Create the proposal with client information - specifically use fk_proposals_client_id to resolve ambiguity
-    const { data: proposal, error: proposalError } = await supabase
-      .from('proposals')
-      .insert({
-        client_id: client.id,
-        title: `Proposal for ${proposalData.client}`,
-        issue_date: proposalData.proposalDate,
-        valid_until: proposalData.expirationDate,
-        amount: totalAmount,
-        content: proposalData.formattedContent || proposalData.scope,
-        status: 'Draft' as ProposalStatus,
-        user_id: user_id
-      })
-      .select()
-      .single();
+    // Format content for better organization
+    const formattedContent = proposalData.formattedContent || 
+      formatProposalContent({
+        scope: proposalData.scope,
+        timeline: proposalData.timeline,
+        items: proposalData.items,
+        notes: proposalData.notes
+      });
 
-    if (proposalError) {
-      console.error('Error creating proposal:', proposalError);
-      throw proposalError;
-    }
-
-    if (!proposal) {
-      console.error('Proposal not created');
-      throw new Error('Proposal could not be created');
-    }
-
+    // Create the proposal record
+    const proposal = await createProposalRecord({
+      client_id: client.id,
+      title: `Proposal for ${proposalData.client}`,
+      issue_date: proposalData.proposalDate,
+      valid_until: proposalData.expirationDate,
+      amount: totalAmount,
+      content: formattedContent,
+      user_id: userId
+    });
+    
     console.log('Proposal created:', proposal);
 
-    // Now fetch the client details separately to avoid the relationship conflict
-    const { data: clientData, error: clientDataError } = await supabase
-      .from('clients')
-      .select('name, email, phone, address')
-      .eq('id', client.id)
-      .single();
-
-    if (clientDataError) {
-      console.error('Error fetching client details:', clientDataError);
+    // Fetch client details separately to avoid relationship conflicts
+    let clientDetails;
+    try {
+      clientDetails = await getClientById(client.id);
+    } catch (error) {
+      console.error('Error fetching client details:', error);
       // Continue despite client fetch errors, as the main proposal is created
+      clientDetails = {
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        address: client.address
+      };
     }
 
     // Add proposal items
-    if (proposalData.items.length > 0) {
-      const proposalItemsData = proposalData.items.map(item => ({
-        proposal_id: proposal.id,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        type: 'item' as const
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('proposal_items')
-        .insert(proposalItemsData);
-
-      if (itemsError) {
-        console.error('Error adding proposal items:', itemsError);
-        // Continue despite item errors, as the main proposal is created
-      }
+    try {
+      await addProposalLineItems(proposal.id, proposalData.items);
+    } catch (error) {
+      console.error('Error adding proposal items:', error);
+      // Continue despite item errors, as the main proposal is created
     }
 
-    // Add scope and timeline as separate items for better organization
+    // Add scope, timeline, and notes as separate items
     try {
-      if (proposalData.scope) {
-        await supabase
-          .from('proposal_items')
-          .insert({
-            proposal_id: proposal.id,
-            description: proposalData.scope,
-            type: 'scope' as const
-          });
-      }
-
-      if (proposalData.timeline) {
-        await supabase
-          .from('proposal_items')
-          .insert({
-            proposal_id: proposal.id,
-            description: proposalData.timeline,
-            type: 'timeline' as const
-          });
-      }
-
-      if (proposalData.notes) {
-        await supabase
-          .from('proposal_items')
-          .insert({
-            proposal_id: proposal.id,
-            description: proposalData.notes,
-            type: 'note' as const
-          });
-      }
+      await addProposalContentSections(proposal.id, {
+        scope: proposalData.scope,
+        timeline: proposalData.timeline,
+        notes: proposalData.notes
+      });
     } catch (error) {
       console.error('Error adding additional proposal items:', error);
       // Continue despite additional item errors
@@ -191,11 +106,11 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     return {
       ...proposal,
       client_name: client.name,
-      clients: clientData ? {
-        name: clientData.name,
-        email: clientData.email,
-        phone: clientData.phone,
-        address: clientData.address
+      clients: clientDetails ? {
+        name: clientDetails.name,
+        email: clientDetails.email,
+        phone: clientDetails.phone,
+        address: clientDetails.address
       } : {
         name: client.name,
         email: client.email,
