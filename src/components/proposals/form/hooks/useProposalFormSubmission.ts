@@ -59,14 +59,16 @@ export function useProposalFormSubmission(
       
       if (isEditMode && id) {
         await updateProposalMutation.mutateAsync({ id, data: proposalData });
+        toast.success("Proposal updated successfully");
       } else {
         await createProposal(proposalData);
+        toast.success("Proposal created successfully");
       }
       
       navigate("/proposals");
     } catch (error: any) {
       console.error("Error in form submission:", error);
-      toast.error(`Form submission failed: ${error.message || "Unknown error"}`);
+      toast.error(`Error creating proposal: ${error.message || "Unknown error"}`);
     }
   };
 

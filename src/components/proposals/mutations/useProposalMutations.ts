@@ -2,7 +2,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createProposal, updateProposal } from "../api/proposalApi";
 import { ProposalFormData } from "../types";
-import { toast } from "sonner";
 
 export function useProposalMutations() {
   const queryClient = useQueryClient();
@@ -13,31 +12,25 @@ export function useProposalMutations() {
     onSuccess: (data) => {
       if (data) {
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
-        toast.success("Proposal created successfully");
-      } else {
-        toast.error("Failed to create proposal, please try again");
       }
     },
     onError: (error: any) => {
       console.error("Proposal creation error:", error);
-      toast.error("Error creating proposal: " + (error.message || "An unexpected error occurred"));
+      throw error;
     }
   });
 
-  // For updating a proposal - fixed to match the updated API
+  // For updating a proposal
   const updateProposalMutation = useMutation({
     mutationFn: updateProposal,
     onSuccess: (data) => {
       if (data) {
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
-        toast.success("Proposal updated successfully");
-      } else {
-        toast.error("Failed to update proposal, please try again");
       }
     },
     onError: (error: any) => {
       console.error("Proposal update error:", error);
-      toast.error("Error updating proposal: " + (error.message || "An unexpected error occurred"));
+      throw error;
     }
   });
 

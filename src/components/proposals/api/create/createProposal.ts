@@ -20,28 +20,62 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     console.log('Creating proposal for user:', user_id);
     console.log('Proposal data:', proposalData);
     
-    // Create or update the client
-    const { data: client, error: clientError } = await supabase
+    // First check if client with this email already exists
+    const { data: existingClients, error: clientFetchError } = await supabase
       .from('clients')
-      .upsert(
-        {
+      .select('id, name, email, phone, address')
+      .eq('email', proposalData.email)
+      .eq('user_id', user_id);
+    
+    if (clientFetchError) {
+      console.error('Error fetching existing clients:', clientFetchError);
+      throw clientFetchError;
+    }
+    
+    let client;
+    
+    if (existingClients && existingClients.length > 0) {
+      // Update existing client
+      client = existingClients[0];
+      const { data: updatedClient, error: updateError } = await supabase
+        .from('clients')
+        .update({
+          name: proposalData.client,
+          email: proposalData.email,
+          phone: proposalData.phone,
+          address: proposalData.address
+        })
+        .eq('id', client.id)
+        .eq('user_id', user_id)
+        .select('id, name, email, phone, address')
+        .single();
+        
+      if (updateError) {
+        console.error('Error updating client:', updateError);
+        throw updateError;
+      }
+      
+      client = updatedClient;
+    } else {
+      // Create new client
+      const { data: newClient, error: createError } = await supabase
+        .from('clients')
+        .insert({
           name: proposalData.client,
           email: proposalData.email,
           phone: proposalData.phone,
           address: proposalData.address,
           user_id: user_id
-        },
-        { 
-          onConflict: 'email',
-          ignoreDuplicates: false // Make sure we get the updated record
-        }
-      )
-      .select('id, name, email, phone, address')
-      .single();
-
-    if (clientError) {
-      console.error('Error creating client:', clientError);
-      throw clientError;
+        })
+        .select('id, name, email, phone, address')
+        .single();
+        
+      if (createError) {
+        console.error('Error creating client:', createError);
+        throw createError;
+      }
+      
+      client = newClient;
     }
 
     if (!client) {
