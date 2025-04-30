@@ -19,6 +19,7 @@ export function useProposalMutations() {
       }
     },
     onError: (error: any) => {
+      console.error("Proposal creation error:", error);
       toast.error("Error creating proposal: " + (error.message || "An unexpected error occurred"));
     }
   });
@@ -35,6 +36,7 @@ export function useProposalMutations() {
       }
     },
     onError: (error: any) => {
+      console.error("Proposal update error:", error);
       toast.error("Error updating proposal: " + (error.message || "An unexpected error occurred"));
     }
   });
