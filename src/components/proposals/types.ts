@@ -7,6 +7,7 @@ export type Proposal = Database["public"]["Tables"]["proposals"]["Row"] & {
     name?: string;
     email?: string;
     address?: string;
+    phone?: string;
   };
   items?: ProposalItem[];
   // Add these fields to match what we're using in the code

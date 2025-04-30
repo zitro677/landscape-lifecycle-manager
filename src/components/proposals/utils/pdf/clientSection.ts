@@ -1,6 +1,7 @@
 
 import { jsPDF } from "jspdf";
 import { Proposal } from "../../types";
+import { MapPin, Phone } from "lucide-react";
 
 export const addClientInformationSection = (
   doc: jsPDF, 
@@ -12,7 +13,7 @@ export const addClientInformationSection = (
   let yPosition = startY;
   doc.setFillColor(232, 237, 228);
   doc.setDrawColor(181, 211, 174);
-  doc.roundedRect(margin, yPosition, 80, 32, 3, 3, 'FD');
+  doc.roundedRect(margin, yPosition, 80, 42, 3, 3, 'FD');
 
   yPosition += 7;
   doc.setFontSize(11);
@@ -26,12 +27,23 @@ export const addClientInformationSection = (
   yPosition += 6;
   doc.text(`${proposal.client_name || "Client"}`, margin + 6, yPosition);
   yPosition += 5;
+  
+  // Add email if available
   if (proposal.clients?.email) {
     doc.text(`${proposal.clients.email}`, margin + 6, yPosition);
     yPosition += 5;
   }
-  if (proposal.clients?.address) {
-    doc.text(`${proposal.clients.address}`, margin + 6, yPosition);
+  
+  // Add phone if available
+  if (proposal.clients?.phone) {
+    doc.text(`📱 ${proposal.clients.phone}`, margin + 6, yPosition);
+    yPosition += 5;
   }
+  
+  // Add address if available
+  if (proposal.clients?.address) {
+    doc.text(`📍 ${proposal.clients.address}`, margin + 6, yPosition);
+  }
+  
   return startY;
 };

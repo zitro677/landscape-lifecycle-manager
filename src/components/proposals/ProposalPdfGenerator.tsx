@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { Proposal } from "./types";
@@ -35,7 +36,8 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       addProposalDetailsSection(doc, proposal, proposalBoxY, pageWidth);
 
       // Drop position after both info boxes for pricing/summary
-      yPosition += 37;
+      // Increase spacing to account for additional client info (phone & address)
+      yPosition += 47;
 
       // Updated: improved pricing summary section
       yPosition = addPricingSummarySection(
