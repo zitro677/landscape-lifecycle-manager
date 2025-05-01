@@ -5,10 +5,16 @@ import { Proposal } from "../../types";
 export const getProposals = async (): Promise<Proposal[]> => {
   try {
     // Get the current user session
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      throw new Error("Authentication error: " + sessionError.message);
+    }
+    
     if (!sessionData?.session?.user?.id) {
       console.error("No authenticated user found");
-      return [];
+      throw new Error("User not authenticated");
     }
     
     const userId = sessionData.session.user.id;
@@ -34,17 +40,22 @@ export const getProposals = async (): Promise<Proposal[]> => {
     }
 
     console.log('Fetched proposals count:', data?.length);
-    console.log('Fetched proposals sample:', data?.slice(0, 2));
+    
+    if (data && data.length > 0) {
+      console.log('Sample proposal data:', data[0]);
+    } else {
+      console.log('No proposals found for user');
+    }
 
     // Enhance each proposal with client details directly in the proposal object
     const proposalsWithClientNames = data.map(proposal => ({
       ...proposal,
-      client_name: proposal.clients?.name || 'Unknown Client', // Default to 'Unknown Client' if no name
+      client_name: proposal.clients?.name || 'Unknown Client', 
     }));
 
     return proposalsWithClientNames as Proposal[];
   } catch (error) {
     console.error("Unexpected error fetching proposals:", error);
-    return [];
+    throw error; // Re-throw the error so it can be handled by the query
   }
 };

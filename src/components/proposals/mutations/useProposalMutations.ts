@@ -10,52 +10,54 @@ export function useProposalMutations() {
   // For creating a proposal
   const createProposalMutation = useMutation({
     mutationFn: createProposal,
+    onMutate: () => {
+      toast.loading("Creating proposal...");
+    },
     onSuccess: (data) => {
+      toast.dismiss();
       if (data) {
-        // Force an immediate refetch of the proposals
+        // Invalidate queries to force an immediate refetch
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
-        // Also invalidate dashboard data if it exists
         queryClient.invalidateQueries({ queryKey: ["dashboard"] });
         
         toast.success("Proposal created successfully");
         console.log("Proposal created successfully:", data);
         
         // Force an immediate refetch
-        setTimeout(() => {
-          queryClient.refetchQueries({ queryKey: ["proposals"] });
-        }, 300);
+        queryClient.refetchQueries({ queryKey: ["proposals"] });
       }
     },
     onError: (error: any) => {
+      toast.dismiss();
       console.error("Proposal creation error:", error);
       toast.error(`Error creating proposal: ${error.message || "Unknown error"}`);
-      throw error;
     }
   });
 
   // For updating a proposal
   const updateProposalMutation = useMutation({
     mutationFn: updateProposal,
+    onMutate: () => {
+      toast.loading("Updating proposal...");
+    },
     onSuccess: (data) => {
+      toast.dismiss();
       if (data) {
-        // Force an immediate refetch of the proposals
+        // Invalidate queries to force an immediate refetch
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
-        // Also invalidate dashboard data if it exists
         queryClient.invalidateQueries({ queryKey: ["dashboard"] });
         
         toast.success("Proposal updated successfully");
         console.log("Proposal updated successfully:", data);
         
         // Force an immediate refetch
-        setTimeout(() => {
-          queryClient.refetchQueries({ queryKey: ["proposals"] });
-        }, 300);
+        queryClient.refetchQueries({ queryKey: ["proposals"] });
       }
     },
     onError: (error: any) => {
+      toast.dismiss();
       console.error("Proposal update error:", error);
       toast.error(`Error updating proposal: ${error.message || "Unknown error"}`);
-      throw error;
     }
   });
 

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
-import { useProposalQueries } from "./queries/useProposalQueries";
+import { useProposals } from "./useProposals"; 
 import ProposalFilters from "./ProposalFilters";
 import ProposalStats from "./ProposalStats";
 import ProposalsList from "./ProposalsList";
@@ -16,34 +16,40 @@ const ProposalsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("newest");
   
-  const { proposals, isLoading, isError, error, refetch } = useProposalQueries();
+  const { proposals, isLoading, isError, error, refetch, status } = useProposals();
 
   // Force a refetch when the component mounts
   useEffect(() => {
-    // Show toast when the component mounts to indicate loading
-    const loadingToast = toast.loading("Loading proposals...");
-    
-    refetch().then(() => {
-      toast.dismiss(loadingToast);
-      if (proposals && proposals.length > 0) {
-        toast.success(`Loaded ${proposals.length} proposals`);
+    const loadProposals = async () => {
+      const loadingToast = toast.loading("Loading proposals...");
+      
+      try {
+        await refetch();
+        toast.dismiss(loadingToast);
+        
+        if (proposals && proposals.length > 0) {
+          toast.success(`Loaded ${proposals.length} proposals`);
+        } else {
+          toast.info("No proposals found");
+        }
+      } catch (err) {
+        toast.dismiss(loadingToast);
+        toast.error("Failed to load proposals");
+        console.error("Error refetching proposals:", err);
       }
-    }).catch((err) => {
-      toast.dismiss(loadingToast);
-      toast.error("Failed to load proposals");
-      console.error("Error refetching proposals:", err);
-    });
+    };
     
+    loadProposals();
     console.log("ProposalsPage mounted, refetching data");
   }, [refetch]);
 
   // Log the proposals data to help debug
   useEffect(() => {
-    if (!isLoading) {
-      console.log("Proposals data in ProposalsPage:", proposals);
-      console.log("Proposals count:", proposals?.length || 0);
-    }
-  }, [proposals, isLoading]);
+    console.log("ProposalsPage - Current proposals status:", status);
+    console.log("ProposalsPage - isLoading:", isLoading);
+    console.log("ProposalsPage - isError:", isError);
+    console.log("ProposalsPage - Proposals count:", proposals?.length || 0);
+  }, [proposals, isLoading, isError, status]);
 
   // Ensure proposals is an array before filtering
   const filteredProposals = Array.isArray(proposals) ? proposals.filter((proposal) => {
@@ -74,6 +80,12 @@ const ProposalsPage: React.FC = () => {
               )}
             </AlertDescription>
           </Alert>
+          <button 
+            onClick={() => refetch()} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Try again
+          </button>
         </div>
       </AnimatedPage>
     );

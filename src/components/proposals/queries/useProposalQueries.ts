@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { getProposals, getProposalById } from "../api/proposalApi";
 
@@ -22,12 +21,24 @@ export function useProposalQueries() {
     gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Log the raw data for debugging
+  console.log("useProposalQueries - Raw Query Result:", proposalsQuery);
+  console.log("useProposalQueries - Proposals Data:", proposalsQuery.data);
+  console.log("useProposalQueries - Is Loading:", proposalsQuery.isLoading);
+  console.log("useProposalQueries - Is Error:", proposalsQuery.isError);
+  
+  if (proposalsQuery.isError) {
+    console.error("useProposalQueries - Error:", proposalsQuery.error);
+  }
+
   return {
     proposals: proposalsQuery.data || [],
     isLoading: proposalsQuery.isLoading,
     isError: proposalsQuery.isError,
     error: proposalsQuery.error,
     refetch: proposalsQuery.refetch,
+    isSuccess: proposalsQuery.isSuccess,
+    status: proposalsQuery.status,
   };
 }
 
