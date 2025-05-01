@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
 import { useProposals } from "./useProposals"; 
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -31,31 +31,35 @@ const ProposalsPage: React.FC = () => {
   }, [user, authLoading, navigate]);
 
   // Force a refetch when the component mounts
-  useEffect(() => {
-    if (user) {
-      const loadProposals = async () => {
-        const loadingToast = toast.loading("Loading proposals...");
-        
-        try {
-          await refetch();
-          toast.dismiss(loadingToast);
-          
-          if (proposals && proposals.length > 0) {
-            toast.success(`Loaded ${proposals.length} proposals`);
-          } else if (status === 'success') {
-            toast.info("No proposals found");
-          }
-        } catch (err) {
-          toast.dismiss(loadingToast);
-          toast.error("Failed to load proposals");
-          console.error("Error refetching proposals:", err);
-        }
-      };
+  const loadProposals = useCallback(async () => {
+    if (!user) return;
+    
+    const loadingToast = toast.loading("Loading proposals...");
+    
+    try {
+      await refetch();
+      toast.dismiss(loadingToast);
       
+      if (status === 'success') {
+        if (proposals && proposals.length > 0) {
+          toast.success(`Loaded ${proposals.length} proposals`);
+        } else {
+          toast.info("No proposals found");
+        }
+      }
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to load proposals");
+      console.error("Error refetching proposals:", err);
+    }
+  }, [refetch, user, proposals, status]);
+  
+  useEffect(() => {
+    if (user && !isLoading) {
       loadProposals();
       console.log("ProposalsPage mounted, refetching data");
     }
-  }, [refetch, user]);
+  }, [user, loadProposals, isLoading]);
 
   // Log the proposals data to help debug
   useEffect(() => {
@@ -118,7 +122,7 @@ const ProposalsPage: React.FC = () => {
             </AlertDescription>
           </Alert>
           <button 
-            onClick={() => refetch()} 
+            onClick={() => loadProposals()} 
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Try again

@@ -15,14 +15,14 @@ export function useProposalQueries() {
     retry: (failureCount, error) => {
       console.log("Retrying proposals query, attempt:", failureCount, "Error:", error);
       // Only retry a few times to avoid infinite loops
-      return failureCount < 3;
+      return failureCount < 2;
     },
     // Keep staleTime at 0 to ensure fresh data
     staleTime: 0,
     // Always refetch when window is focused
     refetchOnWindowFocus: true,
     // Always refetch when component mounts
-    refetchOnMount: "always",
+    refetchOnMount: true,
     // Set a shorter cache time
     gcTime: 1000 * 60 * 5, // 5 minutes
   });

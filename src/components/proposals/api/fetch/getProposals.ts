@@ -2,31 +2,21 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal } from "../../types";
 import { toast } from "sonner";
+import { getAuthenticatedUserId } from "../utils/sessionUtils";
 
 export const getProposals = async (): Promise<Proposal[]> => {
   try {
-    // Get the current user session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    // Use the utility function to get authenticated user ID
+    const userId = await getAuthenticatedUserId();
     
-    if (sessionError) {
-      console.error("Session error:", sessionError);
-      throw new Error("Authentication error: " + sessionError.message);
-    }
-    
-    if (!sessionData?.session?.user?.id) {
-      console.error("No authenticated user found");
-      toast.error("You need to be logged in to view proposals");
-      throw new Error("User not authenticated");
-    }
-    
-    const userId = sessionData.session.user.id;
     console.log('Fetching proposals for user:', userId);
     
+    // Fix the query by specifying the correct foreign key relationship
     const { data, error } = await supabase
       .from('proposals')
       .select(`
         *,
-        clients!client_id (
+        clients!proposals_client_id_fkey (
           name,
           email,
           address,
