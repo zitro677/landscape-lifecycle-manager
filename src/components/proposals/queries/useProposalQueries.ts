@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { getProposals, getProposalById } from "../api/proposalApi";
 
@@ -7,6 +8,7 @@ export function useProposalQueries() {
     queryFn: getProposals,
     // Retry configuration to handle authentication issues
     retry: (failureCount, error) => {
+      console.log("Retrying proposals query, attempt:", failureCount, "Error:", error);
       // Only retry a few times to avoid infinite loops
       return failureCount < 3;
     },
@@ -14,8 +16,10 @@ export function useProposalQueries() {
     staleTime: 0,
     // Always refetch when window is focused
     refetchOnWindowFocus: true,
-    // Add refetchOnMount to ensure data is fetched when component mounts
-    refetchOnMount: true
+    // Always refetch when component mounts
+    refetchOnMount: "always",
+    // Set a shorter cache time
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   return {

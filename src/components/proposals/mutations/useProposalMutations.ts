@@ -14,8 +14,16 @@ export function useProposalMutations() {
       if (data) {
         // Force an immediate refetch of the proposals
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
+        // Also invalidate dashboard data if it exists
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        
         toast.success("Proposal created successfully");
         console.log("Proposal created successfully:", data);
+        
+        // Force an immediate refetch
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ["proposals"] });
+        }, 300);
       }
     },
     onError: (error: any) => {
@@ -32,8 +40,16 @@ export function useProposalMutations() {
       if (data) {
         // Force an immediate refetch of the proposals
         queryClient.invalidateQueries({ queryKey: ["proposals"] });
+        // Also invalidate dashboard data if it exists
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        
         toast.success("Proposal updated successfully");
         console.log("Proposal updated successfully:", data);
+        
+        // Force an immediate refetch
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ["proposals"] });
+        }, 300);
       }
     },
     onError: (error: any) => {

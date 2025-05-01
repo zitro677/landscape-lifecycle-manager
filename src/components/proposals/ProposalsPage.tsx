@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Proposal } from "./types";
+import { toast } from "sonner";
 
 const ProposalsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -19,7 +20,20 @@ const ProposalsPage: React.FC = () => {
 
   // Force a refetch when the component mounts
   useEffect(() => {
-    refetch();
+    // Show toast when the component mounts to indicate loading
+    const loadingToast = toast.loading("Loading proposals...");
+    
+    refetch().then(() => {
+      toast.dismiss(loadingToast);
+      if (proposals && proposals.length > 0) {
+        toast.success(`Loaded ${proposals.length} proposals`);
+      }
+    }).catch((err) => {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to load proposals");
+      console.error("Error refetching proposals:", err);
+    });
+    
     console.log("ProposalsPage mounted, refetching data");
   }, [refetch]);
 
@@ -27,6 +41,7 @@ const ProposalsPage: React.FC = () => {
   useEffect(() => {
     if (!isLoading) {
       console.log("Proposals data in ProposalsPage:", proposals);
+      console.log("Proposals count:", proposals?.length || 0);
     }
   }, [proposals, isLoading]);
 

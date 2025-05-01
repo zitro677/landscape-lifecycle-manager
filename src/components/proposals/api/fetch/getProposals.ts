@@ -25,14 +25,16 @@ export const getProposals = async (): Promise<Proposal[]> => {
           phone
         )
       `)
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("Error fetching proposals:", error);
-      return [];
+      throw error;
     }
 
-    console.log('Fetched proposals:', data);
+    console.log('Fetched proposals count:', data?.length);
+    console.log('Fetched proposals sample:', data?.slice(0, 2));
 
     // Enhance each proposal with client details directly in the proposal object
     const proposalsWithClientNames = data.map(proposal => ({
@@ -40,7 +42,6 @@ export const getProposals = async (): Promise<Proposal[]> => {
       client_name: proposal.clients?.name || 'Unknown Client', // Default to 'Unknown Client' if no name
     }));
 
-    console.log('Processed proposals with client names:', proposalsWithClientNames);
     return proposalsWithClientNames as Proposal[];
   } catch (error) {
     console.error("Unexpected error fetching proposals:", error);
