@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal } from "../../types";
+import { toast } from "sonner";
 
 export const getProposals = async (): Promise<Proposal[]> => {
   try {
@@ -14,6 +15,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
     
     if (!sessionData?.session?.user?.id) {
       console.error("No authenticated user found");
+      toast.error("You need to be logged in to view proposals");
       throw new Error("User not authenticated");
     }
     
@@ -48,10 +50,10 @@ export const getProposals = async (): Promise<Proposal[]> => {
     }
 
     // Enhance each proposal with client details directly in the proposal object
-    const proposalsWithClientNames = data.map(proposal => ({
+    const proposalsWithClientNames = data ? data.map(proposal => ({
       ...proposal,
       client_name: proposal.clients?.name || 'Unknown Client', 
-    }));
+    })) : [];
 
     return proposalsWithClientNames as Proposal[];
   } catch (error) {

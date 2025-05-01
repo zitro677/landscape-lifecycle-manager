@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
 import { useProposals } from "./useProposals"; 
+import { useAuth } from "@/components/auth/AuthProvider";
 import ProposalFilters from "./ProposalFilters";
 import ProposalStats from "./ProposalStats";
 import ProposalsList from "./ProposalsList";
@@ -11,45 +12,81 @@ import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Proposal } from "./types";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const ProposalsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("newest");
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   
   const { proposals, isLoading, isError, error, refetch, status } = useProposals();
 
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("You need to be logged in to view proposals");
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
   // Force a refetch when the component mounts
   useEffect(() => {
-    const loadProposals = async () => {
-      const loadingToast = toast.loading("Loading proposals...");
-      
-      try {
-        await refetch();
-        toast.dismiss(loadingToast);
+    if (user) {
+      const loadProposals = async () => {
+        const loadingToast = toast.loading("Loading proposals...");
         
-        if (proposals && proposals.length > 0) {
-          toast.success(`Loaded ${proposals.length} proposals`);
-        } else {
-          toast.info("No proposals found");
+        try {
+          await refetch();
+          toast.dismiss(loadingToast);
+          
+          if (proposals && proposals.length > 0) {
+            toast.success(`Loaded ${proposals.length} proposals`);
+          } else if (status === 'success') {
+            toast.info("No proposals found");
+          }
+        } catch (err) {
+          toast.dismiss(loadingToast);
+          toast.error("Failed to load proposals");
+          console.error("Error refetching proposals:", err);
         }
-      } catch (err) {
-        toast.dismiss(loadingToast);
-        toast.error("Failed to load proposals");
-        console.error("Error refetching proposals:", err);
-      }
-    };
-    
-    loadProposals();
-    console.log("ProposalsPage mounted, refetching data");
-  }, [refetch]);
+      };
+      
+      loadProposals();
+      console.log("ProposalsPage mounted, refetching data");
+    }
+  }, [refetch, user]);
 
   // Log the proposals data to help debug
   useEffect(() => {
     console.log("ProposalsPage - Current proposals status:", status);
+    console.log("ProposalsPage - Auth status:", user ? "Authenticated" : "Not authenticated");
+    console.log("ProposalsPage - Auth loading:", authLoading);
     console.log("ProposalsPage - isLoading:", isLoading);
     console.log("ProposalsPage - isError:", isError);
     console.log("ProposalsPage - Proposals count:", proposals?.length || 0);
-  }, [proposals, isLoading, isError, status]);
+  }, [proposals, isLoading, isError, status, user, authLoading]);
+
+  // If auth is still loading, show skeleton
+  if (authLoading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <ProposalsHeader />
+          <div className="space-y-4 mt-4">
+            <Skeleton className="h-[150px] w-full" />
+            <Skeleton className="h-[70px] w-full" />
+            <Skeleton className="h-[400px] w-full" />
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  // If user is not authenticated, don't render content
+  if (!user) {
+    return null; // Will be redirected by the useEffect hook
+  }
 
   // Ensure proposals is an array before filtering
   const filteredProposals = Array.isArray(proposals) ? proposals.filter((proposal) => {
