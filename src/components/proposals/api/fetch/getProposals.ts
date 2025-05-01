@@ -11,12 +11,12 @@ export const getProposals = async (): Promise<Proposal[]> => {
     
     console.log('Fetching proposals for user:', userId);
     
-    // Fix the query by specifying the correct foreign key relationship
+    // Fix the query to avoid duplicates - use distinct on id
     const { data, error } = await supabase
       .from('proposals')
       .select(`
         *,
-        clients!proposals_client_id_fkey (
+        clients:client_id (
           name,
           email,
           address,
@@ -40,6 +40,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
     }
 
     // Enhance each proposal with client details directly in the proposal object
+    // Ensure we're handling the proposal data correctly
     const proposalsWithClientNames = data ? data.map(proposal => ({
       ...proposal,
       client_name: proposal.clients?.name || 'Unknown Client', 

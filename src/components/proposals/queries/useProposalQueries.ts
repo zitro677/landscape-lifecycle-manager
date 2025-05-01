@@ -17,13 +17,13 @@ export function useProposalQueries() {
       // Only retry a few times to avoid infinite loops
       return failureCount < 2;
     },
-    // Keep staleTime at 0 to ensure fresh data
-    staleTime: 0,
-    // Always refetch when window is focused
+    // Avoid multiple refetches with their own unique queryKeys
+    staleTime: 1000 * 60, // 1 minute
+    // Focus refetching
     refetchOnWindowFocus: true,
-    // Always refetch when component mounts
-    refetchOnMount: true,
-    // Set a shorter cache time
+    // Only refetch when component mounts and then rely on manual refetches
+    refetchOnMount: 'always',
+    // Set a cache time
     gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
