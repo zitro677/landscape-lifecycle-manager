@@ -33,15 +33,15 @@ export const addClientInformationSection = (
     yPosition += 5;
   }
   
-  // Add phone if available - using phone property directly
+  // Add phone if available - removed emoji
   if (proposal.clients?.phone) {
-    doc.text(`📱 ${proposal.clients.phone}`, margin + 6, yPosition);
+    doc.text(`Phone: ${proposal.clients.phone}`, margin + 6, yPosition);
     yPosition += 5;
   }
   
-  // Add address if available
+  // Add address if available - removed emoji
   if (proposal.clients?.address) {
-    doc.text(`📍 ${proposal.clients.address}`, margin + 6, yPosition);
+    doc.text(`Address: ${proposal.clients.address}`, margin + 6, yPosition);
   }
   
   return startY;
