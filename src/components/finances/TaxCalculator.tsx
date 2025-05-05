@@ -6,6 +6,8 @@ import { useTaxCalculator } from "./tax-calculator/hooks/useTaxCalculator";
 import { TaxIncomeSection } from "./tax-calculator/components/TaxIncomeSection";
 import { TaxExpensesSection } from "./tax-calculator/components/TaxExpensesSection";
 import { TaxResultsSection } from "./tax-calculator/components/TaxResultsSection";
+import { generateTaxReport } from "./tax-calculator/utils/generateTaxReport";
+import { toast } from "sonner";
 
 const TaxCalculator: React.FC = () => {
   const {
@@ -19,6 +21,22 @@ const TaxCalculator: React.FC = () => {
     yearFilter,
     setYearFilter,
   } = useTaxCalculator();
+
+  const handleGenerateReport = () => {
+    try {
+      generateTaxReport({
+        taxResults,
+        expenses,
+        income,
+        filingStatus,
+        year: yearFilter,
+      });
+      toast.success(`Tax report for ${yearFilter} generated successfully`);
+    } catch (error) {
+      console.error("Error generating tax report:", error);
+      toast.error("Failed to generate tax report");
+    }
+  };
 
   return (
     <motion.div
@@ -49,7 +67,10 @@ const TaxCalculator: React.FC = () => {
       </div>
 
       <div className="flex justify-end">
-        <Button className="w-full sm:w-auto">
+        <Button 
+          className="w-full sm:w-auto"
+          onClick={handleGenerateReport}
+        >
           Generate Tax Report for {yearFilter}
         </Button>
       </div>
