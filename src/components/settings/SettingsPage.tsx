@@ -8,10 +8,13 @@ import UserManagementTab from "./tabs/UserManagementTab";
 import AnimatedPage from "../shared/AnimatedPage";
 import { useAuth } from "../auth/AuthProvider";
 import { useSettings } from "./hooks/useSettings";
+import { Button } from "../ui/button";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("account");
-  const { isAdmin } = useAuth();
+  const { isAdmin, signOut } = useAuth();
   const { 
     loadUserSettings, 
     isLoading, 
@@ -23,14 +26,34 @@ const SettingsPage = () => {
   // Load user settings
   const userSettings = loadUserSettings();
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("You have been signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
+  };
+
   return (
     <AnimatedPage>
       <div className="container mx-auto py-6 space-y-4 max-w-5xl">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+            <p className="text-muted-foreground">
+              Manage your account settings and preferences
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2" 
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
