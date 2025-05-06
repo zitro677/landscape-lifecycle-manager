@@ -11,10 +11,14 @@ import { useSettings } from "./hooks/useSettings";
 import { Button } from "../ui/button";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("account");
   const { isAdmin, signOut } = useAuth();
+  const isMobile = useIsMobile();
   const { 
     loadUserSettings, 
     isLoading, 
@@ -36,6 +40,17 @@ const SettingsPage = () => {
     }
   };
 
+  const renderSignOutButton = () => (
+    <Button 
+      variant="outline" 
+      className="flex items-center gap-2" 
+      onClick={handleSignOut}
+    >
+      <LogOut className="h-4 w-4" />
+      Sign Out
+    </Button>
+  );
+
   return (
     <AnimatedPage>
       <div className="container mx-auto py-6 space-y-4 max-w-5xl">
@@ -46,14 +61,35 @@ const SettingsPage = () => {
               Manage your account settings and preferences
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2" 
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
+          
+          {/* Desktop sign out button */}
+          <div className="hidden md:block">
+            {renderSignOutButton()}
+          </div>
+          
+          {/* Mobile sign out button */}
+          <div className="md:hidden">
+            {isMobile && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-auto">
+                  <div className="py-6 flex justify-center">
+                    <Button 
+                      onClick={handleSignOut} 
+                      className="w-full max-w-xs flex items-center justify-center gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

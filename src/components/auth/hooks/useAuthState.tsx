@@ -50,11 +50,24 @@ export const useAuthState = () => {
 
   const signOut = async () => {
     try {
+      console.log("Attempting to sign out...");
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("Error in supabase.auth.signOut():", error);
+        throw error;
+      }
+      console.log("Sign out successful");
+      
+      // Force clear local session state
+      setUser(null);
+      setSession(null);
+      
+      // Navigate to auth page after sign out
+      window.location.href = "/auth";
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Error signing out");
+      throw error;
     }
   };
 
