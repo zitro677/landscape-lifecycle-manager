@@ -1,67 +1,19 @@
 
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  LayoutDashboard,
-  FileText,
-  PenTool,
-  BarChart3,
-  FolderKanban,
-  Settings,
-  LogOut,
-  Users,
-} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useSidebar } from "./hooks/useSidebar";
+import SidebarHeader from "./sidebar/SidebarHeader";
+import SidebarNavItems from "./sidebar/SidebarNavItems";
+import SidebarSettings from "./sidebar/SidebarSettings";
+import SidebarUserRole from "./sidebar/SidebarUserRole";
+import SidebarSignOut from "./sidebar/SidebarSignOut";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
   closeSidebar: () => void;
 }
-
-interface NavItem {
-  name: string;
-  path: string;
-  icon: React.ReactNode;
-  adminOnly?: boolean;
-}
-
-const navItems: NavItem[] = [
-  {
-    name: "Dashboard",
-    path: "/",
-    icon: <LayoutDashboard className="h-5 w-5" />,
-  },
-  {
-    name: "Invoices",
-    path: "/invoices",
-    icon: <FileText className="h-5 w-5" />,
-  },
-  {
-    name: "Proposals",
-    path: "/proposals",
-    icon: <PenTool className="h-5 w-5" />,
-  },
-  {
-    name: "Finances",
-    path: "/finances",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
-    name: "Projects",
-    path: "/projects",
-    icon: <FolderKanban className="h-5 w-5" />,
-  },
-  {
-    name: "Clients",
-    path: "/clients",
-    icon: <Users className="h-5 w-5" />,
-  },
-];
 
 const sidebarVariants = {
   open: {
@@ -85,22 +37,7 @@ const sidebarVariants = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
-  const { signOut, isAdmin, userRole } = useAuth();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success("You have been logged out");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Failed to log out");
-    }
-  };
-
-  // Filter navigation items based on user role
-  const visibleNavItems = navItems.filter(item => 
-    !item.adminOnly || (item.adminOnly && isAdmin)
-  );
+  const { isAdmin, userRole, handleSignOut } = useSidebar();
 
   return (
     <>
@@ -127,79 +64,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b px-4">
-          <h2 className="text-lg font-semibold">Landscape Irrigation</h2>
-        </div>
+        <SidebarHeader />
 
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <div className="px-3 py-2">
-            <nav className="flex flex-col gap-1">
-              {visibleNavItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => {
-                    if (window.innerWidth < 768) {
-                      closeSidebar();
-                    }
-                  }}
-                  className={({ isActive }) =>
-                    cn(
-                      "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    )
-                  }
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </NavLink>
-              ))}
-            </nav>
-
-            <div className="mt-6">
-              <p className="mb-2 text-xs font-medium text-sidebar-foreground/70 px-3">
-                Settings
-              </p>
-              <nav className="flex flex-col gap-1">
-                <NavLink
-                  to="/settings"
-                  className={({ isActive }) =>
-                    cn(
-                      "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    )
-                  }
-                >
-                  <Settings className="h-5 w-5" />
-                  <span>Settings</span>
-                </NavLink>
-              </nav>
-            </div>
-
-            {userRole && (
-              <div className="mt-6 px-3">
-                <div className="rounded-md bg-primary/10 px-3 py-2">
-                  <p className="text-xs font-medium">Logged in as:</p>
-                  <p className="text-sm">{isAdmin ? 'Administrator' : 'Read-Only User'}</p>
-                </div>
-              </div>
-            )}
+            <SidebarNavItems isAdmin={isAdmin} closeSidebar={closeSidebar} />
+            <SidebarSettings />
+            <SidebarUserRole userRole={userRole} isAdmin={isAdmin} />
           </div>
 
-          <div className="absolute bottom-4 left-0 right-0 px-3">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-current"
-              onClick={handleSignOut}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
+          <SidebarSignOut onSignOut={handleSignOut} />
         </ScrollArea>
       </motion.aside>
     </>
