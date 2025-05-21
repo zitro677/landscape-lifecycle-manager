@@ -1,23 +1,48 @@
 
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-export const useSidebar = () => {
-  const { signOut, isAdmin, userRole } = useAuth();
+export function useSidebar() {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { user, userRole, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSignOut = async () => {
+  const closeSidebar = useCallback(() => {
+    setIsMobileOpen(false);
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setIsMobileOpen(prev => !prev);
+  }, []);
+
+  const handleSignOut = useCallback(async () => {
     try {
+      toast.loading("Signing out...");
       await signOut();
-      toast.success("You have been logged out");
+      toast.success("Signed out successfully");
+      navigate("/auth");
     } catch (error) {
       console.error("Error signing out:", error);
-      toast.error("Failed to log out");
+      toast.error("Failed to sign out. Please try again.");
     }
-  };
+  }, [signOut, navigate]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("useSidebar hook - userRole:", userRole);
+    console.log("useSidebar hook - isAdmin:", isAdmin);
+  }, [userRole, isAdmin]);
 
   return {
+    isMobileOpen,
+    setIsMobileOpen,
+    closeSidebar,
+    toggleSidebar,
+    handleSignOut,
     isAdmin,
     userRole,
-    handleSignOut,
+    user
   };
-};
+}

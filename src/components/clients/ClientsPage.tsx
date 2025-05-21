@@ -20,10 +20,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { toast } from "sonner";
 
 const ClientsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { clients, isLoading, deleteClient } = useClients();
+  const { user, isAdmin } = useAuth();
+  const { clients, isLoading, deleteClient, error, refetch } = useClients();
+
+  // Log debug information
+  React.useEffect(() => {
+    console.log("ClientsPage - Auth state:", user ? "Authenticated" : "Not authenticated");
+    console.log("ClientsPage - isAdmin:", isAdmin);
+    console.log("ClientsPage - isLoading:", isLoading);
+    console.log("ClientsPage - clients count:", clients?.length || 0);
+    console.log("ClientsPage - error:", error);
+    
+    if (error) {
+      toast.error("Failed to load clients data");
+      console.error("Error loading clients:", error);
+    }
+
+    // Attempt to refetch if we have a user but no clients data
+    if (user && !isLoading && !clients && !error) {
+      console.log("ClientsPage - Attempting to refetch clients data");
+      refetch();
+    }
+  }, [user, isAdmin, clients, isLoading, error, refetch]);
 
   return (
     <AnimatedPage>
@@ -56,6 +79,20 @@ const ClientsPage: React.FC = () => {
               </Card>
             ))}
           </div>
+        ) : error ? (
+          <Card className="shadow-sm border-red-200 bg-red-50">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="text-center py-8">
+                <h3 className="text-lg font-medium mb-2 text-red-600">Error loading clients</h3>
+                <p className="text-muted-foreground mb-4">
+                  There was a problem retrieving client data
+                </p>
+                <Button onClick={() => refetch()} className="flex items-center gap-1">
+                  Try Again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : clients && clients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {clients.map((client) => (

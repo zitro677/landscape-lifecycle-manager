@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Proposal } from "./types";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const ProposalsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -20,20 +21,46 @@ const ProposalsPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
-  const { proposals, isLoading, isError, error, refetch, status } = useProposals();
+  const { 
+    proposals, 
+    isLoading, 
+    isError, 
+    error, 
+    refetch, 
+    status 
+  } = useProposals();
+
+  // Improved logging for debugging
+  useEffect(() => {
+    console.log("ProposalsPage - Auth status:", user ? "Authenticated" : "Not authenticated");
+    console.log("ProposalsPage - Auth loading:", authLoading);
+    console.log("ProposalsPage - isLoading:", isLoading);
+    console.log("ProposalsPage - isError:", isError);
+    console.log("ProposalsPage - Proposals count:", proposals?.length || 0);
+    console.log("ProposalsPage - Query status:", status);
+    
+    if (error) {
+      console.error("ProposalsPage - Error details:", error);
+    }
+  }, [proposals, isLoading, isError, status, user, authLoading, error]);
 
   // Check if user is authenticated
   useEffect(() => {
     if (!authLoading && !user) {
+      console.log("ProposalsPage - User not authenticated, redirecting to auth page");
       toast.error("You need to be logged in to view proposals");
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
-  // Force a refetch when the component mounts
+  // Improved load proposals function with better error handling
   const loadProposals = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      console.log("ProposalsPage - Not loading proposals, user not authenticated");
+      return;
+    }
     
+    console.log("ProposalsPage - Loading proposals...");
     const loadingToast = toast.loading("Loading proposals...");
     
     try {
@@ -46,30 +73,23 @@ const ProposalsPage: React.FC = () => {
         } else {
           toast.info("No proposals found");
         }
+      } else if (status === 'error') {
+        toast.error("Failed to load proposals");
       }
     } catch (err) {
       toast.dismiss(loadingToast);
       toast.error("Failed to load proposals");
-      console.error("Error refetching proposals:", err);
+      console.error("ProposalsPage - Error refetching proposals:", err);
     }
   }, [refetch, user, proposals, status]);
   
+  // Force a refetch when the component mounts
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !isLoading && status !== 'loading') {
+      console.log("ProposalsPage - Component mounted, loading proposals");
       loadProposals();
-      console.log("ProposalsPage mounted, refetching data");
     }
-  }, [user, loadProposals, isLoading]);
-
-  // Log the proposals data to help debug
-  useEffect(() => {
-    console.log("ProposalsPage - Current proposals status:", status);
-    console.log("ProposalsPage - Auth status:", user ? "Authenticated" : "Not authenticated");
-    console.log("ProposalsPage - Auth loading:", authLoading);
-    console.log("ProposalsPage - isLoading:", isLoading);
-    console.log("ProposalsPage - isError:", isError);
-    console.log("ProposalsPage - Proposals count:", proposals?.length || 0);
-  }, [proposals, isLoading, isError, status, user, authLoading]);
+  }, [user, loadProposals, isLoading, status]);
 
   // If auth is still loading, show skeleton
   if (authLoading) {
@@ -121,12 +141,12 @@ const ProposalsPage: React.FC = () => {
               )}
             </AlertDescription>
           </Alert>
-          <button 
+          <Button 
             onClick={() => loadProposals()} 
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Try again
-          </button>
+          </Button>
         </div>
       </AnimatedPage>
     );

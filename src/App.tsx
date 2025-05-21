@@ -23,27 +23,56 @@ import ClientsPage from "./components/clients/ClientsPage";
 import ClientForm from "./components/clients/ClientForm";
 import SettingsPage from "./components/settings/SettingsPage";
 import { Loader2 } from "lucide-react";
+import React from "react";
 
-const queryClient = new QueryClient();
+// Configure the query client with better error handling and retry options
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      onError: (error) => {
+        console.error("Query error:", error);
+      }
+    },
+    mutations: {
+      retry: 1,
+      onError: (error) => {
+        console.error("Mutation error:", error);
+      }
+    }
+  }
+});
 
 // Auth guard component to protect routes
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log("ProtectedRoute - Auth status:", user ? "Authenticated" : "Not authenticated");
+    console.log("ProtectedRoute - Auth loading:", loading);
+    console.log("ProtectedRoute - Current path:", location.pathname);
+  }, [user, loading, location.pathname]);
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Checking authentication...</span>
       </div>
     );
   }
 
   if (!user) {
     // Save the current path to redirect back after login
+    console.log("ProtectedRoute - User not authenticated, redirecting to auth page");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  console.log("ProtectedRoute - User authenticated, rendering children");
   return <>{children}</>;
 };
 

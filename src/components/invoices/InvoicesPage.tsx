@@ -1,69 +1,108 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/components/auth/AuthProvider";
 import AnimatedPage from "../shared/AnimatedPage";
+import { useInvoices } from "./useInvoices";
 import InvoicesHeader from "./InvoicesHeader";
 import InvoiceStats from "./InvoiceStats";
 import InvoiceFilters from "./InvoiceFilters";
 import InvoicesList from "./InvoicesList";
-import { useInvoices } from "./useInvoices";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const InvoicesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortOrder, setSortOrder] = useState<string>("newest");
+  const { user, loading: authLoading } = useAuth();
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date");
+  const [direction, setDirection] = useState("desc");
   
-  const { data: invoices, isLoading, error } = useInvoices();
+  const { 
+    invoices, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useInvoices();
 
-  // Filter invoices by status
-  const filteredInvoices = invoices ? 
-    invoices.filter(invoice => 
-      statusFilter === "all" ? true : invoice.status?.toLowerCase() === statusFilter.toLowerCase()
-    ) : [];
-  
-  // Sort invoices by date
-  const sortedInvoices = filteredInvoices
-    ? [...filteredInvoices].sort((a, b) => {
-        const dateA = new Date(a.issue_date).getTime();
-        const dateB = new Date(b.issue_date).getTime();
-        return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
-      })
-    : [];
-  
-  // Calculate statistics
-  const totalAmount = invoices
-    ? invoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0)
-    : 0;
-  
-  const pendingAmount = invoices
-    ? invoices.filter(invoice => 
-        invoice.status === "Pending" || invoice.status === "Overdue"
-      ).reduce((sum, invoice) => sum + Number(invoice.amount), 0)
-    : 0;
-  
-  const pendingCount = invoices
-    ? invoices.filter(
-        invoice => invoice.status === "Pending" || invoice.status === "Overdue"
-      ).length
-    : 0;
+  // Debug logging
+  useEffect(() => {
+    console.log("InvoicesPage - Auth status:", user ? "Authenticated" : "Not authenticated");
+    console.log("InvoicesPage - Auth loading:", authLoading);
+    console.log("InvoicesPage - Invoices loading:", isLoading);
+    console.log("InvoicesPage - Invoices count:", invoices?.length || 0);
+    
+    if (error) {
+      console.error("InvoicesPage - Error loading invoices:", error);
+    }
+  }, [user, authLoading, isLoading, invoices, error]);
 
-  if (error) {
+  // Load invoices when component mounts
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log("InvoicesPage - Attempting to refetch invoices data");
+      const loadData = async () => {
+        try {
+          await refetch();
+        } catch (err) {
+          console.error("Error refetching invoices:", err);
+          toast.error("Failed to load invoices");
+        }
+      };
+      
+      loadData();
+    }
+  }, [user, refetch, isLoading]);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      console.log("InvoicesPage - User not authenticated, redirecting to auth page");
+      toast.error("You need to be logged in to view invoices");
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
     return (
       <AnimatedPage>
         <div className="page-container">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Error loading invoices. Please try again later.
-            </AlertDescription>
-          </Alert>
+          <InvoicesHeader />
+          <div className="space-y-4 mt-4">
+            <Skeleton className="h-[150px] w-full" />
+            <Skeleton className="h-[70px] w-full" />
+            <Skeleton className="h-[400px] w-full" />
+          </div>
         </div>
       </AnimatedPage>
     );
   }
+
+  if (!user) {
+    return null; // Will be redirected by the useEffect hook
+  }
+
+  // Filter invoices based on status
+  const filteredInvoices = Array.isArray(invoices) 
+    ? invoices.filter(invoice => {
+        if (statusFilter === "all") return true;
+        return invoice.status?.toLowerCase() === statusFilter.toLowerCase();
+      })
+    : [];
+
+  // Sort invoices based on selected criteria
+  const sortedInvoices = [...filteredInvoices].sort((a, b) => {
+    if (sortBy === "date") {
+      const dateA = new Date(a.issue_date || a.created_at || "").getTime();
+      const dateB = new Date(b.issue_date || b.created_at || "").getTime();
+      return direction === "desc" ? dateB - dateA : dateA - dateB;
+    } else if (sortBy === "amount") {
+      const amountA = a.amount || 0;
+      const amountB = b.amount || 0;
+      return direction === "desc" ? amountB - amountA : amountA - amountB;
+    }
+    return 0;
+  });
 
   return (
     <AnimatedPage>
@@ -71,28 +110,41 @@ const InvoicesPage: React.FC = () => {
         <InvoicesHeader />
         
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-4 mt-4">
             <Skeleton className="h-[150px] w-full" />
             <Skeleton className="h-[70px] w-full" />
             <Skeleton className="h-[400px] w-full" />
           </div>
+        ) : error ? (
+          <div className="mt-8 text-center">
+            <h3 className="text-xl font-medium text-red-600">Failed to load invoices</h3>
+            <p className="text-gray-500 mt-2 mb-4">
+              {error instanceof Error ? error.message : "An unexpected error occurred"}
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Try Again
+            </button>
+          </div>
         ) : (
           <>
-            <InvoiceStats 
-              totalAmount={totalAmount}
-              invoicesCount={invoices?.length || 0}
-              pendingAmount={pendingAmount}
-              pendingCount={pendingCount}
-            />
+            <InvoiceStats invoices={invoices || []} />
             
             <InvoiceFilters
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              direction={direction}
+              setDirection={setDirection}
             />
             
-            <InvoicesList invoices={sortedInvoices} />
+            <InvoicesList
+              invoices={sortedInvoices}
+              isLoading={isLoading}
+            />
           </>
         )}
       </div>
