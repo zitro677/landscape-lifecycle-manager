@@ -73,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
             <SidebarUserRole userRole={userRole} isAdmin={isAdmin} />
           </div>
 
-          <SidebarSignOut onSignOut={handleSignOut} />
+          <SidebarSignOut onSignOut={handleSignOut} isAdmin={isAdmin} />
         </ScrollArea>
       </motion.aside>
     </>
