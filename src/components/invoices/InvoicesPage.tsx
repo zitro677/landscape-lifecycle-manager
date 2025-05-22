@@ -15,8 +15,7 @@ const InvoicesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("date");
-  const [direction, setDirection] = useState("desc");
+  const [sortOrder, setSortOrder] = useState("newest");
   
   const { 
     invoices, 
@@ -92,16 +91,9 @@ const InvoicesPage: React.FC = () => {
 
   // Sort invoices based on selected criteria
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
-    if (sortBy === "date") {
-      const dateA = new Date(a.issue_date || a.created_at || "").getTime();
-      const dateB = new Date(b.issue_date || b.created_at || "").getTime();
-      return direction === "desc" ? dateB - dateA : dateA - dateB;
-    } else if (sortBy === "amount") {
-      const amountA = a.amount || 0;
-      const amountB = b.amount || 0;
-      return direction === "desc" ? amountB - amountA : amountA - amountB;
-    }
-    return 0;
+    const dateA = new Date(a.issue_date || a.created_at || "").getTime();
+    const dateB = new Date(b.issue_date || b.created_at || "").getTime();
+    return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
   });
 
   return (
@@ -130,15 +122,13 @@ const InvoicesPage: React.FC = () => {
           </div>
         ) : (
           <>
-            <InvoiceStats invoices={invoices || []} />
+            <InvoiceStats invoices={invoices} />
             
             <InvoiceFilters
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              direction={direction}
-              setDirection={setDirection}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
             />
             
             <InvoicesList

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 // Fetch all invoices
 export const useInvoices = () => {
-  return useQuery({
+  const result = useQuery({
     queryKey: ["invoices"],
     queryFn: async () => {
       const { data: invoices, error } = await supabase
@@ -38,6 +38,13 @@ export const useInvoices = () => {
       })) as Invoice[];
     },
   });
+
+  return {
+    invoices: result.data || [],
+    isLoading: result.isLoading,
+    error: result.error,
+    refetch: result.refetch
+  };
 };
 
 // Fetch a single invoice with its items

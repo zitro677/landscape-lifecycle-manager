@@ -1,20 +1,21 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { Invoice } from "./types";
 
 interface InvoiceStatsProps {
-  totalAmount: number;
-  invoicesCount: number;
-  pendingAmount: number;
-  pendingCount: number;
+  invoices: Invoice[];
 }
 
-const InvoiceStats: React.FC<InvoiceStatsProps> = ({
-  totalAmount,
-  invoicesCount,
-  pendingAmount,
-  pendingCount,
-}) => {
+const InvoiceStats: React.FC<InvoiceStatsProps> = ({ invoices }) => {
+  // Calculate total and pending amounts
+  const totalAmount = invoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+  const invoicesCount = invoices.length;
+  
+  const pendingInvoices = invoices.filter(invoice => invoice.status === "Pending" || invoice.status === "pending");
+  const pendingAmount = pendingInvoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+  const pendingCount = pendingInvoices.length;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
       <motion.div

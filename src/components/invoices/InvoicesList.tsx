@@ -6,9 +6,24 @@ import { Invoice } from "./types";
 
 interface InvoicesListProps {
   invoices: Invoice[];
+  isLoading?: boolean;
 }
 
-const InvoicesList: React.FC<InvoicesListProps> = ({ invoices }) => {
+const InvoicesList: React.FC<InvoicesListProps> = ({ invoices, isLoading }) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
+          <p className="text-muted-foreground">Loading invoices...</p>
+        </motion.div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
       {invoices.map((invoice, index) => (

@@ -25,7 +25,7 @@ export const useClients = () => {
   const queryClient = useQueryClient();
 
   // Fetch all clients
-  const { data: clients, isLoading, error } = useQuery({
+  const { data: clients, isLoading, error, refetch } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -165,5 +165,6 @@ export const useClients = () => {
     createClient,
     updateClient,
     deleteClient,
+    refetch, // Expose the refetch function
   };
 };
