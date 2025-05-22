@@ -3,11 +3,14 @@ import React from "react";
 import { motion } from "framer-motion";
 import InvoiceCard from "./InvoiceCard";
 import { Invoice } from "./types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface InvoicesListProps {
   invoices: Invoice[];
   isLoading?: boolean;
   isError?: boolean;
+  errorMessage?: string;
   filteredAndSortedInvoices?: Invoice[];
 }
 
@@ -15,6 +18,7 @@ const InvoicesList: React.FC<InvoicesListProps> = ({
   invoices, 
   isLoading,
   isError,
+  errorMessage,
   filteredAndSortedInvoices
 }) => {
   // Use the filteredAndSortedInvoices if provided, otherwise use the raw invoices
@@ -37,12 +41,18 @@ const InvoicesList: React.FC<InvoicesListProps> = ({
   if (isError) {
     return (
       <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {errorMessage || "Error loading invoices. Please try again."}
+          </AlertDescription>
+        </Alert>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-12"
+          className="text-center py-8"
         >
-          <p className="text-red-500">Error loading invoices. Please try again.</p>
+          <p className="text-red-500">There was a problem retrieving invoice data.</p>
         </motion.div>
       </div>
     );

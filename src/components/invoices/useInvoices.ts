@@ -8,34 +8,90 @@ export const useInvoices = () => {
   const result = useQuery({
     queryKey: ["invoices"],
     queryFn: async () => {
-      const { data: invoices, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          clients (
-            name,
-            email,
-            address
-          ),
-          items:invoice_items(*)
-        `)
-        .order("created_at", { ascending: false });
+      try {
+        // First try the standard query
+        const { data: invoices, error } = await supabase
+          .from("invoices")
+          .select(`
+            *,
+            clients (
+              name,
+              email,
+              address
+            ),
+            items:invoice_items(*)
+          `)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching invoices:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching invoices:", error);
+          
+          // If there's a recursion error related to user_roles, try a more direct approach
+          if (error.code === "42P17" && error.message.includes("user_roles")) {
+            console.log("Detected recursion error, trying alternative fetch method for invoices");
+            
+            // Get the current user to use their ID directly
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+              throw new Error("User not authenticated");
+            }
+            
+            // Try a simpler query without joining tables that might trigger the recursion
+            const { data: directData, error: directError } = await supabase
+              .from("invoices")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false });
+              
+            if (directError) {
+              console.error("Error in alternative invoice fetch:", directError);
+              throw directError;
+            }
+            
+            // Fetch clients data separately
+            const { data: clientsData } = await supabase
+              .from("clients")
+              .select("id, name, email, address");
+            
+            // Fetch invoice items separately
+            const { data: itemsData } = await supabase
+              .from("invoice_items")
+              .select("*");
+            
+            // Manually join the data
+            const enhancedInvoices = directData.map(invoice => {
+              const client = clientsData?.find(c => c.id === invoice.client_id);
+              const items = itemsData?.filter(item => item.invoice_id === invoice.id);
+              
+              return {
+                ...invoice,
+                client_name: client?.name || "Unknown Client",
+                clients: client || null,
+                items: items || [],
+              };
+            });
+            
+            return enhancedInvoices as Invoice[];
+          }
+          
+          throw error;
+        }
+
+        // Format invoices data
+        return invoices.map((invoice) => ({
+          ...invoice,
+          client_name: invoice.clients?.name || "Unknown Client",
+          // Format date strings for display
+          issue_date: invoice.issue_date,
+          due_date: invoice.due_date,
+          // Format amount for display
+          amount: invoice.amount,
+        })) as Invoice[];
+      } catch (err) {
+        console.error("Invoice fetch error:", err);
+        throw err;
       }
-
-      // Format invoices data
-      return invoices.map((invoice) => ({
-        ...invoice,
-        client_name: invoice.clients?.name || "Unknown Client",
-        // Format date strings for display
-        issue_date: invoice.issue_date,
-        due_date: invoice.due_date,
-        // Format amount for display
-        amount: invoice.amount,
-      })) as Invoice[];
     },
   });
 
@@ -54,26 +110,67 @@ export const useInvoice = (id: string | undefined) => {
     queryFn: async () => {
       if (!id) return null;
 
-      const { data: invoice, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          clients (
-            name,
-            email,
-            address
-          ),
-          items:invoice_items(*)
-        `)
-        .eq("id", id)
-        .single();
+      try {
+        const { data: invoice, error } = await supabase
+          .from("invoices")
+          .select(`
+            *,
+            clients (
+              name,
+              email,
+              address
+            ),
+            items:invoice_items(*)
+          `)
+          .eq("id", id)
+          .single();
 
-      if (error) {
-        console.error("Error fetching invoice:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching invoice:", error);
+          
+          // If recursion error, try alternative approach
+          if (error.code === "42P17" && error.message.includes("user_roles")) {
+            console.log("Detected recursion error, trying alternative fetch method for single invoice");
+            
+            // Get invoice without joins
+            const { data: invoiceData, error: invoiceError } = await supabase
+              .from("invoices")
+              .select("*")
+              .eq("id", id)
+              .single();
+              
+            if (invoiceError) throw invoiceError;
+            
+            // Get client data separately
+            const { data: clientData } = await supabase
+              .from("clients")
+              .select("name, email, address")
+              .eq("id", invoiceData.client_id)
+              .single();
+              
+            // Get items separately
+            const { data: itemsData } = await supabase
+              .from("invoice_items")
+              .select("*")
+              .eq("invoice_id", id);
+              
+            // Combine the data
+            return {
+              ...invoiceData,
+              clients: clientData || null,
+              items: itemsData || [],
+              client_name: clientData?.name || "Unknown Client"
+            } as Invoice;
+          }
+          
+          throw error;
+        }
+
+        return invoice as Invoice;
+      } catch (err) {
+        console.error("Error in useInvoice:", err);
+        throw err;
       }
-
-      return invoice as Invoice;
     },
     enabled: !!id,
   });

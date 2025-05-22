@@ -96,6 +96,11 @@ const InvoicesPage: React.FC = () => {
     return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
   });
 
+  // Get error message
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : "An unexpected error occurred loading invoices";
+
   return (
     <AnimatedPage>
       <div className="page-container">
@@ -107,22 +112,9 @@ const InvoicesPage: React.FC = () => {
             <Skeleton className="h-[70px] w-full" />
             <Skeleton className="h-[400px] w-full" />
           </div>
-        ) : error ? (
-          <div className="mt-8 text-center">
-            <h3 className="text-xl font-medium text-red-600">Failed to load invoices</h3>
-            <p className="text-gray-500 mt-2 mb-4">
-              {error instanceof Error ? error.message : "An unexpected error occurred"}
-            </p>
-            <button
-              onClick={() => refetch()}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Try Again
-            </button>
-          </div>
         ) : (
           <>
-            <InvoiceStats invoices={invoices} />
+            <InvoiceStats invoices={invoices || []} />
             
             <InvoiceFilters
               statusFilter={statusFilter}
@@ -132,8 +124,11 @@ const InvoicesPage: React.FC = () => {
             />
             
             <InvoicesList
-              invoices={sortedInvoices}
+              invoices={invoices || []}
+              filteredAndSortedInvoices={sortedInvoices}
               isLoading={isLoading}
+              isError={!!error}
+              errorMessage={errorMessage}
             />
           </>
         )}
