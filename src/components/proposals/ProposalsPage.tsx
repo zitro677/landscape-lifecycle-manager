@@ -67,7 +67,7 @@ const ProposalsPage: React.FC = () => {
       await refetch();
       toast.dismiss(loadingToast);
       
-      // Fix: Check for status rather than comparing string literals
+      // Fix: Use the correct status values based on the type
       if (status === 'success') {
         if (proposals && proposals.length > 0) {
           toast.success(`Loaded ${proposals.length} proposals`);
@@ -86,7 +86,7 @@ const ProposalsPage: React.FC = () => {
   
   // Force a refetch when the component mounts
   useEffect(() => {
-    if (user && !isLoading && status !== 'loading') {
+    if (user && !isLoading && status !== 'pending') {
       console.log("ProposalsPage - Component mounted, loading proposals");
       loadProposals();
     }
