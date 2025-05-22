@@ -34,14 +34,38 @@ export const useClients = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       try {
-        // Standard query to fetch clients
+        // Get the current user session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("No authenticated user");
+        }
+
+        // Direct query using user ID to avoid recursion issues
         const { data, error } = await supabase
           .from("clients")
           .select("*")
+          .eq("user_id", session.user.id)
           .order("name");
 
         if (error) {
-          console.error("Error fetching clients:", error);
+          // Check for recursion error and try alternate approach
+          if (error.message.includes("infinite recursion")) {
+            console.log("Detected recursion error, using alternate query approach");
+            
+            // Simplified query without joins
+            const { data: altData, error: altError } = await supabase
+              .from("clients")
+              .select("id, name, email, phone, address, created_at, updated_at")
+              .eq("user_id", session.user.id)
+              .order("name");
+              
+            if (altError) {
+              throw altError;
+            }
+            
+            return altData as Client[];
+          }
+          
           throw error;
         }
 
@@ -56,28 +80,33 @@ export const useClients = () => {
 
   // Fetch a single client
   const fetchClient = async (id: string) => {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("*")
-      .eq("id", id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    if (error) {
-      console.error("Error fetching client:", error);
-      toast.error("Failed to load client details");
+      if (error) {
+        console.error("Error fetching client:", error);
+        toast.error("Failed to load client details");
+        throw error;
+      }
+
+      return data as Client;
+    } catch (error) {
+      console.error("Error in fetchClient:", error);
       throw error;
     }
-
-    return data as Client;
   };
 
   // Create a new client
   const createClient = useMutation({
     mutationFn: async (client: NewClientData) => {
       // Get the user ID from the auth state
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (!user) {
+      if (!session?.user) {
         throw new Error("User is not authenticated");
       }
 
@@ -85,7 +114,7 @@ export const useClients = () => {
         .from("clients")
         .insert({
           ...client,
-          user_id: user.id // Add the user_id from the authenticated user
+          user_id: session.user.id // Add the user_id from the authenticated user
         })
         .select()
         .single();

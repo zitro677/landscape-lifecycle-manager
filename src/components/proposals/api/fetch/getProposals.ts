@@ -1,53 +1,100 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal } from "../../types";
-import { toast } from "sonner";
-import { getAuthenticatedUserId } from "../utils/sessionUtils";
 
 export const getProposals = async (): Promise<Proposal[]> => {
   try {
-    // Use the utility function to get authenticated user ID
-    const userId = await getAuthenticatedUserId();
+    // Get the current session to access user ID
+    const { data: { session } } = await supabase.auth.getSession();
     
-    console.log('Fetching proposals for user:', userId);
-    
-    // Fix the query by explicitly specifying the foreign key relationship
-    const { data, error } = await supabase
-      .from('proposals')
-      .select(`
-        *,
-        clients!fk_proposals_client_id (
-          name,
-          email,
-          address,
-          phone
-        )
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching proposals:", error);
-      throw error;
+    if (!session) {
+      console.error("No authenticated user session");
+      return [];
     }
 
-    console.log('Fetched proposals count:', data?.length);
-    
-    if (data && data.length > 0) {
-      console.log('Sample proposal data:', data[0]);
-    } else {
-      console.log('No proposals found for user');
+    // Try the standard query first
+    try {
+      const { data, error } = await supabase
+        .from('proposals')
+        .select(`
+          *,
+          clients!client_id (
+            name,
+            email
+          )
+        `)
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Process the data to add client_name to each proposal
+      return data.map((proposal: any) => ({
+        ...proposal,
+        client_name: proposal.clients?.name || 'Unknown Client',
+      })) as Proposal[];
+
+    } catch (error: any) {
+      // If the first query fails due to recursion, try a simpler approach
+      if (error.message && error.message.includes('infinite recursion')) {
+        console.error("Unexpected error fetching proposals:", error);
+        console.log("Retrying proposals query, attempt: 1", "Error:", error);
+
+        // Simplified approach without joins
+        const { data: proposalsData, error: proposalsError } = await supabase
+          .from('proposals')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        if (proposalsError) {
+          throw proposalsError;
+        }
+
+        // If we got proposals data, get client data separately
+        if (proposalsData && proposalsData.length > 0) {
+          const clientIds = proposalsData
+            .filter(p => p.client_id)
+            .map(p => p.client_id);
+
+          // Get client data if we have any client IDs
+          if (clientIds.length > 0) {
+            const { data: clientsData, error: clientsError } = await supabase
+              .from('clients')
+              .select('id, name')
+              .in('id', clientIds);
+
+            if (clientsError) {
+              console.error("Error fetching client data:", clientsError);
+            }
+
+            // Map client names to proposals
+            return proposalsData.map((proposal: any) => {
+              const client = clientsData?.find(c => c.id === proposal.client_id);
+              return {
+                ...proposal,
+                client_name: client?.name || 'Unknown Client',
+              };
+            }) as Proposal[];
+          }
+
+          // If no client IDs, just return the proposals
+          return proposalsData.map((proposal: any) => ({
+            ...proposal,
+            client_name: 'Unknown Client',
+          })) as Proposal[];
+        }
+
+        return [];
+      } else {
+        // For other errors, just propagate
+        throw error;
+      }
     }
-
-    // Enhance each proposal with client details directly in the proposal object
-    const proposalsWithClientNames = data ? data.map(proposal => ({
-      ...proposal,
-      client_name: proposal.clients?.name || 'Unknown Client', 
-    })) : [];
-
-    return proposalsWithClientNames as Proposal[];
   } catch (error) {
     console.error("Unexpected error fetching proposals:", error);
-    throw error; // Re-throw the error so it can be handled by the query
+    return [];
   }
 };

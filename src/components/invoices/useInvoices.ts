@@ -1,265 +1,114 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice, InvoiceItem, InvoiceStatus } from "./types";
 import { toast } from "sonner";
+import { Invoice } from "./types";
 
-// Fetch all invoices
 export const useInvoices = () => {
-  const result = useQuery({
+  const { 
+    data: invoices = [],
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
     queryKey: ["invoices"],
     queryFn: async () => {
       try {
-        // Standard query approach
-        const { data: invoices, error } = await supabase
-          .from("invoices")
-          .select(`
-            *,
-            clients (
-              name,
-              email,
-              address
-            ),
-            items:invoice_items(*)
-          `)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error fetching invoices:", error);
-          throw error;
+        // Get the current session for the user ID
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error("No authenticated user session");
         }
 
-        // Format invoices data
-        return invoices.map((invoice) => ({
-          ...invoice,
-          client_name: invoice.clients?.name || "Unknown Client",
-          // Format date strings for display
-          issue_date: invoice.issue_date,
-          due_date: invoice.due_date,
-          // Format amount for display
-          amount: invoice.amount,
-        })) as Invoice[];
+        try {
+          // Standard query with joins
+          const { data, error } = await supabase
+            .from("invoices")
+            .select(`
+              *,
+              clients!client_id (
+                name,
+                email
+              )
+            `)
+            .eq('user_id', session.user.id)
+            .order("issue_date", { ascending: false });
+
+          if (error) {
+            throw error;
+          }
+
+          return data.map((invoice: any) => ({
+            ...invoice,
+            client_name: invoice.clients?.name || "Unknown Client",
+          })) as Invoice[];
+
+        } catch (error: any) {
+          // If recursion error, try a simpler approach
+          if (error.message && error.message.includes('infinite recursion')) {
+            console.log("Detected recursion error in invoices, using alternate query");
+
+            // Get invoices directly without joins
+            const { data: invoicesData, error: invoicesError } = await supabase
+              .from("invoices")
+              .select("*")
+              .eq('user_id', session.user.id)
+              .order("issue_date", { ascending: false });
+
+            if (invoicesError) {
+              throw invoicesError;
+            }
+
+            // If we have invoices with client IDs, get the clients separately
+            if (invoicesData && invoicesData.length > 0) {
+              const clientIds = invoicesData
+                .filter(inv => inv.client_id)
+                .map(inv => inv.client_id);
+
+              if (clientIds.length > 0) {
+                const { data: clientsData, error: clientsError } = await supabase
+                  .from('clients')
+                  .select('id, name')
+                  .in('id', clientIds);
+
+                if (clientsError) {
+                  console.error("Error fetching client data for invoices:", clientsError);
+                }
+
+                // Map client names to invoices
+                return invoicesData.map((invoice: any) => {
+                  const client = clientsData?.find(c => c.id === invoice.client_id);
+                  return {
+                    ...invoice,
+                    client_name: client?.name || 'Unknown Client',
+                  };
+                }) as Invoice[];
+              }
+            }
+
+            // If no client IDs or no clients data, just return invoices
+            return (invoicesData || []).map((invoice: any) => ({
+              ...invoice,
+              client_name: 'Unknown Client',
+            })) as Invoice[];
+          } else {
+            // For other errors, just propagate
+            throw error;
+          }
+        }
       } catch (err) {
-        console.error("Invoice fetch error:", err);
+        console.error("Error fetching invoices:", err);
+        toast.error("Failed to load invoices");
         throw err;
       }
     },
   });
 
   return {
-    invoices: result.data || [],
-    isLoading: result.isLoading,
-    error: result.error,
-    refetch: result.refetch
+    invoices: invoices || [],
+    isLoading,
+    error,
+    refetch,
   };
-};
-
-// Fetch a single invoice with its items
-export const useInvoice = (id: string | undefined) => {
-  return useQuery({
-    queryKey: ["invoices", id],
-    queryFn: async () => {
-      if (!id) return null;
-
-      try {
-        const { data: invoice, error } = await supabase
-          .from("invoices")
-          .select(`
-            *,
-            clients (
-              name,
-              email,
-              address
-            ),
-            items:invoice_items(*)
-          `)
-          .eq("id", id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching invoice:", error);
-          throw error;
-        }
-
-        return invoice as Invoice;
-      } catch (err) {
-        console.error("Error in useInvoice:", err);
-        throw err;
-      }
-    },
-    enabled: !!id,
-  });
-};
-
-// Create a new invoice
-export const useCreateInvoice = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      invoice,
-      items,
-    }: {
-      invoice: Omit<Invoice, "id" | "created_at" | "updated_at" | "items">;
-      items: Omit<InvoiceItem, "id" | "invoice_id" | "created_at" | "updated_at">[];
-    }) => {
-      // 1. Insert the invoice
-      const { data: newInvoice, error: invoiceError } = await supabase
-        .from("invoices")
-        .insert(invoice)
-        .select()
-        .single();
-
-      if (invoiceError) {
-        throw invoiceError;
-      }
-
-      // 2. Insert the invoice items
-      if (items.length > 0) {
-        const itemsWithInvoiceId = items.map((item) => ({
-          ...item,
-          invoice_id: newInvoice.id,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from("invoice_items")
-          .insert(itemsWithInvoiceId);
-
-        if (itemsError) {
-          throw itemsError;
-        }
-      }
-
-      return newInvoice;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Invoice created successfully");
-    },
-    onError: (error) => {
-      console.error("Error creating invoice:", error);
-      toast.error("Failed to create invoice");
-    },
-  });
-};
-
-// Update an existing invoice
-export const useUpdateInvoice = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      invoice,
-      items,
-    }: {
-      id: string;
-      invoice: Partial<Invoice>;
-      items: Omit<InvoiceItem, "id" | "invoice_id" | "created_at" | "updated_at">[];
-    }) => {
-      // 1. Update the invoice
-      const { data: updatedInvoice, error: invoiceError } = await supabase
-        .from("invoices")
-        .update({
-          ...invoice,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (invoiceError) {
-        throw invoiceError;
-      }
-
-      // 2. Delete existing items for this invoice
-      const { error: deleteError } = await supabase
-        .from("invoice_items")
-        .delete()
-        .eq("invoice_id", id);
-
-      if (deleteError) {
-        throw deleteError;
-      }
-
-      // 3. Insert the new invoice items
-      if (items.length > 0) {
-        const itemsWithInvoiceId = items.map((item) => ({
-          ...item,
-          invoice_id: id,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from("invoice_items")
-          .insert(itemsWithInvoiceId);
-
-        if (itemsError) {
-          throw itemsError;
-        }
-      }
-
-      return updatedInvoice;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Invoice updated successfully");
-    },
-    onError: (error) => {
-      console.error("Error updating invoice:", error);
-      toast.error("Failed to update invoice");
-    },
-  });
-};
-
-// Update an invoice status
-export const useUpdateInvoiceStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: InvoiceStatus }) => {
-      const { data, error } = await supabase
-        .from("invoices")
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Invoice status updated");
-    },
-    onError: (error) => {
-      console.error("Error updating invoice status:", error);
-      toast.error("Failed to update invoice status");
-    },
-  });
-};
-
-// Delete an invoice
-export const useDeleteInvoice = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("invoices").delete().eq("id", id);
-
-      if (error) {
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Invoice deleted successfully");
-    },
-    onError: (error) => {
-      console.error("Error deleting invoice:", error);
-      toast.error("Failed to delete invoice");
-    },
-  });
 };

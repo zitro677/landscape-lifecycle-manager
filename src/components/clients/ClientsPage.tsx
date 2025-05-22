@@ -25,13 +25,12 @@ import { toast } from "sonner";
 
 const ClientsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { clients, isLoading, deleteClient, error, refetch } = useClients();
 
   // Log debug information
   React.useEffect(() => {
     console.log("ClientsPage - Auth state:", user ? "Authenticated" : "Not authenticated");
-    console.log("ClientsPage - isAdmin:", isAdmin);
     console.log("ClientsPage - isLoading:", isLoading);
     console.log("ClientsPage - clients count:", clients?.length || 0);
     console.log("ClientsPage - error:", error);
@@ -46,7 +45,7 @@ const ClientsPage: React.FC = () => {
       console.log("ClientsPage - Attempting to refetch clients data");
       refetch();
     }
-  }, [user, isAdmin, clients, isLoading, error, refetch]);
+  }, [user, clients, isLoading, error, refetch]);
 
   return (
     <AnimatedPage>
