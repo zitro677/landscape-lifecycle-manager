@@ -42,8 +42,10 @@ const queryClient = new QueryClient({
       },
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      onError: (error) => {
-        console.error("Query error:", error);
+      meta: {
+        onError: (error: Error) => {
+          console.error("Query error:", error);
+        }
       }
     },
     mutations: {
@@ -59,8 +61,10 @@ const queryClient = new QueryClient({
         // Otherwise retry once
         return failureCount < 1;
       },
-      onError: (error) => {
-        console.error("Mutation error:", error);
+      meta: {
+        onError: (error: Error) => {
+          console.error("Mutation error:", error);
+        }
       }
     }
   }
