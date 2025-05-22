@@ -72,6 +72,11 @@ export const useUserManagement = () => {
   };
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'read_only') => {
+    if (!updateUserRole) {
+      toast.error("Role update functionality is not available");
+      return;
+    }
+    
     const success = await updateUserRole(userId, newRole);
     if (success) {
       // Update local state
