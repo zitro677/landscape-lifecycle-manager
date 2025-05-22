@@ -67,6 +67,7 @@ const ProposalsPage: React.FC = () => {
       await refetch();
       toast.dismiss(loadingToast);
       
+      // Fix: Check for status rather than comparing string literals
       if (status === 'success') {
         if (proposals && proposals.length > 0) {
           toast.success(`Loaded ${proposals.length} proposals`);
