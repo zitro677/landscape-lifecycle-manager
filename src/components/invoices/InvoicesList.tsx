@@ -7,9 +7,19 @@ import { Invoice } from "./types";
 interface InvoicesListProps {
   invoices: Invoice[];
   isLoading?: boolean;
+  isError?: boolean;
+  filteredAndSortedInvoices?: Invoice[];
 }
 
-const InvoicesList: React.FC<InvoicesListProps> = ({ invoices, isLoading }) => {
+const InvoicesList: React.FC<InvoicesListProps> = ({ 
+  invoices, 
+  isLoading,
+  isError,
+  filteredAndSortedInvoices
+}) => {
+  // Use the filteredAndSortedInvoices if provided, otherwise use the raw invoices
+  const displayInvoices = filteredAndSortedInvoices || invoices;
+  
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -23,14 +33,28 @@ const InvoicesList: React.FC<InvoicesListProps> = ({ invoices, isLoading }) => {
       </div>
     );
   }
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
+          <p className="text-red-500">Error loading invoices. Please try again.</p>
+        </motion.div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-4">
-      {invoices.map((invoice, index) => (
+      {displayInvoices.map((invoice, index) => (
         <InvoiceCard key={invoice.id} invoice={invoice} index={index} />
       ))}
 
-      {invoices.length === 0 && (
+      {displayInvoices.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

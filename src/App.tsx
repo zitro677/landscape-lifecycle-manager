@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,21 +28,39 @@ import React from "react";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Don't retry on recursion errors
+        if (
+          error instanceof Error && 
+          error.message && 
+          error.message.includes("recursion")
+        ) {
+          return false;
+        }
+        // Otherwise retry once
+        return failureCount < 1;
+      },
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      meta: {
-        onError: (error: Error) => {
-          console.error("Query error:", error);
-        }
+      onError: (error) => {
+        console.error("Query error:", error);
       }
     },
     mutations: {
-      retry: 1,
-      meta: {
-        onError: (error: Error) => {
-          console.error("Mutation error:", error);
+      retry: (failureCount, error) => {
+        // Don't retry on recursion errors
+        if (
+          error instanceof Error && 
+          error.message && 
+          error.message.includes("recursion")
+        ) {
+          return false;
         }
+        // Otherwise retry once
+        return failureCount < 1;
+      },
+      onError: (error) => {
+        console.error("Mutation error:", error);
       }
     }
   }

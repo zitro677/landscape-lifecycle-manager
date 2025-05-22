@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,22 +23,61 @@ export interface NewClientData {
 export const useClients = () => {
   const queryClient = useQueryClient();
 
-  // Fetch all clients
-  const { data: clients, isLoading, error, refetch } = useQuery({
+  // Fetch all clients with error handling for recursion issues
+  const { 
+    data: clients = [], // Default to empty array if no data 
+    isLoading, 
+    error, 
+    refetch 
+  } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*")
-        .order("name");
+      try {
+        // Try the standard query first
+        const { data, error } = await supabase
+          .from("clients")
+          .select("*")
+          .order("name");
 
-      if (error) {
-        console.error("Error fetching clients:", error);
+        if (error) {
+          // Log the error for debugging
+          console.error("Error fetching clients:", error);
+          
+          // If there's a recursion error related to user_roles, try a more direct approach
+          if (error.code === "42P17" && error.message.includes("user_roles")) {
+            console.log("Detected recursion error, trying alternative fetch method");
+            
+            // Get the current user to use their ID directly
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+              throw new Error("User not authenticated");
+            }
+            
+            // Try a simpler query without involving user_roles policies
+            const { data: directData, error: directError } = await supabase
+              .from("clients")
+              .select("id, name, email, phone, address, created_at, updated_at")
+              .eq("user_id", user.id)
+              .order("name");
+              
+            if (directError) {
+              console.error("Error in alternative client fetch:", directError);
+              throw directError;
+            }
+            
+            return directData as Client[];
+          }
+          
+          throw error;
+        }
+
+        return data as Client[];
+      } catch (err) {
+        console.error("Client fetch error:", err);
         toast.error("Failed to load clients");
-        throw error;
+        throw err;
       }
-
-      return data as Client[];
     },
   });
 
@@ -158,7 +196,7 @@ export const useClients = () => {
   };
 
   return {
-    clients,
+    clients: clients || [],
     isLoading,
     error,
     fetchClient,

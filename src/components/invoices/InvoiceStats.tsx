@@ -8,11 +8,14 @@ interface InvoiceStatsProps {
 }
 
 const InvoiceStats: React.FC<InvoiceStatsProps> = ({ invoices }) => {
-  // Calculate total and pending amounts
-  const totalAmount = invoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
-  const invoicesCount = invoices.length;
+  // Make sure invoices is an array
+  const invoicesArray = Array.isArray(invoices) ? invoices : [];
   
-  const pendingInvoices = invoices.filter(invoice => invoice.status === "Pending" || invoice.status === "pending");
+  // Calculate total and pending amounts
+  const totalAmount = invoicesArray.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+  const invoicesCount = invoicesArray.length;
+  
+  const pendingInvoices = invoicesArray.filter(invoice => invoice.status === "Pending" || invoice.status === "pending");
   const pendingAmount = pendingInvoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
   const pendingCount = pendingInvoices.length;
 
