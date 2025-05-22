@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceItem, InvoiceStatus } from "./types";
@@ -9,7 +10,7 @@ export const useInvoices = () => {
     queryKey: ["invoices"],
     queryFn: async () => {
       try {
-        // First try the standard query
+        // Standard query approach
         const { data: invoices, error } = await supabase
           .from("invoices")
           .select(`
@@ -25,56 +26,6 @@ export const useInvoices = () => {
 
         if (error) {
           console.error("Error fetching invoices:", error);
-          
-          // If there's a recursion error related to user_roles, try a more direct approach
-          if (error.code === "42P17" && error.message.includes("user_roles")) {
-            console.log("Detected recursion error, trying alternative fetch method for invoices");
-            
-            // Get the current user to use their ID directly
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (!user) {
-              throw new Error("User not authenticated");
-            }
-            
-            // Try a simpler query without joining tables that might trigger the recursion
-            const { data: directData, error: directError } = await supabase
-              .from("invoices")
-              .select("*")
-              .eq("user_id", user.id)
-              .order("created_at", { ascending: false });
-              
-            if (directError) {
-              console.error("Error in alternative invoice fetch:", directError);
-              throw directError;
-            }
-            
-            // Fetch clients data separately
-            const { data: clientsData } = await supabase
-              .from("clients")
-              .select("id, name, email, address");
-            
-            // Fetch invoice items separately
-            const { data: itemsData } = await supabase
-              .from("invoice_items")
-              .select("*");
-            
-            // Manually join the data
-            const enhancedInvoices = directData.map(invoice => {
-              const client = clientsData?.find(c => c.id === invoice.client_id);
-              const items = itemsData?.filter(item => item.invoice_id === invoice.id);
-              
-              return {
-                ...invoice,
-                client_name: client?.name || "Unknown Client",
-                clients: client || null,
-                items: items || [],
-              };
-            });
-            
-            return enhancedInvoices as Invoice[];
-          }
-          
           throw error;
         }
 
@@ -127,42 +78,6 @@ export const useInvoice = (id: string | undefined) => {
 
         if (error) {
           console.error("Error fetching invoice:", error);
-          
-          // If recursion error, try alternative approach
-          if (error.code === "42P17" && error.message.includes("user_roles")) {
-            console.log("Detected recursion error, trying alternative fetch method for single invoice");
-            
-            // Get invoice without joins
-            const { data: invoiceData, error: invoiceError } = await supabase
-              .from("invoices")
-              .select("*")
-              .eq("id", id)
-              .single();
-              
-            if (invoiceError) throw invoiceError;
-            
-            // Get client data separately
-            const { data: clientData } = await supabase
-              .from("clients")
-              .select("name, email, address")
-              .eq("id", invoiceData.client_id)
-              .single();
-              
-            // Get items separately
-            const { data: itemsData } = await supabase
-              .from("invoice_items")
-              .select("*")
-              .eq("invoice_id", id);
-              
-            // Combine the data
-            return {
-              ...invoiceData,
-              clients: clientData || null,
-              items: itemsData || [],
-              client_name: clientData?.name || "Unknown Client"
-            } as Invoice;
-          }
-          
           throw error;
         }
 

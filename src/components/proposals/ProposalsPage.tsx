@@ -26,8 +26,7 @@ const ProposalsPage: React.FC = () => {
     isLoading, 
     isError, 
     error, 
-    refetch, 
-    status 
+    refetch 
   } = useProposals();
 
   // Improved logging for debugging
@@ -37,12 +36,11 @@ const ProposalsPage: React.FC = () => {
     console.log("ProposalsPage - isLoading:", isLoading);
     console.log("ProposalsPage - isError:", isError);
     console.log("ProposalsPage - Proposals count:", proposals?.length || 0);
-    console.log("ProposalsPage - Query status:", status);
     
     if (error) {
       console.error("ProposalsPage - Error details:", error);
     }
-  }, [proposals, isLoading, isError, status, user, authLoading, error]);
+  }, [proposals, isLoading, isError, user, authLoading, error]);
 
   // Check if user is authenticated
   useEffect(() => {
@@ -67,14 +65,13 @@ const ProposalsPage: React.FC = () => {
       await refetch();
       toast.dismiss(loadingToast);
       
-      // Fix: Use the correct status values based on the type
-      if (status === 'success') {
-        if (proposals && proposals.length > 0) {
+      if (!isError && proposals) {
+        if (proposals.length > 0) {
           toast.success(`Loaded ${proposals.length} proposals`);
         } else {
           toast.info("No proposals found");
         }
-      } else if (status === 'error') {
+      } else {
         toast.error("Failed to load proposals");
       }
     } catch (err) {
@@ -82,15 +79,15 @@ const ProposalsPage: React.FC = () => {
       toast.error("Failed to load proposals");
       console.error("ProposalsPage - Error refetching proposals:", err);
     }
-  }, [refetch, user, proposals, status]);
+  }, [refetch, user, proposals, isError]);
   
   // Force a refetch when the component mounts
   useEffect(() => {
-    if (user && !isLoading && status !== 'pending') {
+    if (user && !isLoading) {
       console.log("ProposalsPage - Component mounted, loading proposals");
       loadProposals();
     }
-  }, [user, loadProposals, isLoading, status]);
+  }, [user, loadProposals, isLoading]);
 
   // If auth is still loading, show skeleton
   if (authLoading) {

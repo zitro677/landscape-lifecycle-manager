@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,7 +24,7 @@ export interface NewClientData {
 export const useClients = () => {
   const queryClient = useQueryClient();
 
-  // Fetch all clients with error handling for recursion issues
+  // Fetch all clients with error handling
   const { 
     data: clients = [], // Default to empty array if no data 
     isLoading, 
@@ -33,42 +34,14 @@ export const useClients = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       try {
-        // Try the standard query first
+        // Standard query to fetch clients
         const { data, error } = await supabase
           .from("clients")
           .select("*")
           .order("name");
 
         if (error) {
-          // Log the error for debugging
           console.error("Error fetching clients:", error);
-          
-          // If there's a recursion error related to user_roles, try a more direct approach
-          if (error.code === "42P17" && error.message.includes("user_roles")) {
-            console.log("Detected recursion error, trying alternative fetch method");
-            
-            // Get the current user to use their ID directly
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (!user) {
-              throw new Error("User not authenticated");
-            }
-            
-            // Try a simpler query without involving user_roles policies
-            const { data: directData, error: directError } = await supabase
-              .from("clients")
-              .select("id, name, email, phone, address, created_at, updated_at")
-              .eq("user_id", user.id)
-              .order("name");
-              
-            if (directError) {
-              console.error("Error in alternative client fetch:", directError);
-              throw directError;
-            }
-            
-            return directData as Client[];
-          }
-          
           throw error;
         }
 

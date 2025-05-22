@@ -7,7 +7,6 @@ import { useSidebar } from "./hooks/useSidebar";
 import SidebarHeader from "./sidebar/SidebarHeader";
 import SidebarNavItems from "./sidebar/SidebarNavItems";
 import SidebarSettings from "./sidebar/SidebarSettings";
-import SidebarUserRole from "./sidebar/SidebarUserRole";
 import SidebarSignOut from "./sidebar/SidebarSignOut";
 
 interface SidebarProps {
@@ -37,7 +36,7 @@ const sidebarVariants = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
-  const { isAdmin, userRole, handleSignOut } = useSidebar();
+  const { handleSignOut, user } = useSidebar();
 
   return (
     <>
@@ -68,12 +67,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
 
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <div className="px-3 py-2">
-            <SidebarNavItems isAdmin={isAdmin} closeSidebar={closeSidebar} />
+            <SidebarNavItems closeSidebar={closeSidebar} />
             <SidebarSettings />
-            <SidebarUserRole userRole={userRole} isAdmin={isAdmin} />
           </div>
 
-          <SidebarSignOut onSignOut={handleSignOut} isAdmin={isAdmin} />
+          <SidebarSignOut onSignOut={handleSignOut} />
         </ScrollArea>
       </motion.aside>
     </>

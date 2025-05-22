@@ -15,7 +15,6 @@ interface NavItem {
   name: string;
   path: string;
   icon: React.ReactNode;
-  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -52,19 +51,13 @@ const navItems: NavItem[] = [
 ];
 
 interface SidebarNavItemsProps {
-  isAdmin: boolean;
   closeSidebar: () => void;
 }
 
-const SidebarNavItems: React.FC<SidebarNavItemsProps> = ({ isAdmin, closeSidebar }) => {
-  // Filter navigation items based on user role
-  const visibleNavItems = navItems.filter(
-    (item) => !item.adminOnly || (item.adminOnly && isAdmin)
-  );
-
+const SidebarNavItems: React.FC<SidebarNavItemsProps> = ({ closeSidebar }) => {
   return (
     <nav className="flex flex-col gap-1">
-      {visibleNavItems.map((item) => (
+      {navItems.map((item) => (
         <NavLink
           key={item.path}
           to={item.path}

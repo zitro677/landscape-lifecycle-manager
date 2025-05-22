@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export function useSidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const { user, userRole, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const closeSidebar = useCallback(() => {
@@ -29,20 +29,12 @@ export function useSidebar() {
     }
   }, [signOut, navigate]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("useSidebar hook - userRole:", userRole);
-    console.log("useSidebar hook - isAdmin:", isAdmin);
-  }, [userRole, isAdmin]);
-
   return {
     isMobileOpen,
     setIsMobileOpen,
     closeSidebar,
     toggleSidebar,
     handleSignOut,
-    isAdmin,
-    userRole,
     user
   };
 }
