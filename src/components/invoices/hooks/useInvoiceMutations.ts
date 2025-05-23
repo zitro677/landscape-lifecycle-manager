@@ -81,10 +81,10 @@ export const useUpdateInvoice = () => {
       items 
     }: { 
       id: string; 
-      invoice: Partial<Invoice>; 
+      invoice: Omit<Partial<Invoice>, 'clients' | 'items' | 'client_name'>; 
       items: Array<{ description: string; quantity: number; unit_price: number }>;
     }) => {
-      // Update invoice
+      // Update invoice - remove extended properties before sending to Supabase
       const { data, error } = await supabase
         .from("invoices")
         .update(invoice)

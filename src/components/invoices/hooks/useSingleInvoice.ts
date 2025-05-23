@@ -37,13 +37,7 @@ export const useInvoice = (invoiceId?: string) => {
 
           if (error) throw error;
           
-          // Add this type assertion to help TypeScript understand the structure
-          const result = data as Invoice & {
-            clients?: { name?: string; email?: string; address?: string };
-            items?: Array<{ description: string; quantity: number; unit_price: number; }>;
-          };
-          
-          return result;
+          return data as Invoice;
           
         } catch (error: any) {
           // If recursion error or any other error, try a simpler approach
@@ -85,10 +79,7 @@ export const useInvoice = (invoiceId?: string) => {
             result.items = items;
           }
           
-          return result as Invoice & {
-            clients?: { name?: string; email?: string; address?: string };
-            items?: Array<{ description: string; quantity: number; unit_price: number; }>;
-          };
+          return result as Invoice;
         }
       } catch (err) {
         console.error("Error fetching invoice:", err);
