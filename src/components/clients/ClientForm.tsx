@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import AnimatedPage from "../shared/AnimatedPage";
-import { useClients, NewClientData } from "./useClients";
+import { useSingleClient } from "./hooks/useSingleClient";
+import { useClientMutations } from "./hooks/useClientMutations";
+import { NewClientData } from "./types";
 
 // Schema now ensures name is required
 const clientSchema = z.object({
@@ -35,11 +36,10 @@ const ClientForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
   
-  const {
-    fetchClient,
-    createClient,
-    updateClient,
-  } = useClients();
+  const { fetchClient } = useSingleClient();
+  const { useCreateClient, useUpdateClient } = useClientMutations();
+  const createClient = useCreateClient();
+  const updateClient = useUpdateClient();
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),

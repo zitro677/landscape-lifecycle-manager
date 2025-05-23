@@ -1,7 +1,7 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useClients } from "./useClients";
+import { useClientsList } from "./hooks/useClientsList";
+import { useClientMutations } from "./hooks/useClientMutations";
 import AnimatedPage from "../shared/AnimatedPage";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
@@ -26,7 +26,8 @@ import { toast } from "sonner";
 const ClientsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { clients, isLoading, deleteClient, error, refetch } = useClients();
+  const { clients, isLoading, error, refetch } = useClientsList();
+  const { deleteClient } = useClientMutations();
 
   // Log debug information
   React.useEffect(() => {
