@@ -39,10 +39,14 @@ export const useLoginForm = () => {
       
       console.log("Starting Google login...");
       
+      // Get the current origin for the redirect
+      const currentOrigin = window.location.origin;
+      console.log("Current origin:", currentOrigin);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: currentOrigin,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
