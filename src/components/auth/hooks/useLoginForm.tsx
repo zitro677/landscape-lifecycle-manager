@@ -37,17 +37,28 @@ export const useLoginForm = () => {
       setIsLoading(true);
       setErrorMessage(null);
       
+      console.log("Starting Google login...");
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Google login error:", error);
+        throw error;
+      }
+      
+      console.log("Google OAuth initiated successfully");
       
       // The redirect will happen automatically
-      // We don't need to navigate or show success here
+      // Don't set loading to false here as the page will redirect
     } catch (error: any) {
       console.error("Google login error:", error);
       setErrorMessage(error.message || "Failed to login with Google");
@@ -103,6 +114,7 @@ export const useLoginForm = () => {
       
       if (error) throw error;
       
+      console.log("Email login successful:", data.user?.email);
       toast.success("Logged in successfully");
       navigate("/");
     } catch (error: any) {
