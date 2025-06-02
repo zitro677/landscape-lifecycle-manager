@@ -37,7 +37,7 @@ export const useInventory = () => {
           id: item.id,
           name: item.name,
           category: item.category || 'tools',
-          unit_cost: parseFloat(item.unit_cost || 0),
+          unit_cost: parseFloat(item.unit_cost?.toString() || '0'),
           quantity: item.quantity || 0,
           life_span: 5, // Default value, could be extracted from interval if needed
           depreciation_rate: 20, // Default value, could be calculated
@@ -70,8 +70,8 @@ export const useInventory = () => {
           user_id: session.user.id,
           name: data.name,
           category: data.category,
-          unit_cost: parseFloat(data.unit_cost),
-          quantity: parseInt(data.quantity, 10),
+          unit_cost: parseFloat(data.unit_cost.toString()),
+          quantity: parseInt(data.quantity.toString(), 10),
           status: data.status || 'active',
         })
         .select()
@@ -87,10 +87,10 @@ export const useInventory = () => {
         id: newItem.id,
         name: newItem.name,
         category: newItem.category,
-        unit_cost: parseFloat(newItem.unit_cost),
+        unit_cost: parseFloat(newItem.unit_cost?.toString() || '0'),
         quantity: newItem.quantity,
-        life_span: parseInt(data.life_span, 10),
-        depreciation_rate: parseFloat(data.depreciation_rate),
+        life_span: parseInt(data.life_span?.toString() || '5', 10),
+        depreciation_rate: parseFloat(data.depreciation_rate?.toString() || '20'),
         status: newItem.status,
       };
       
@@ -109,8 +109,8 @@ export const useInventory = () => {
         .update({
           name: data.name,
           category: data.category,
-          unit_cost: parseFloat(data.unit_cost),
-          quantity: parseInt(data.quantity, 10),
+          unit_cost: parseFloat(data.unit_cost.toString()),
+          quantity: parseInt(data.quantity.toString(), 10),
           status: data.status,
         })
         .eq('id', selectedItem.id);
@@ -123,10 +123,10 @@ export const useInventory = () => {
 
       const updatedData = {
         ...data,
-        unit_cost: parseFloat(data.unit_cost),
-        quantity: parseInt(data.quantity, 10),
-        life_span: parseInt(data.life_span, 10),
-        depreciation_rate: parseFloat(data.depreciation_rate),
+        unit_cost: parseFloat(data.unit_cost.toString()),
+        quantity: parseInt(data.quantity.toString(), 10),
+        life_span: parseInt(data.life_span?.toString() || '5', 10),
+        depreciation_rate: parseFloat(data.depreciation_rate?.toString() || '20'),
       };
       
       setInventory(

@@ -82,10 +82,10 @@ export const useFinancialData = (yearFilter: string) => {
         // Calculate totals
         const totalIncome = (invoices || [])
           .filter(inv => inv.status === 'Paid')
-          .reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+          .reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
         
         const totalExpenses = (expenses || [])
-          .reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+          .reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
 
         const netIncome = totalIncome - totalExpenses;
         const profitMargin = totalIncome > 0 ? ((netIncome / totalIncome) * 100).toFixed(1) : "0.0";
@@ -130,14 +130,14 @@ const generateMonthlyData = (invoices: any[], expenses: any[], year: number) => 
                invoiceDate <= monthEnd && 
                inv.status === 'Paid';
       })
-      .reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+      .reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
 
     const monthExpenses = expenses
       .filter(exp => {
         const expenseDate = new Date(exp.date);
         return expenseDate >= monthStart && expenseDate <= monthEnd;
       })
-      .reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+      .reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
 
     return {
       name: month,
@@ -157,14 +157,14 @@ const generateProjectIncomeData = (projects: any[], invoices: any[]) => {
       const project = projects.find(p => p.id === inv.project_id);
       if (project) {
         const currentAmount = projectIncomeMap.get(project.name) || 0;
-        projectIncomeMap.set(project.name, currentAmount + parseFloat(inv.amount));
+        projectIncomeMap.set(project.name, currentAmount + parseFloat(inv.amount.toString()));
       }
     });
 
   // Add projects without invoices but with budget
   projects.forEach(project => {
     if (!projectIncomeMap.has(project.name) && project.budget && project.status === 'Completed') {
-      projectIncomeMap.set(project.name, parseFloat(project.budget));
+      projectIncomeMap.set(project.name, parseFloat(project.budget.toString()));
     }
   });
 
@@ -193,7 +193,7 @@ const generateExpenseBreakdownData = (expenses: any[]) => {
   expenses.forEach(expense => {
     const category = expense.category || 'Other';
     const currentTotal = categoryTotals.get(category) || 0;
-    categoryTotals.set(category, currentTotal + parseFloat(expense.amount));
+    categoryTotals.set(category, currentTotal + parseFloat(expense.amount.toString()));
   });
 
   return Array.from(categoryTotals.entries()).map(([name, value]) => ({

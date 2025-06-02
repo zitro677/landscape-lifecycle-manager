@@ -67,7 +67,7 @@ export const useTaxCalculator = () => {
           .gte('issue_date', `${year}-01-01`)
           .lte('issue_date', `${year}-12-31`);
 
-        const totalIncome = (invoices || []).reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+        const totalIncome = (invoices || []).reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
         setIncome(totalIncome);
 
         // Fetch real expenses by category
@@ -94,7 +94,7 @@ export const useTaxCalculator = () => {
 
         (expenseData || []).forEach(expense => {
           const category = expense.category?.toLowerCase();
-          const amount = parseFloat(expense.amount);
+          const amount = parseFloat(expense.amount.toString());
           
           switch (category) {
             case 'materials':
