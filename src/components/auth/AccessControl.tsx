@@ -14,9 +14,9 @@ const AccessControl: React.FC<AccessControlProps> = ({
   requiredRole = 'read_only',
   fallback 
 }) => {
-  const { userRole, isLoading } = useAuth();
+  const { userRole, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
@@ -26,7 +26,7 @@ const AccessControl: React.FC<AccessControlProps> = ({
   }
 
   // Check if user meets the required role
-  if (requiredRole === 'read_only' && (userRole === 'admin' || userRole === 'read_only')) {
+  if (requiredRole === 'read_only' && userRole === 'read_only') {
     return <>{children}</>;
   }
 
