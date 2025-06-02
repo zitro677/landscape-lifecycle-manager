@@ -1,9 +1,8 @@
 
 import { jsPDF } from "jspdf";
 
-// Inline base64 for the logo image for performance and reliable PDF generation.
-// Normally, you'd run a build-time conversion, but here we'll load from public with getImageFromUrl.
-const logoUrl = "/lovable-uploads/d3b8a746-5360-4cd5-b681-98638ed73e81.png";
+// Updated logo URL to use the new Green Landscape Irrigation logo
+const logoUrl = "/lovable-uploads/a1affb37-4921-4003-bdc3-84e84110c503.png";
 
 /**
  * Load an image url to dataUrl (base64). This is async but for PDF export, we want users to wait a split second if needed for best logo quality.
@@ -35,28 +34,20 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
   let yPosition = yPositionInitial;
   const marginLeft = 20;
 
-  // We'll synchronously return if logo is not yet ready, and try to embed the logo if image loaded.
-  // Since generatePDF is called on a button, this can be made async if needed in future.
-
   // Add green line under header
   doc.setDrawColor(93, 144, 73);
   doc.setLineWidth(1.5);
   doc.line(marginLeft, yPosition - 7, pageWidth - marginLeft, yPosition - 7);
 
-  // Add logo left-aligned (about 32x32, size can be adjusted as needed)
-  // We'll attempt to load logo synchronously (in practice, for best experience convert logo at build time).
-  // Since this is called inside a try/catch in ProposalPdfGenerator, we'll block if logo is not ready.
-  let logoHeight = 28;
-  let logoWidth = 28;
+  // Add logo left-aligned (adjusted size for better proportion)
+  let logoHeight = 32;
+  let logoWidth = 32;
   let logoLoaded = false;
   let logoY = yPosition - 2;
   let logoX = marginLeft;
-  // Default fallback: Do nothing if logo cannot be fetched, PDF is still usable.
 
-  // Instead of async/await, we use a workaround so this signature stays non-async for compatibility.
-  // We'll use a hack: If window._PDF_LOGO_CACHE is set, use it. Else block and set it.
+  // Use the window cache approach for logo loading
   const _window = typeof window !== "undefined" ? window : {} as Window;
-  // Declare the type for the extended window
   interface ExtendedWindow extends Window {
     _PDF_LOGO_CACHE?: string | null;
   }
@@ -64,9 +55,7 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
   
   if (!extWindow._PDF_LOGO_CACHE) {
     // Not loaded yet, block (synchronously) for this export.
-    // NOTE: The first export will show the logo after a moment, next exports will be instant.
     extWindow._PDF_LOGO_CACHE = undefined;
-    // Only synchronous in modern browsers (waiting till image loads).
     throw new Error("Logo not loaded for PDF; try again in a second.");
   }
   
@@ -114,9 +103,7 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
 };
 
 // Patch: On app start, fire off loading the logo and put it in window._PDF_LOGO_CACHE
-// So that PDF export is instant on first click (ignoring SSR/hydration as PDF runs client-side)
 if (typeof window !== "undefined") {
-  // Define window with our custom property
   interface ExtendedWindow extends Window {
     _PDF_LOGO_CACHE?: string | null;
   }

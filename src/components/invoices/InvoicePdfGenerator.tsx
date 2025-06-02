@@ -1,8 +1,10 @@
+
 import { Invoice } from "./types";
 import { formatCurrency } from "./utils";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
+import { addHeaderSection } from "../proposals/utils/pdf/headerSection";
 
 interface InvoicePdfGeneratorProps {
   invoice: Invoice;
@@ -15,26 +17,9 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
       const pageWidth = doc.internal.pageSize.width;
       
       let yPosition = 20;
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text("Green Landscape Irrigation", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 8;
       
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text("Phone: (727) 484-5516", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 5;
-      
-      doc.text("Email: greenplanetlandscaping01@gmail.com", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 5;
-      
-      doc.text("Web: www.greenlandscapeirrigation.com", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
-      
-      doc.setFontSize(20);
-      doc.setFont(undefined, 'bold');
-      doc.text("INVOICE", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
+      // Use the shared header section with the new logo
+      yPosition = addHeaderSection(doc, "INVOICE", yPosition, pageWidth);
       
       doc.setFontSize(12);
       doc.text(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);
