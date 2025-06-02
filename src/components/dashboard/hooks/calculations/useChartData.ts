@@ -39,8 +39,9 @@ const generateRevenueData = (invoices: any[]) => {
     }).reduce((sum, inv) => sum + parseFloat(inv.amount?.toString() || '0'), 0) || 0;
 
     return {
-      month,
-      revenue: monthlyRevenue
+      name: month,
+      revenue: monthlyRevenue,
+      expenses: 0 // Default to 0 for expenses since we don't have expense data mapped to months yet
     };
   });
 };
@@ -60,9 +61,9 @@ const generateProjectStatusData = (projects: any[]) => {
   });
 
   return Object.entries(statusCounts).map(([status, count]) => ({
-    status,
-    count,
-    fill: getStatusColor(status)
+    name: status,
+    value: count,
+    color: getStatusColor(status)
   }));
 };
 
