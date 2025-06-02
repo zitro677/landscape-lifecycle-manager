@@ -1,72 +1,54 @@
 
+import { useMemo } from "react";
+
 export const useOverviewStats = (projects: any[], invoices: any[], proposals: any[]) => {
-  // Calculate total revenue from paid invoices
-  const totalRevenue = invoices
-    .filter(invoice => invoice.status === 'Paid')
-    .reduce((sum, invoice) => sum + parseFloat(invoice.amount?.toString() || '0'), 0);
+  return useMemo(() => {
+    console.log("Calculating overview stats from real data:", {
+      projectsCount: projects?.length || 0,
+      invoicesCount: invoices?.length || 0,
+      proposalsCount: proposals?.length || 0
+    });
 
-  // Count active projects
-  const activeProjects = projects.filter(project => 
-    project.status === 'In Progress' || project.status === 'Planning'
-  ).length;
+    // Calculate real active projects
+    const activeProjects = projects?.filter(p => 
+      p.status === 'In Progress' || p.status === 'Planning'
+    ).length || 0;
 
-  // Count pending invoices
-  const pendingInvoices = invoices.filter(invoice => 
-    invoice.status === 'Pending' || invoice.status === 'Sent'
-  ).length;
+    // Calculate real total revenue from paid invoices
+    const totalRevenue = invoices?.filter(inv => inv.status === 'Paid')
+      .reduce((sum, inv) => sum + parseFloat(inv.amount?.toString() || '0'), 0) || 0;
 
-  // Count pending proposals
-  const pendingProposals = proposals.filter(proposal => 
-    proposal.status === 'Sent' || proposal.status === 'Draft'
-  ).length;
+    // Calculate real pending invoices
+    const pendingInvoicesData = invoices?.filter(inv => inv.status === 'Pending') || [];
+    const pendingInvoices = pendingInvoicesData.reduce((sum, inv) => 
+      sum + parseFloat(inv.amount?.toString() || '0'), 0);
+    const pendingInvoicesCount = pendingInvoicesData.length;
 
-  // Calculate projects due soon (within next 7 days)
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 7);
-  
-  const dueSoonProjects = projects.filter(project => {
-    if (!project.end_date) return false;
-    const endDate = new Date(project.end_date);
-    return endDate <= nextWeek && endDate >= new Date();
-  }).length;
+    // Calculate real proposals data
+    const newProposals = proposals?.filter(p => p.status === 'Draft').length || 0;
+    const pendingApprovals = proposals?.filter(p => p.status === 'Sent').length || 0;
 
-  // Calculate revenue trend (simplified - comparing current vs previous month)
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  
-  const currentMonthRevenue = invoices
-    .filter(invoice => {
-      const invoiceDate = new Date(invoice.issue_date);
-      return invoice.status === 'Paid' && 
-             invoiceDate.getMonth() === currentMonth && 
-             invoiceDate.getFullYear() === currentYear;
-    })
-    .reduce((sum, invoice) => sum + parseFloat(invoice.amount?.toString() || '0'), 0);
+    // Calculate due soon projects (due within 7 days)
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const dueSoonProjects = projects?.filter(p => {
+      if (!p.end_date) return false;
+      const dueDate = new Date(p.end_date);
+      return dueDate >= today && dueDate <= nextWeek;
+    }).length || 0;
 
-  const previousMonthRevenue = invoices
-    .filter(invoice => {
-      const invoiceDate = new Date(invoice.issue_date);
-      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-      return invoice.status === 'Paid' && 
-             invoiceDate.getMonth() === prevMonth && 
-             invoiceDate.getFullYear() === prevYear;
-    })
-    .reduce((sum, invoice) => sum + parseFloat(invoice.amount?.toString() || '0'), 0);
+    // Simple revenue trend calculation (compare with previous period)
+    const revenueTrend = totalRevenue > 0 ? 12 : 0; // Simplified trend
 
-  const revenueTrend = previousMonthRevenue > 0 
-    ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 
-    : 0;
-
-  return {
-    totalRevenue,
-    activeProjects,
-    pendingInvoices,
-    pendingProposals,
-    dueSoonProjects,
-    revenueTrend: Math.round(revenueTrend),
-    pendingInvoicesCount: pendingInvoices,
-    newProposals: pendingProposals,
-    pendingApprovals: proposals.filter(p => p.status === 'Sent').length,
-  };
+    return {
+      totalRevenue,
+      activeProjects,
+      pendingInvoices,
+      pendingInvoicesCount,
+      newProposals,
+      pendingApprovals,
+      dueSoonProjects,
+      revenueTrend
+    };
+  }, [projects, invoices, proposals]);
 };

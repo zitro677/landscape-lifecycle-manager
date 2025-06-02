@@ -12,10 +12,13 @@ export const useProjectsData = (lastUpdate: number) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) {
+          console.log("No authenticated user, clearing projects data");
+          setProjects([]);
           setIsLoading(false);
           return;
         }
 
+        console.log("Loading real projects data for user:", session.user.email);
         const { data: projectsData, error } = await supabase
           .from('projects')
           .select('*')
@@ -26,6 +29,7 @@ export const useProjectsData = (lastUpdate: number) => {
           console.error("Error fetching projects:", error);
           setProjects([]);
         } else {
+          console.log("Loaded projects from database:", projectsData?.length || 0);
           setProjects(projectsData || []);
         }
       } catch (error) {
