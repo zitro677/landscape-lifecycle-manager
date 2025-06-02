@@ -15,48 +15,45 @@ export const useClientsList = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       try {
+        console.log("Fetching clients list...");
+        
         // Get the current user session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
+        }
+        
+        if (!session?.user) {
+          console.error("No authenticated user found");
           throw new Error("No authenticated user");
         }
 
-        // Direct query using user ID to avoid recursion issues
+        console.log("Fetching clients for user:", session.user.id);
+
+        // Simple direct query to avoid any potential recursion
         const { data, error } = await supabase
           .from("clients")
-          .select("*")
+          .select("id, name, email, phone, address, created_at, updated_at")
           .eq("user_id", session.user.id)
           .order("name");
 
         if (error) {
-          // Check for recursion error and try alternate approach
-          if (error.message.includes("infinite recursion")) {
-            console.log("Detected recursion error, using alternate query approach");
-            
-            // Simplified query without joins
-            const { data: altData, error: altError } = await supabase
-              .from("clients")
-              .select("id, name, email, phone, address, created_at, updated_at")
-              .eq("user_id", session.user.id)
-              .order("name");
-              
-            if (altError) {
-              throw altError;
-            }
-            
-            return altData as Client[];
-          }
-          
+          console.error("Error fetching clients:", error);
           throw error;
         }
 
+        console.log("Clients fetched successfully:", data?.length || 0, "clients");
         return data as Client[];
-      } catch (err) {
+      } catch (err: any) {
         console.error("Client fetch error:", err);
-        toast.error("Failed to load clients");
+        toast.error(err.message || "Failed to load clients");
         throw err;
       }
     },
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return {
