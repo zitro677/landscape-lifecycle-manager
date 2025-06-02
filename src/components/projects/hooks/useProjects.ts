@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,6 +20,8 @@ export interface Project {
 export const useProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("dueDate");
 
   const loadProjects = async () => {
     setIsLoading(true);
@@ -136,9 +138,58 @@ export const useProjects = () => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      "Completed": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      "In Progress": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+      "Planning": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+      "On Hold": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+    };
+    return colorMap[status] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+  };
+
+  // Filter and sort projects
+  const sortedProjects = useMemo(() => {
+    let filtered = projects;
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = projects.filter(project => 
+        project.status.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortOrder) {
+        case "dueDate":
+          const dateA = a.end_date ? new Date(a.end_date).getTime() : 0;
+          const dateB = b.end_date ? new Date(b.end_date).getTime() : 0;
+          return dateB - dateA;
+        case "progress":
+          // Since we don't have progress in DB, sort by status priority
+          const statusPriority = { "In Progress": 3, "Planning": 2, "On Hold": 1, "Completed": 0 };
+          return (statusPriority[b.status as keyof typeof statusPriority] || 0) - 
+                 (statusPriority[a.status as keyof typeof statusPriority] || 0);
+        case "budget":
+          return (b.budget || 0) - (a.budget || 0);
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    return sorted;
+  }, [projects, statusFilter, sortOrder]);
+
   return {
     projects,
     isLoading,
+    statusFilter,
+    setStatusFilter,
+    sortOrder,
+    setSortOrder,
+    getStatusColor,
+    sortedProjects,
     createProject,
     updateProject,
     deleteProject,

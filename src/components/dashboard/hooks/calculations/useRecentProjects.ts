@@ -10,6 +10,7 @@ export const useRecentProjects = (projects: any[]) => {
       budget: project.budget,
       progress: calculateProgress(project),
       created_at: project.created_at,
+      end_date: project.end_date,
     }));
 };
 

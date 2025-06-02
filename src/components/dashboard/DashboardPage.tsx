@@ -29,7 +29,7 @@ const DashboardPage: React.FC = () => {
       header: "ID",
     },
     {
-      accessorKey: "client",
+      accessorKey: "name",
       header: "Client",
     },
     {
@@ -52,14 +52,29 @@ const DashboardPage: React.FC = () => {
       },
     },
     {
-      accessorKey: "dueDate",
+      accessorKey: "end_date",
       header: "Due Date",
+      cell: ({ row }: any) => {
+        const date = row.getValue("end_date");
+        return date ? new Date(date).toLocaleDateString() : "Not set";
+      },
     },
     {
       accessorKey: "budget",
       header: "Value",
+      cell: ({ row }: any) => {
+        const budget = row.getValue("budget");
+        return budget ? `$${Number(budget).toLocaleString()}` : "Not set";
+      },
     },
   ];
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
 
   return (
     <AnimatedPage>
@@ -78,7 +93,7 @@ const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <OverviewCard
             title="Total Revenue"
-            value={overviewStats.totalRevenue}
+            value={formatCurrency(overviewStats.totalRevenue)}
             description="vs. last month"
             icon={BarChart3}
             trend={overviewStats.revenueTrend}
@@ -96,7 +111,7 @@ const DashboardPage: React.FC = () => {
           />
           <OverviewCard
             title="Pending Invoices"
-            value={overviewStats.pendingInvoices}
+            value={overviewStats.pendingInvoices.toString()}
             description={`${overviewStats.pendingInvoicesCount} invoices pending`}
             icon={FileText}
             trend={-4}
@@ -131,8 +146,8 @@ const DashboardPage: React.FC = () => {
               <DataTable
                 columns={columns}
                 data={recentProjects}
-                searchColumn="client"
-                searchPlaceholder="Search clients..."
+                searchColumn="name"
+                searchPlaceholder="Search projects..."
               />
             </CardContent>
           </Card>
