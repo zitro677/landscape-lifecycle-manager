@@ -1,72 +1,166 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const mockInventory = [
-  {
-    id: "inv-001",
-    name: "Heavy Duty Drill",
-    category: "tools",
-    unit_cost: 299.99,
-    quantity: 2,
-    life_span: 5,
-    depreciation_rate: 20,
-    status: "active",
-  },
-  {
-    id: "inv-002",
-    name: "Industrial Printer",
-    category: "machinery",
-    unit_cost: 1499.99,
-    quantity: 1,
-    life_span: 8,
-    depreciation_rate: 12.5,
-    status: "active",
-  },
-];
-
 export const useInventory = () => {
-  const [inventory, setInventory] = useState(mockInventory);
+  const [inventory, setInventory] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleAddItem = (data: any) => {
-    // Ensure unit_cost is stored as a number
-    const newItem = {
-      ...data,
-      id: `inv-${String(inventory.length + 1).padStart(3, "0")}`,
-      unit_cost: parseFloat(data.unit_cost),
-      quantity: parseInt(data.quantity, 10),
-      life_span: parseInt(data.life_span, 10),
-      depreciation_rate: parseFloat(data.depreciation_rate),
+  // Load inventory from Supabase
+  useEffect(() => {
+    const loadInventory = async () => {
+      setIsLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: inventoryData, error } = await supabase
+          .from('inventory')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error("Error fetching inventory:", error);
+          toast.error("Failed to load inventory");
+          return;
+        }
+
+        // Transform database inventory to match our interface
+        const transformedInventory = (inventoryData || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          category: item.category || 'tools',
+          unit_cost: parseFloat(item.unit_cost || 0),
+          quantity: item.quantity || 0,
+          life_span: 5, // Default value, could be extracted from interval if needed
+          depreciation_rate: 20, // Default value, could be calculated
+          status: item.status || 'active',
+        }));
+
+        setInventory(transformedInventory);
+      } catch (error) {
+        console.error("Error loading inventory:", error);
+        toast.error("Failed to load inventory");
+      } finally {
+        setIsLoading(false);
+      }
     };
-    
-    setInventory([...inventory, newItem]);
-    toast.success("Item added successfully");
+
+    loadInventory();
+  }, []);
+
+  const handleAddItem = async (data: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        toast.error("You must be logged in to add inventory items");
+        return;
+      }
+
+      const { data: newItem, error } = await supabase
+        .from('inventory')
+        .insert({
+          user_id: session.user.id,
+          name: data.name,
+          category: data.category,
+          unit_cost: parseFloat(data.unit_cost),
+          quantity: parseInt(data.quantity, 10),
+          status: data.status || 'active',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error adding inventory item:", error);
+        toast.error("Failed to add inventory item");
+        return;
+      }
+
+      const transformedItem = {
+        id: newItem.id,
+        name: newItem.name,
+        category: newItem.category,
+        unit_cost: parseFloat(newItem.unit_cost),
+        quantity: newItem.quantity,
+        life_span: parseInt(data.life_span, 10),
+        depreciation_rate: parseFloat(data.depreciation_rate),
+        status: newItem.status,
+      };
+      
+      setInventory([...inventory, transformedItem]);
+      toast.success("Item added successfully");
+    } catch (error) {
+      console.error("Error adding inventory item:", error);
+      toast.error("Failed to add inventory item");
+    }
   };
 
-  const handleEditItem = (data: any) => {
-    // Ensure unit_cost is stored as a number when editing
-    const updatedData = {
-      ...data,
-      unit_cost: parseFloat(data.unit_cost),
-      quantity: parseInt(data.quantity, 10),
-      life_span: parseInt(data.life_span, 10),
-      depreciation_rate: parseFloat(data.depreciation_rate),
-    };
-    
-    setInventory(
-      inventory.map((item) =>
-        item.id === selectedItem.id ? { ...item, ...updatedData } : item
-      )
-    );
-    setSelectedItem(null);
-    toast.success("Item updated successfully");
+  const handleEditItem = async (data: any) => {
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .update({
+          name: data.name,
+          category: data.category,
+          unit_cost: parseFloat(data.unit_cost),
+          quantity: parseInt(data.quantity, 10),
+          status: data.status,
+        })
+        .eq('id', selectedItem.id);
+
+      if (error) {
+        console.error("Error updating inventory item:", error);
+        toast.error("Failed to update inventory item");
+        return;
+      }
+
+      const updatedData = {
+        ...data,
+        unit_cost: parseFloat(data.unit_cost),
+        quantity: parseInt(data.quantity, 10),
+        life_span: parseInt(data.life_span, 10),
+        depreciation_rate: parseFloat(data.depreciation_rate),
+      };
+      
+      setInventory(
+        inventory.map((item) =>
+          item.id === selectedItem.id ? { ...item, ...updatedData } : item
+        )
+      );
+      setSelectedItem(null);
+      toast.success("Item updated successfully");
+    } catch (error) {
+      console.error("Error updating inventory item:", error);
+      toast.error("Failed to update inventory item");
+    }
   };
 
-  const handleDeleteItem = (id: string) => {
-    setInventory(inventory.filter((item) => item.id !== id));
-    toast.success("Item deleted successfully");
+  const handleDeleteItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error("Error deleting inventory item:", error);
+        toast.error("Failed to delete inventory item");
+        return;
+      }
+
+      setInventory(inventory.filter((item) => item.id !== id));
+      toast.success("Item deleted successfully");
+    } catch (error) {
+      console.error("Error deleting inventory item:", error);
+      toast.error("Failed to delete inventory item");
+    }
   };
 
   // Add handlers to each inventory item
@@ -87,5 +181,6 @@ export const useInventory = () => {
     handleAddItem,
     handleEditItem,
     handleDeleteItem,
+    isLoading,
   };
 };

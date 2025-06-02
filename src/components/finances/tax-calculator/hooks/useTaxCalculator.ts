@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface TaxExpenses {
   materials: number;
@@ -23,18 +24,18 @@ export interface TaxResults {
 }
 
 export const useTaxCalculator = () => {
-  const [income, setIncome] = useState(150000);
+  const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState<TaxExpenses>({
-    materials: 30000,
-    equipment: 15000,
-    labor: 40000,
-    mileage: 2500,
-    utilities: 3600,
-    insurance: 4800,
-    marketing: 2000,
-    maintenance: 3000,
-    office: 1500,
-    other: 1000,
+    materials: 0,
+    equipment: 0,
+    labor: 0,
+    mileage: 0,
+    utilities: 0,
+    insurance: 0,
+    marketing: 0,
+    maintenance: 0,
+    office: 0,
+    other: 0,
   });
   const [taxRate, setTaxRate] = useState(25);
   const [filingStatus, setFilingStatus] = useState("single");
@@ -46,6 +47,98 @@ export const useTaxCalculator = () => {
     effectiveTaxRate: 0,
   });
   const [yearFilter, setYearFilter] = useState<string>("2025");
+
+  // Load real financial data
+  useEffect(() => {
+    const loadRealData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) return;
+
+        const userId = session.user.id;
+        const year = parseInt(yearFilter);
+
+        // Fetch real income from paid invoices
+        const { data: invoices } = await supabase
+          .from('invoices')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('status', 'Paid')
+          .gte('issue_date', `${year}-01-01`)
+          .lte('issue_date', `${year}-12-31`);
+
+        const totalIncome = (invoices || []).reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+        setIncome(totalIncome);
+
+        // Fetch real expenses by category
+        const { data: expenseData } = await supabase
+          .from('expenses')
+          .select('category, amount')
+          .eq('user_id', userId)
+          .gte('date', `${year}-01-01`)
+          .lte('date', `${year}-12-31`);
+
+        // Group expenses by category
+        const categoryTotals: TaxExpenses = {
+          materials: 0,
+          equipment: 0,
+          labor: 0,
+          mileage: 0,
+          utilities: 0,
+          insurance: 0,
+          marketing: 0,
+          maintenance: 0,
+          office: 0,
+          other: 0,
+        };
+
+        (expenseData || []).forEach(expense => {
+          const category = expense.category?.toLowerCase();
+          const amount = parseFloat(expense.amount);
+          
+          switch (category) {
+            case 'materials':
+              categoryTotals.materials += amount;
+              break;
+            case 'equipment':
+              categoryTotals.equipment += amount;
+              break;
+            case 'labor':
+              categoryTotals.labor += amount;
+              break;
+            case 'mileage':
+              categoryTotals.mileage += amount;
+              break;
+            case 'utilities':
+              categoryTotals.utilities += amount;
+              break;
+            case 'insurance':
+              categoryTotals.insurance += amount;
+              break;
+            case 'marketing':
+              categoryTotals.marketing += amount;
+              break;
+            case 'maintenance':
+              categoryTotals.maintenance += amount;
+              break;
+            case 'office':
+              categoryTotals.office += amount;
+              break;
+            default:
+              categoryTotals.other += amount;
+              break;
+          }
+        });
+
+        setExpenses(categoryTotals);
+
+      } catch (error) {
+        console.error("Error loading real financial data for tax calculator:", error);
+      }
+    };
+
+    loadRealData();
+  }, [yearFilter]);
 
   useEffect(() => {
     const totalExpenses = Object.values(expenses).reduce(

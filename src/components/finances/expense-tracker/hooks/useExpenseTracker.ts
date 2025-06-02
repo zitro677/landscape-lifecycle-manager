@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { mockExpenses } from "../data/mockExpenses";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface Expense {
@@ -28,11 +28,11 @@ export interface NewExpense {
 }
 
 const MILEAGE_RATE = 0.67;
-const EXPENSE_STORAGE_KEY = "expense-tracker-data";
 
 export const useExpenseTracker = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [currentExpenseId, setCurrentExpenseId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [newExpense, setNewExpense] = useState<NewExpense>({
     date: format(new Date(), "yyyy-MM-dd"),
@@ -44,88 +44,156 @@ export const useExpenseTracker = () => {
     miles: "",
   });
 
-  // Load expenses from localStorage on initial load
+  // Load expenses from Supabase
   useEffect(() => {
-    const savedExpenses = localStorage.getItem(EXPENSE_STORAGE_KEY);
-    if (savedExpenses) {
+    const loadExpenses = async () => {
+      setIsLoading(true);
       try {
-        setExpenses(JSON.parse(savedExpenses));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: expensesData, error } = await supabase
+          .from('expenses')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('date', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching expenses:", error);
+          toast.error("Failed to load expenses");
+          return;
+        }
+
+        // Transform database expenses to match our interface
+        const transformedExpenses = (expensesData || []).map((expense: any) => ({
+          id: expense.id,
+          date: expense.date,
+          category: expense.category,
+          amount: parseFloat(expense.amount),
+          vendor: expense.description || 'Unknown Vendor', // Use description as vendor for now
+          description: expense.description || '',
+          deductible: true, // Default to true, could be added to database schema
+          miles: expense.category === 'Mileage' ? Math.round(parseFloat(expense.amount) / MILEAGE_RATE) : undefined,
+        }));
+
+        setExpenses(transformedExpenses);
       } catch (error) {
-        console.error("Failed to parse saved expenses:", error);
-        // Fallback to mock data if parsing fails
-        setExpenses(mockExpenses);
+        console.error("Error loading expenses:", error);
+        toast.error("Failed to load expenses");
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      // If no saved data, use mock data for initial state
-      setExpenses(mockExpenses);
-    }
+    };
+
+    loadExpenses();
   }, []);
 
-  // Save expenses to localStorage whenever they change
-  useEffect(() => {
-    if (expenses.length > 0) {
-      localStorage.setItem(EXPENSE_STORAGE_KEY, JSON.stringify(expenses));
-    }
-  }, [expenses]);
-
-  const addExpense = () => {
+  const addExpense = async () => {
     if (!newExpense.vendor) return;
 
-    let finalAmount = 0;
-    if (newExpense.category === "Mileage" && newExpense.miles) {
-      finalAmount = parseFloat(newExpense.miles) * MILEAGE_RATE;
-    } else if (newExpense.amount) {
-      finalAmount = parseFloat(newExpense.amount);
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        toast.error("You must be logged in to add expenses");
+        return;
+      }
 
-    // If we're editing an existing expense
-    if (currentExpenseId) {
-      const updatedExpenses = expenses.map(expense => {
-        if (expense.id === currentExpenseId) {
-          return {
-            ...expense,
+      let finalAmount = 0;
+      if (newExpense.category === "Mileage" && newExpense.miles) {
+        finalAmount = parseFloat(newExpense.miles) * MILEAGE_RATE;
+      } else if (newExpense.amount) {
+        finalAmount = parseFloat(newExpense.amount);
+      }
+
+      // If we're editing an existing expense
+      if (currentExpenseId) {
+        const { error } = await supabase
+          .from('expenses')
+          .update({
             date: newExpense.date,
             category: newExpense.category,
             amount: finalAmount,
-            vendor: newExpense.vendor,
-            description: newExpense.description,
-            deductible: newExpense.deductible,
-            miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
-          };
+            description: newExpense.vendor + (newExpense.description ? ` - ${newExpense.description}` : ''),
+          })
+          .eq('id', currentExpenseId);
+
+        if (error) {
+          console.error("Error updating expense:", error);
+          toast.error("Failed to update expense");
+          return;
         }
-        return expense;
+
+        const updatedExpenses = expenses.map(expense => {
+          if (expense.id === currentExpenseId) {
+            return {
+              ...expense,
+              date: newExpense.date,
+              category: newExpense.category,
+              amount: finalAmount,
+              vendor: newExpense.vendor,
+              description: newExpense.description,
+              deductible: newExpense.deductible,
+              miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
+            };
+          }
+          return expense;
+        });
+        
+        setExpenses(updatedExpenses);
+        setCurrentExpenseId(null);
+        toast.success("Expense updated successfully");
+      } else {
+        // Adding a new expense
+        const { data, error } = await supabase
+          .from('expenses')
+          .insert({
+            user_id: session.user.id,
+            date: newExpense.date,
+            category: newExpense.category,
+            amount: finalAmount,
+            description: newExpense.vendor + (newExpense.description ? ` - ${newExpense.description}` : ''),
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error adding expense:", error);
+          toast.error("Failed to add expense");
+          return;
+        }
+
+        const expense: Expense = {
+          id: data.id,
+          date: newExpense.date,
+          category: newExpense.category,
+          amount: finalAmount,
+          vendor: newExpense.vendor,
+          description: newExpense.description,
+          deductible: newExpense.deductible,
+          miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
+        };
+
+        setExpenses([expense, ...expenses]);
+        toast.success("Expense added successfully");
+      }
+
+      // Reset form
+      setNewExpense({
+        date: format(new Date(), "yyyy-MM-dd"),
+        category: "Materials",
+        amount: "",
+        vendor: "",
+        description: "",
+        deductible: true,
+        miles: "",
       });
-      
-      setExpenses(updatedExpenses);
-      setCurrentExpenseId(null);
-      toast.success("Expense updated successfully");
-    } else {
-      // Adding a new expense
-      const expense: Expense = {
-        id: `EXP-${String(expenses.length + 1).padStart(3, "0")}`,
-        date: newExpense.date,
-        category: newExpense.category,
-        amount: finalAmount,
-        vendor: newExpense.vendor,
-        description: newExpense.description,
-        deductible: newExpense.deductible,
-        miles: newExpense.category === "Mileage" ? parseFloat(newExpense.miles || "0") : undefined,
-      };
-
-      setExpenses([expense, ...expenses]);
-      toast.success("Expense added successfully");
+    } catch (error) {
+      console.error("Error saving expense:", error);
+      toast.error("Failed to save expense");
     }
-
-    // Reset form
-    setNewExpense({
-      date: format(new Date(), "yyyy-MM-dd"),
-      category: "Materials",
-      amount: "",
-      vendor: "",
-      description: "",
-      deductible: true,
-      miles: "",
-    });
   };
 
   const handleEditExpense = (expense: Expense) => {
@@ -141,10 +209,26 @@ export const useExpenseTracker = () => {
     });
   };
 
-  const handleDeleteExpense = (id: string) => {
-    const updatedExpenses = expenses.filter(expense => expense.id !== id);
-    setExpenses(updatedExpenses);
-    toast.success("Expense deleted successfully");
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error("Error deleting expense:", error);
+        toast.error("Failed to delete expense");
+        return;
+      }
+
+      const updatedExpenses = expenses.filter(expense => expense.id !== id);
+      setExpenses(updatedExpenses);
+      toast.success("Expense deleted successfully");
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
+    }
   };
 
   // Add handlers to each expense object
@@ -159,6 +243,7 @@ export const useExpenseTracker = () => {
     newExpense,
     setNewExpense,
     addExpense,
+    isLoading,
     totalExpenses: expenses.reduce((sum, expense) => sum + expense.amount, 0),
     deductibleExpenses: expenses
       .filter((expense) => expense.deductible)

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import AnimatedPage from "../shared/AnimatedPage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,17 +9,35 @@ import FinancialStats from "./stats/FinancialStats";
 import IncomeExpenseChart from "./charts/IncomeExpenseChart";
 import ProjectIncomeChart from "./charts/ProjectIncomeChart";
 import ExpenseBreakdownChart from "./charts/ExpenseBreakdownChart";
-import { monthlyIncomeData, projectIncomeData, expenseBreakdownData } from "./data/FinancialData";
+import { useFinancialData } from "./hooks/useFinancialData";
 import { InventoryPage } from "./inventory/InventoryPage";
 
 const FinancesPage: React.FC = () => {
   const [timeFilter, setTimeFilter] = useState<string>("year");
   const [yearFilter, setYearFilter] = useState<string>("2025");
 
-  const totalIncome = monthlyIncomeData.reduce((sum, item) => sum + item.income, 0);
-  const totalExpenses = monthlyIncomeData.reduce((sum, item) => sum + item.expenses, 0);
-  const netIncome = totalIncome - totalExpenses;
-  const profitMargin = ((netIncome / totalIncome) * 100).toFixed(1);
+  const { 
+    monthlyIncomeData, 
+    projectIncomeData, 
+    expenseBreakdownData,
+    totalIncome,
+    totalExpenses,
+    netIncome,
+    profitMargin,
+    isLoading 
+  } = useFinancialData(yearFilter);
+
+  if (isLoading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg">Loading financial data...</div>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   return (
     <AnimatedPage>
