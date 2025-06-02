@@ -10,8 +10,10 @@ export const useDashboardData = () => {
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
   // Load data from different sources
-  const projects = useProjectsData(lastUpdate);
-  const { proposals, invoices, clients, isLoading } = useSupabaseData(lastUpdate);
+  const { projects, isLoading: projectsLoading } = useProjectsData(lastUpdate);
+  const { proposals, invoices, clients, isLoading: supabaseLoading } = useSupabaseData(lastUpdate);
+
+  const isLoading = projectsLoading || supabaseLoading;
 
   // Calculate derived data
   const overviewStats = useOverviewStats(projects, invoices, proposals);
@@ -24,18 +26,8 @@ export const useDashboardData = () => {
       setLastUpdate(Date.now());
     }, 30000); // Check for updates every 30 seconds
 
-    // Set up localStorage change listener for projects
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "landscape_projects" || e.key === "projectsData") {
-        setLastUpdate(Date.now());
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 

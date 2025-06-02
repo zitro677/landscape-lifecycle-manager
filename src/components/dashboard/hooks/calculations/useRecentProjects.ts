@@ -1,22 +1,30 @@
 
 export const useRecentProjects = (projects: any[]) => {
-  // Get recent projects (4 most recent by creation date)
-  const getRecentProjects = () => {
-    return [...projects]
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.startDate).getTime();
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.startDate).getTime();
-        return dateB - dateA;
-      })
-      .slice(0, 4)
-      .map(project => ({
-        id: project.id,
-        client: project.client,
-        status: project.status,
-        dueDate: project.dueDate,
-        budget: project.budget
-      }));
-  };
+  return projects
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5)
+    .map(project => ({
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      budget: project.budget,
+      progress: calculateProgress(project),
+      created_at: project.created_at,
+    }));
+};
 
-  return getRecentProjects();
+const calculateProgress = (project: any) => {
+  // Simple progress calculation based on status
+  switch (project.status) {
+    case 'Planning':
+      return 10;
+    case 'In Progress':
+      return 50;
+    case 'Completed':
+      return 100;
+    case 'On Hold':
+      return 25;
+    default:
+      return 0;
+  }
 };
