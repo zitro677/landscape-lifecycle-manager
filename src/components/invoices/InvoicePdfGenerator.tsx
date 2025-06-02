@@ -11,15 +11,15 @@ interface InvoicePdfGeneratorProps {
 }
 
 const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
-  const generatePDF = () => {
+  const generatePDF = async () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       
       let yPosition = 20;
       
-      // Use the shared header section with the new logo
-      yPosition = addHeaderSection(doc, "INVOICE", yPosition, pageWidth);
+      // Use the shared header section with the new logo (now async)
+      yPosition = await addHeaderSection(doc, "INVOICE", yPosition, pageWidth);
       
       doc.setFontSize(12);
       doc.text(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);

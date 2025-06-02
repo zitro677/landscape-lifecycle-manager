@@ -11,13 +11,13 @@ interface InvoiceEmailServiceProps {
 }
 
 const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
-  const createPdf = () => {
+  const createPdf = async () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       
       let yPosition = 20;
-      yPosition = addHeaderSection(doc, "INVOICE", yPosition, pageWidth);
+      yPosition = await addHeaderSection(doc, "INVOICE", yPosition, pageWidth);
       
       doc.setFontSize(12);
       doc.text(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);
@@ -93,7 +93,7 @@ const InvoiceEmailService = ({ invoice }: InvoiceEmailServiceProps) => {
     }
   };
 
-  const sendEmail = () => {
+  const sendEmail = async () => {
     try {
       const companyEmail = "greenplanetlandscaping01@gmail.com";
       const subject = `Invoice ${invoice.invoice_number} from Green Landscape Irrigation`;
@@ -113,7 +113,7 @@ Phone: (727) 484-5516
 Email: greenplanetlandscaping01@gmail.com
 Web: www.greenlandscapeirrigation.com`;
       
-      const doc = createPdf();
+      const doc = await createPdf();
       if (doc) {
         doc.save(`Invoice_${invoice.invoice_number}.pdf`);
       }

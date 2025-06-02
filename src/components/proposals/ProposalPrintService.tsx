@@ -8,13 +8,13 @@ interface ProposalPrintServiceProps {
 }
 
 const ProposalPrintService = ({ proposal }: ProposalPrintServiceProps) => {
-  const printProposal = () => {
+  const printProposal = async () => {
     try {
       toast.info("Preparing proposal for printing...");
       
-      // Use the PDF generator to create the PDF
+      // Use the PDF generator to create the PDF (now async)
       const pdfGenerator = ProposalPdfGenerator({ proposal });
-      const doc = pdfGenerator.generatePDF();
+      const doc = await pdfGenerator.generatePDF();
       
       if (!doc) {
         throw new Error("Failed to generate PDF for printing");

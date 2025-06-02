@@ -17,7 +17,7 @@ interface ProposalPdfGeneratorProps {
 }
 
 const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
-  const generatePDF = () => {
+  const generatePDF = async () => {
     try {
       const doc = new jsPDF();
       let yPosition = 20;
@@ -25,8 +25,8 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
 
-      // Updated: More professional header style
-      yPosition = addHeaderSection(doc, "PROPOSAL", yPosition, pageWidth);
+      // Updated: More professional header style (now async)
+      yPosition = await addHeaderSection(doc, "PROPOSAL", yPosition, pageWidth);
 
       // Key Information row: client info and proposal info, now styled
       const clientBoxY = yPosition;

@@ -1,10 +1,11 @@
+
 import { Proposal } from "./types";
 import { toast } from "sonner";
 import { formatCurrency, formatDate, parseProposalContent } from "./utils/formatters";
 import ProposalPdfGenerator from "./ProposalPdfGenerator";
 
 const ProposalEmailService = ({ proposal }: { proposal: Proposal }) => {
-  const sendEmail = () => {
+  const sendEmail = async () => {
     try {
       // Create email subject
       const subject = `Proposal: ${proposal.title || `Proposal #${proposal.id.substring(0, 8)}`}`;
@@ -77,9 +78,9 @@ const ProposalEmailService = ({ proposal }: { proposal: Proposal }) => {
       body += `Thank you for considering our services.\n\n`;
       body += `Best regards,\nYour Company`;
       
-      // Create and download the PDF
+      // Create and download the PDF (now async)
       const pdfGenerator = ProposalPdfGenerator({ proposal });
-      const doc = pdfGenerator.generatePDF();
+      const doc = await pdfGenerator.generatePDF();
       
       // Guide the user
       toast.success(

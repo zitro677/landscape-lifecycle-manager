@@ -2,7 +2,7 @@
 import { jsPDF } from "jspdf";
 
 // Updated logo URL to use the new Green Landscape Irrigation logo
-const logoUrl = "/lovable-uploads/a1affb37-4921-4003-bdc3-84e84110c503.png";
+const logoUrl = "/lovable-uploads/2d9a4b96-0ae5-48d2-80f3-1b981a064847.png";
 
 /**
  * Load an image url to dataUrl (base64). This is async but for PDF export, we want users to wait a split second if needed for best logo quality.
@@ -30,7 +30,7 @@ const getImageDataUrl = (url: string): Promise<string> => {
   });
 };
 
-export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: number, pageWidth: number) => {
+export const addHeaderSection = async (doc: jsPDF, title: string, yPositionInitial: number, pageWidth: number) => {
   let yPosition = yPositionInitial;
   const marginLeft = 20;
 
@@ -39,34 +39,23 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
   doc.setLineWidth(1.5);
   doc.line(marginLeft, yPosition - 7, pageWidth - marginLeft, yPosition - 7);
 
-  // Add logo left-aligned (adjusted size for better proportion)
-  let logoHeight = 32;
-  let logoWidth = 32;
+  // Logo configuration
+  const logoHeight = 40;
+  const logoWidth = 40;
+  const logoY = yPosition - 2;
+  const logoX = marginLeft;
   let logoLoaded = false;
-  let logoY = yPosition - 2;
-  let logoX = marginLeft;
 
-  // Use the window cache approach for logo loading
-  const _window = typeof window !== "undefined" ? window : {} as Window;
-  interface ExtendedWindow extends Window {
-    _PDF_LOGO_CACHE?: string | null;
-  }
-  const extWindow = _window as ExtendedWindow;
-  
-  if (!extWindow._PDF_LOGO_CACHE) {
-    // Not loaded yet, block (synchronously) for this export.
-    extWindow._PDF_LOGO_CACHE = undefined;
-    throw new Error("Logo not loaded for PDF; try again in a second.");
-  }
-  
-  const logoBase64 = extWindow._PDF_LOGO_CACHE;
-  if (logoBase64) {
-    try {
+  // Try to load and add logo
+  try {
+    const logoBase64 = await getImageDataUrl(logoUrl);
+    if (logoBase64) {
       doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
       logoLoaded = true;
-    } catch (e) {
-      // If drawing logo fails, silently continue.
     }
+  } catch (error) {
+    console.warn("Failed to load logo for PDF:", error);
+    // Continue without logo
   }
 
   // Company name next to logo - left aligned, shifted right, or centered if logo invisible
@@ -101,21 +90,3 @@ export const addHeaderSection = (doc: jsPDF, title: string, yPositionInitial: nu
   doc.setTextColor(0, 0, 0);
   return companyY + 12;
 };
-
-// Patch: On app start, fire off loading the logo and put it in window._PDF_LOGO_CACHE
-if (typeof window !== "undefined") {
-  interface ExtendedWindow extends Window {
-    _PDF_LOGO_CACHE?: string | null;
-  }
-  const extWindow = window as ExtendedWindow;
-  
-  if (!extWindow._PDF_LOGO_CACHE) {
-    getImageDataUrl(logoUrl)
-      .then((data) => {
-        extWindow._PDF_LOGO_CACHE = data;
-      })
-      .catch(() => {
-        extWindow._PDF_LOGO_CACHE = null;
-      });
-  }
-}
