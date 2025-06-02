@@ -70,8 +70,8 @@ export const useInventory = () => {
           user_id: session.user.id,
           name: data.name,
           category: data.category,
-          unit_cost: parseFloat(data.unit_cost.toString()),
-          quantity: parseInt(data.quantity.toString(), 10),
+          unit_cost: parseFloat(data.unit_cost?.toString() || '0'),
+          quantity: parseInt(data.quantity?.toString() || '0', 10),
           status: data.status || 'active',
         })
         .select()

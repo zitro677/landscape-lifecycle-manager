@@ -56,7 +56,8 @@ export const useTaxCalculator = () => {
         if (!session?.user?.id) return;
 
         const userId = session.user.id;
-        const year = parseInt(yearFilter);
+        const yearStart = `${yearFilter}-01-01`;
+        const yearEnd = `${yearFilter}-12-31`;
 
         // Fetch real income from paid invoices
         const { data: invoices } = await supabase
@@ -64,8 +65,8 @@ export const useTaxCalculator = () => {
           .select('amount')
           .eq('user_id', userId)
           .eq('status', 'Paid')
-          .gte('issue_date', `${year}-01-01`)
-          .lte('issue_date', `${year}-12-31`);
+          .gte('issue_date', yearStart)
+          .lte('issue_date', yearEnd);
 
         const totalIncome = (invoices || []).reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
         setIncome(totalIncome);
@@ -75,8 +76,8 @@ export const useTaxCalculator = () => {
           .from('expenses')
           .select('category, amount')
           .eq('user_id', userId)
-          .gte('date', `${year}-01-01`)
-          .lte('date', `${year}-12-31`);
+          .gte('date', yearStart)
+          .lte('date', yearEnd);
 
         // Group expenses by category
         const categoryTotals: TaxExpenses = {
@@ -94,7 +95,7 @@ export const useTaxCalculator = () => {
 
         (expenseData || []).forEach(expense => {
           const category = expense.category?.toLowerCase();
-          const amount = parseFloat(expense.amount.toString());
+          const amount = parseFloat(expense.amount?.toString() || '0');
           
           switch (category) {
             case 'materials':

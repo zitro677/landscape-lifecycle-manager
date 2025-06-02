@@ -46,23 +46,24 @@ export const useFinancialData = (yearFilter: string) => {
         }
 
         const userId = session.user.id;
-        const year = parseInt(yearFilter);
+        const yearStart = `${yearFilter}-01-01`;
+        const yearEnd = `${yearFilter}-12-31`;
 
         // Fetch invoices for income data
         const { data: invoices } = await supabase
           .from('invoices')
           .select('*')
           .eq('user_id', userId)
-          .gte('issue_date', `${year}-01-01`)
-          .lte('issue_date', `${year}-12-31`);
+          .gte('issue_date', yearStart)
+          .lte('issue_date', yearEnd);
 
         // Fetch expenses
         const { data: expenses } = await supabase
           .from('expenses')
           .select('*')
           .eq('user_id', userId)
-          .gte('date', `${year}-01-01`)
-          .lte('date', `${year}-12-31`);
+          .gte('date', yearStart)
+          .lte('date', yearEnd);
 
         // Fetch projects for project income breakdown
         const { data: projects } = await supabase
@@ -71,7 +72,7 @@ export const useFinancialData = (yearFilter: string) => {
           .eq('user_id', userId);
 
         // Generate monthly income/expense data
-        const monthlyData = generateMonthlyData(invoices || [], expenses || [], year);
+        const monthlyData = generateMonthlyData(invoices || [], expenses || [], parseInt(yearFilter));
         
         // Generate project income data
         const projectIncomeData = generateProjectIncomeData(projects || [], invoices || []);
