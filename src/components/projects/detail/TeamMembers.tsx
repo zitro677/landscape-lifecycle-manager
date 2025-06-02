@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
-import { updateProject } from "../hooks/useProjects";
+import { updateProject } from "../hooks/projectOperations";
 
 interface TeamMembersProps {
   teamMembers: Array<{ name: string; role: string; avatar: string }>;
@@ -21,7 +21,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers, 
   const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "" });
 
   const saveTeamToProject = (updatedTeam: Array<{ name: string; role: string; avatar: string }>) => {
-    // Update the project in localStorage
+    // Update the project in database
     updateProject(projectId, { team: updatedTeam });
   };
 
@@ -42,7 +42,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers, 
     // Update local state
     setTeamMembers(updatedTeam);
     
-    // Persist to localStorage
+    // Persist to database
     saveTeamToProject(updatedTeam);
     
     setNewTeamMember({ name: "", role: "" });
@@ -58,7 +58,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, setTeamMembers, 
     // Update local state
     setTeamMembers(updatedTeam);
     
-    // Persist to localStorage
+    // Persist to database
     saveTeamToProject(updatedTeam);
     
     toast.success("Team member removed");

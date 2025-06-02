@@ -1,3 +1,4 @@
+
 import React from "react";
 import { getAllProjects } from "../hooks/projectData";
 import { getStatusColor } from "../hooks/projectUtils";
@@ -47,16 +48,20 @@ const defaultExtraData = {
 };
 
 // Function to generate extra data for a project if it doesn't exist
-export const getProjectExtraData = (projectId: string) => {
+export const getProjectExtraData = async (projectId: string) => {
   // For new projects, use the description from the project if available
   if (!projectExtraData[projectId as keyof typeof projectExtraData]) {
-    const project = getAllProjects().find(p => p.id === projectId);
-    if (project && project.description) {
-      return {
-        ...defaultExtraData,
-        description: project.description,
-        estimatedHours: project.estimatedHours ? Number(project.estimatedHours) : 0
-      };
+    try {
+      const projects = await getAllProjects();
+      const project = projects.find(p => p.id === projectId);
+      if (project && project.description) {
+        return {
+          ...defaultExtraData,
+          description: project.description,
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching project:", error);
     }
   }
   return projectExtraData[projectId as keyof typeof projectExtraData] || defaultExtraData;

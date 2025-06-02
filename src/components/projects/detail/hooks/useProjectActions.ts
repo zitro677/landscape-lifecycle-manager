@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { updateProject } from "../../hooks/useProjects";
+import { updateProject } from "../../hooks/projectOperations";
 import ProjectPdfGenerator from "../utils/ProjectPdfGenerator";
 
 export const useProjectActions = (projectId: string, projectName: string) => {
