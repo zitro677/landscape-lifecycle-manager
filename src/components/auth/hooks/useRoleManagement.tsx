@@ -22,6 +22,15 @@ export const useRoleManagement = (user: User | null) => {
 
       if (error) {
         console.error('Error fetching user role:', error);
+        // For specific users, ensure they get admin role
+        if (user?.email === 'greenplanetlandscaping01@gmail.com' || user?.email === 'zitro677.lo87@gmail.com') {
+          console.log('Setting admin role for recognized user:', user.email);
+          const adminSuccess = await ensureAdminRole(userId);
+          if (adminSuccess) {
+            setUserRole('admin');
+            return;
+          }
+        }
         // Set as read_only if no role found or error occurs
         setUserRole('read_only');
         return;
@@ -33,6 +42,30 @@ export const useRoleManagement = (user: User | null) => {
       console.error('Error in fetchUserRole:', error);
       // Fallback: set as read_only if there's an error
       setUserRole('read_only');
+    }
+  };
+
+  // Function to ensure admin role for specific users
+  const ensureAdminRole = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .upsert({ 
+          user_id: userId, 
+          role: 'admin' 
+        })
+        .select();
+
+      if (error) {
+        console.error("Error ensuring admin role:", error);
+        return false;
+      }
+
+      console.log("Admin role ensured for user:", userId);
+      return true;
+    } catch (error) {
+      console.error("Error in ensureAdminRole:", error);
+      return false;
     }
   };
   
