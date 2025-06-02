@@ -27,3 +27,13 @@ export const calculateProgress = (project: any): number => {
       return 0;
   }
 };
+
+export const getStatusColor = (status: string) => {
+  const colorMap: Record<string, string> = {
+    "Completed": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    "In Progress": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    "Planning": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+    "On Hold": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+  };
+  return colorMap[status] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+};

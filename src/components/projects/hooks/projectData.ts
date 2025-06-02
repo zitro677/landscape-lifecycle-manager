@@ -36,3 +36,29 @@ export const useProjectData = (projectId: string) => {
 
   return { project, isLoading, setProject };
 };
+
+// Function to get all projects (for compatibility with existing code)
+export const getAllProjects = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching projects:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error loading projects:", error);
+    return [];
+  }
+};
