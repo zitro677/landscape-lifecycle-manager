@@ -14,6 +14,26 @@ export const useRoleManagement = (user: User | null) => {
     try {
       console.log("Fetching user role for:", userId);
       
+      // For greenplanetlandscaping01@gmail.com, ensure admin role first
+      if (user?.email === 'greenplanetlandscaping01@gmail.com') {
+        console.log('Ensuring admin role for greenplanetlandscaping01@gmail.com');
+        const adminSuccess = await ensureAdminRole(userId);
+        if (adminSuccess) {
+          setUserRole('admin');
+          return;
+        }
+      }
+      
+      // For zitro677.lo87@gmail.com, also ensure admin role
+      if (user?.email === 'zitro677.lo87@gmail.com') {
+        console.log('Ensuring admin role for zitro677.lo87@gmail.com');
+        const adminSuccess = await ensureAdminRole(userId);
+        if (adminSuccess) {
+          setUserRole('admin');
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -22,16 +42,7 @@ export const useRoleManagement = (user: User | null) => {
 
       if (error) {
         console.error('Error fetching user role:', error);
-        // For specific users, ensure they get admin role
-        if (user?.email === 'greenplanetlandscaping01@gmail.com' || user?.email === 'zitro677.lo87@gmail.com') {
-          console.log('Setting admin role for recognized user:', user.email);
-          const adminSuccess = await ensureAdminRole(userId);
-          if (adminSuccess) {
-            setUserRole('admin');
-            return;
-          }
-        }
-        // Set as read_only if no role found or error occurs
+        // Set as read_only if no role found or error occurs for other users
         setUserRole('read_only');
         return;
       }
@@ -48,9 +59,16 @@ export const useRoleManagement = (user: User | null) => {
   // Function to ensure admin role for specific users
   const ensureAdminRole = async (userId: string): Promise<boolean> => {
     try {
+      // First, delete any existing roles for this user to avoid conflicts
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Then insert the admin role
       const { data, error } = await supabase
         .from('user_roles')
-        .upsert({ 
+        .insert({ 
           user_id: userId, 
           role: 'admin' 
         })
