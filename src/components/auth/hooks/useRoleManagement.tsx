@@ -9,24 +9,26 @@ export type UserRole = 'admin' | 'read_only' | null;
 export const useRoleManagement = (user: User | null) => {
   const [userRole, setUserRole] = useState<UserRole>(null);
 
-  // Function to fetch user role using the security definer function
+  // Function to fetch user role - now using direct query since RLS is fixed
   const fetchUserRole = async (userId: string) => {
     try {
       console.log("Fetching user role for:", userId);
       
-      // Use the security definer function to get role without triggering RLS
       const { data, error } = await supabase
-        .rpc('get_current_user_role');
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
 
       if (error) {
-        console.error('Error fetching user role with RPC:', error);
-        // Fallback: set as read_only if there's an error
+        console.error('Error fetching user role:', error);
+        // Set as read_only if no role found or error occurs
         setUserRole('read_only');
         return;
       }
 
-      console.log('User role from RPC:', data);
-      setUserRole(data as UserRole);
+      console.log('User role fetched:', data.role);
+      setUserRole(data.role as UserRole);
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
       // Fallback: set as read_only if there's an error
