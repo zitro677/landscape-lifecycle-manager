@@ -26,7 +26,7 @@ export const useDashboardData = () => {
     const clearSyntheticData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email === 'greenplanetlandscaping01@gmail.com') {
-        console.log("Clearing synthetic data for greenplanetlandscaping01@gmail.com");
+        console.log("Clearing ALL synthetic data for greenplanetlandscaping01@gmail.com");
         
         // Clear any localStorage items that might contain synthetic data
         const keysToRemove = [
@@ -34,12 +34,48 @@ export const useDashboardData = () => {
           'projectsData',
           'financial_data',
           'dashboard_data',
-          'demo_data'
+          'demo_data',
+          'synthetic_data',
+          'mock_data',
+          'fake_data',
+          'sample_data',
+          'test_data',
+          'landscape_data',
+          'demo_projects',
+          'mock_projects',
+          'sample_projects',
+          'demo_invoices',
+          'mock_invoices',
+          'demo_proposals',
+          'mock_proposals',
+          'demo_clients',
+          'mock_clients',
+          'synthetic_financial_data',
+          'demo_financial_data',
+          'landscape_financial_data',
+          'mock_financial_data'
         ];
         
         keysToRemove.forEach(key => {
           if (localStorage.getItem(key)) {
             console.log(`Removing synthetic data key: ${key}`);
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Also clear any keys that might start with common prefixes
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('demo_') || 
+              key.startsWith('mock_') || 
+              key.startsWith('synthetic_') || 
+              key.startsWith('sample_') || 
+              key.startsWith('fake_') || 
+              key.startsWith('test_') ||
+              key.includes('landscape_') ||
+              key.includes('synthetic') ||
+              key.includes('demo') ||
+              key.includes('mock')) {
+            console.log(`Removing potential synthetic data key: ${key}`);
             localStorage.removeItem(key);
           }
         });
