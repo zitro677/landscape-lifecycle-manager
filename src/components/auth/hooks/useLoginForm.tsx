@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const useLoginForm = () => {
@@ -31,27 +32,16 @@ export const useLoginForm = () => {
     checkUserCount();
   }, []);
 
-  // Handle Google login
+  // Handle Google login using Lovable managed OAuth
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       setErrorMessage(null);
       
-      console.log("Starting Google login...");
+      console.log("Starting Google login with Lovable managed OAuth...");
       
-      // Get the current origin for the redirect
-      const currentOrigin = window.location.origin;
-      console.log("Current origin:", currentOrigin);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: currentOrigin,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        }
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
       
       if (error) {
@@ -60,9 +50,7 @@ export const useLoginForm = () => {
       }
       
       console.log("Google OAuth initiated successfully");
-      
       // The redirect will happen automatically
-      // Don't set loading to false here as the page will redirect
     } catch (error: any) {
       console.error("Google login error:", error);
       setErrorMessage(error.message || "Failed to login with Google");
