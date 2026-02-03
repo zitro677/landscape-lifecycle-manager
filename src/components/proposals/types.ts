@@ -40,10 +40,9 @@ export type ProposalFormData = {
 export type ProposalItem = {
   id: string;
   proposal_id: string;
-  type: 'scope' | 'timeline' | 'item' | 'note';
   description: string;
   quantity?: number;
   unit_price?: number;
+  amount?: number;
   created_at?: string;
-  updated_at?: string;
 };

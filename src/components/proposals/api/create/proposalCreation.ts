@@ -11,8 +11,11 @@ export const createProposalRecord = async (proposalData: {
   issue_date: string;
   valid_until: string;
   amount: number;
-  content: string | null;
+  scope?: string | null;
+  timeline?: string | null;
+  notes?: string | null;
   user_id: string;
+  proposal_number: string;
 }) => {
   const { data: proposal, error } = await supabase
     .from('proposals')
@@ -22,9 +25,12 @@ export const createProposalRecord = async (proposalData: {
       issue_date: proposalData.issue_date,
       valid_until: proposalData.valid_until,
       amount: proposalData.amount,
-      content: proposalData.content,
+      scope: proposalData.scope,
+      timeline: proposalData.timeline,
+      notes: proposalData.notes,
       status: 'Draft' as ProposalStatus,
-      user_id: proposalData.user_id
+      user_id: proposalData.user_id,
+      proposal_number: proposalData.proposal_number
     })
     .select()
     .single();

@@ -45,14 +45,8 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     // Calculate total amount from items
     const totalAmount = calculateTotalAmount(proposalData.items);
 
-    // Format content for better organization
-    const formattedContent = proposalData.formattedContent || 
-      formatProposalContent({
-        scope: proposalData.scope,
-        timeline: proposalData.timeline,
-        items: proposalData.items,
-        notes: proposalData.notes
-      });
+    // Generate a unique proposal number
+    const proposalNumber = `PROP-${Date.now().toString(36).toUpperCase()}`;
 
     // Create the proposal record
     const proposal = await createProposalRecord({
@@ -61,8 +55,11 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
       issue_date: proposalData.proposalDate,
       valid_until: proposalData.expirationDate,
       amount: totalAmount,
-      content: formattedContent,
-      user_id: userId
+      scope: proposalData.scope,
+      timeline: proposalData.timeline,
+      notes: proposalData.notes,
+      user_id: userId,
+      proposal_number: proposalNumber
     });
     
     console.log('Proposal created:', proposal);

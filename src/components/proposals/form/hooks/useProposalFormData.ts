@@ -28,8 +28,8 @@ export function useProposalFormData(
         if (proposal) {
           console.log("Loaded proposal for editing:", proposal);
           
-          // Extract proposal items with proper type assertion
-          const items = proposal.items?.filter(item => item.type === 'item').map(item => ({
+          // Extract proposal items - all items are regular line items now
+          const items = proposal.items?.map(item => ({
             description: item.description || "",
             quantity: item.quantity || 1,
             unitPrice: item.unit_price || 0
@@ -44,11 +44,6 @@ export function useProposalFormData(
             } as ProposalItemType);
           }
           
-          // Find scope, timeline and notes items
-          const scopeItem = proposal.items?.find(item => item.type === 'scope');
-          const timelineItem = proposal.items?.find(item => item.type === 'timeline');
-          const notesItem = proposal.items?.find(item => item.type === 'note');
-          
           // Create a complete form data object before resetting the form
           // This prevents partial updates that could cause flickering
           const formData = {
@@ -59,9 +54,9 @@ export function useProposalFormData(
             proposalDate: proposal.issue_date || form.getValues("proposalDate"),
             expirationDate: proposal.valid_until || form.getValues("expirationDate"),
             items: items,
-            scope: scopeItem?.description || "",
-            timeline: timelineItem?.description || "",
-            notes: notesItem?.description || ""
+            scope: proposal.scope || "",
+            timeline: proposal.timeline || "",
+            notes: proposal.notes || ""
           };
           
           // Use a single atomic update to prevent flickering
