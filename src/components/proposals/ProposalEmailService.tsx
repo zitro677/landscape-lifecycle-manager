@@ -45,34 +45,23 @@ const ProposalEmailService = ({ proposal }: { proposal: Proposal }) => {
       body += `Tax (7%): ${formatCurrency(tax)}\n`;
       body += `Total Amount: ${formatCurrency(total)}\n\n`;
       
-      // Add content sections
-      if (proposal.content) {
-        const contentSections = parseProposalContent(proposal.content);
-        
-        // Add sections in order
-        if (contentSections["Project Scope"]) {
-          body += `PROJECT SCOPE\n`;
-          body += `-------------\n`;
-          body += `${contentSections["Project Scope"]}\n\n`;
-        }
-        
-        if (contentSections["Project Timeline"]) {
-          body += `PROJECT TIMELINE\n`;
-          body += `----------------\n`;
-          body += `${contentSections["Project Timeline"]}\n\n`;
-        }
-        
-        if (contentSections["Items & Services"]) {
-          body += `ITEMS & SERVICES\n`;
-          body += `----------------\n`;
-          body += `${contentSections["Items & Services"]}\n\n`;
-        }
-        
-        if (contentSections["Terms & Notes"]) {
-          body += `TERMS & NOTES\n`;
-          body += `-------------\n`;
-          body += `${contentSections["Terms & Notes"]}\n\n`;
-        }
+      // Add content sections from proposal fields
+      if (proposal.scope) {
+        body += `PROJECT SCOPE\n`;
+        body += `-------------\n`;
+        body += `${proposal.scope}\n\n`;
+      }
+      
+      if (proposal.timeline) {
+        body += `PROJECT TIMELINE\n`;
+        body += `----------------\n`;
+        body += `${proposal.timeline}\n\n`;
+      }
+      
+      if (proposal.notes) {
+        body += `TERMS & NOTES\n`;
+        body += `-------------\n`;
+        body += `${proposal.notes}\n\n`;
       }
       
       body += `Thank you for considering our services.\n\n`;

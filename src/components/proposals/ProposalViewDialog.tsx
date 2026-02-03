@@ -35,23 +35,19 @@ const ProposalViewDialog: React.FC<ProposalViewDialogProps> = ({
     "Terms & Notes": ""
   });
   
-  // Update sections whenever proposal changes
+  // Update sections whenever proposal changes - use direct fields instead of content parsing
   useEffect(() => {
-    if (proposal?.content) {
-      try {
-        const parsedSections = parseProposalContent(proposal.content);
-        setSections(parsedSections);
-      } catch (error) {
-        console.error("Error parsing proposal content:", error);
-        setSections({
-          "Project Scope": "Error parsing content",
-          "Project Timeline": "",
-          "Items & Services": "",
-          "Terms & Notes": ""
-        });
-      }
+    if (proposal) {
+      setSections({
+        "Project Scope": proposal.scope || "",
+        "Project Timeline": proposal.timeline || "",
+        "Items & Services": proposal.items?.map(item => 
+          `${item.description}: ${item.quantity || 1} x $${item.unit_price?.toFixed(2) || '0.00'}`
+        ).join('\n') || "",
+        "Terms & Notes": proposal.notes || ""
+      });
     }
-  }, [proposal?.content]);
+  }, [proposal]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

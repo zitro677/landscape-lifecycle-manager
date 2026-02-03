@@ -49,9 +49,15 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         contentWidth
       );
 
-      // Add content sections if available
-      if (proposal.content) {
-        yPosition = addContentSections(doc, proposal.content, margin, contentWidth, yPosition);
+      // Add content sections if available - build content from scope, timeline, notes
+      const content = [
+        proposal.scope ? `Project Scope:\n${proposal.scope}` : '',
+        proposal.timeline ? `Project Timeline:\n${proposal.timeline}` : '',
+        proposal.notes ? `Terms & Notes:\n${proposal.notes}` : ''
+      ].filter(Boolean).join('\n\n');
+      
+      if (content) {
+        yPosition = addContentSections(doc, content, margin, contentWidth, yPosition);
       }
 
       // Footer with page numbers and generated date
