@@ -25,8 +25,9 @@ export const useOverviewStats = (projects: any[], invoices: any[], proposals: an
     const pendingInvoicesCount = pendingInvoicesData.length;
 
     // Calculate real proposals data (status is lowercase in database)
-    const newProposals = proposals?.filter(p => p.status?.toLowerCase() === 'draft').length || 0;
-    const pendingApprovals = proposals?.filter(p => p.status === 'Sent').length || 0;
+    // "New proposals" shows 'sent' status (awaiting approval)
+    const newProposals = proposals?.filter(p => p.status?.toLowerCase() === 'sent').length || 0;
+    const pendingApprovals = proposals?.filter(p => p.status?.toLowerCase() === 'sent').length || 0;
 
     // Calculate due soon projects (due within 7 days)
     const today = new Date();
