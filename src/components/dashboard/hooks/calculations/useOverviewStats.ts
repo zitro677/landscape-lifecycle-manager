@@ -24,8 +24,8 @@ export const useOverviewStats = (projects: any[], invoices: any[], proposals: an
       sum + parseFloat(inv.amount?.toString() || '0'), 0);
     const pendingInvoicesCount = pendingInvoicesData.length;
 
-    // Calculate real proposals data
-    const newProposals = proposals?.filter(p => p.status === 'Draft').length || 0;
+    // Calculate real proposals data (status is lowercase in database)
+    const newProposals = proposals?.filter(p => p.status?.toLowerCase() === 'draft').length || 0;
     const pendingApprovals = proposals?.filter(p => p.status === 'Sent').length || 0;
 
     // Calculate due soon projects (due within 7 days)
