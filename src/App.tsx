@@ -21,6 +21,7 @@ import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import ClientsPage from "./components/clients/ClientsPage";
 import ClientForm from "./components/clients/ClientForm";
 import SettingsPage from "./components/settings/SettingsPage";
+import AccountantChat from "./components/chat/AccountantChat";
 import { Loader2 } from "lucide-react";
 import React from "react";
 
@@ -127,6 +128,7 @@ const AppRoutes = () => (
         <Route path="projects/edit/:id" element={<ProjectForm />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="chat" element={<AccountantChat />} />
       </Route>
       
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
