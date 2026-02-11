@@ -9,6 +9,7 @@ import {
   BarChart3,
   FolderKanban,
   Users,
+  Bot,
 } from "lucide-react";
 
 interface NavItem {
@@ -47,6 +48,11 @@ const navItems: NavItem[] = [
     name: "Clients",
     path: "/clients",
     icon: <Users className="h-5 w-5" />,
+  },
+  {
+    name: "AI Accountant",
+    path: "/chat",
+    icon: <Bot className="h-5 w-5" />,
   },
 ];
 
