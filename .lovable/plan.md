@@ -1,26 +1,25 @@
 
 
-## Plan: Temporarily Disable Google Sign-In
+# Fix AI Accountant "supabaseKey is required" Error
 
-A simple UI change to hide the Google login option while keeping the code for future re-enablement.
+## Problem
+The AI Accountant edge function is crashing because it references `SUPABASE_PUBLISHABLE_KEY` as an environment variable, but the actual secret available is named `SUPABASE_ANON_KEY`.
 
----
+## Solution
+Change the environment variable name in the edge function from `SUPABASE_PUBLISHABLE_KEY` to `SUPABASE_ANON_KEY`.
 
-### Change Required
+## Technical Details
 
-**File: `src/components/auth/LoginPage.tsx`**
+**File:** `supabase/functions/accountant-chat/index.ts`
 
-Comment out or remove:
-- The "Or continue with" divider (lines 56-59)
-- The Google Sign In button (lines 61-80)
+Change line 28:
+```text
+// FROM:
+const supabaseKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
-The `handleGoogleLogin` function can stay in the hook - we're just hiding the UI.
+// TO:
+const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+```
 
----
-
-### Result
-
-- Clean email/password login page
-- Google code preserved for easy re-enablement later
-- You can access the app and work on other features
+Also add a validation check before creating the client so the error message is clearer if either variable is missing.
 
