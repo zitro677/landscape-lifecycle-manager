@@ -17,6 +17,8 @@ import ProjectsPage from "./components/projects/ProjectsPage";
 import ProjectDetail from "./components/projects/ProjectDetail";
 import ProjectForm from "./components/projects/ProjectForm";
 import LoginPage from "./components/auth/LoginPage";
+import ForgotPasswordPage from "./components/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import ClientsPage from "./components/clients/ClientsPage";
 import ClientForm from "./components/clients/ClientForm";
@@ -106,6 +108,8 @@ const AppRoutes = () => (
   <AnimatePresence mode="wait">
     <Routes>
       <Route path="/auth" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       
       <Route path="/" element={
         <ProtectedRoute>
