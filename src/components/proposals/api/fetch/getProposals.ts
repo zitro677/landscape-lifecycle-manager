@@ -21,7 +21,8 @@ export const getProposals = async (): Promise<Proposal[]> => {
           clients!client_id (
             name,
             email
-          )
+          ),
+          proposal_items (*)
         `)
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
@@ -34,6 +35,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
       return data.map((proposal: any) => ({
         ...proposal,
         client_name: proposal.clients?.name || 'Unknown Client',
+        items: proposal.proposal_items || [],
       })) as Proposal[];
 
     } catch (error: any) {
