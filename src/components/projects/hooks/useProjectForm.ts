@@ -144,51 +144,30 @@ export const useProjectForm = () => {
       setIsSubmitting(true);
       console.log("Form submission data:", data);
       
+      // Map form fields to database columns
+      const dbData = {
+        name: data.name,
+        description: data.description,
+        status: data.status.toLowerCase().replace(/ /g, '_'),
+        start_date: format(new Date(data.startDate), "yyyy-MM-dd"),
+        end_date: format(new Date(data.dueDate), "yyyy-MM-dd"),
+        budget: parseFloat(data.budget) || 0,
+        hours_estimated: parseFloat(data.estimatedHours) || 0,
+      };
+
       if (isEditMode && id) {
-        // Format dates correctly for storage
-        const formattedData = {
-          ...data,
-          startDate: format(new Date(data.startDate), "yyyy-MM-dd"),
-          dueDate: format(new Date(data.dueDate), "yyyy-MM-dd"),
-        };
-        
         console.log("Updating project with ID:", id);
-        console.log("Update data:", formattedData);
-        
-        const updated = updateProject(id, formattedData);
+        const updated = await updateProject(id, dbData);
         
         if (updated) {
-          console.log("Project updated successfully:", updated);
-          toast.success("Project updated successfully");
-          
-          // Navigate back to project details after successful update
-          setTimeout(() => {
-            navigate(`/projects/${id}`);
-          }, 500);
-        } else {
-          console.error("Failed to update project");
-          toast.error("Failed to update project");
+          navigate(`/projects/${id}`);
         }
       } else {
-        // Create new project
-        const formattedData = {
-          ...data,
-          startDate: format(new Date(data.startDate), "yyyy-MM-dd"),
-          dueDate: format(new Date(data.dueDate), "yyyy-MM-dd"),
-        };
-        
-        const newProject = addProject(formattedData);
+        console.log("Creating new project");
+        const newProject = await addProject(dbData);
         
         if (newProject) {
-          console.log("Project created successfully:", newProject);
-          toast.success("Project created successfully");
-          
-          setTimeout(() => {
-            navigate("/projects");
-          }, 500);
-        } else {
-          console.error("Failed to create project");
-          toast.error("Failed to create project");
+          navigate("/projects");
         }
       }
     } catch (error) {
