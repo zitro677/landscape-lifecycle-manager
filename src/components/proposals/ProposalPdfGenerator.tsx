@@ -46,7 +46,8 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         margin,
         yPosition,
         pageWidth,
-        contentWidth
+        contentWidth,
+        proposal.items
       );
 
       // Add content sections if available - build content from scope, timeline, notes
