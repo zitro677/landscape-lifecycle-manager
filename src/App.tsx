@@ -141,7 +141,22 @@ const AppRoutes = () => (
   </AnimatePresence>
 );
 
-const App = () => (
+const App = () => {
+  React.useEffect(() => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      // Ignore MetaMask and other browser extension errors
+      const reason = event.reason?.message || String(event.reason || "");
+      if (reason.includes("MetaMask") || reason.includes("chrome-extension://")) {
+        event.preventDefault();
+        console.warn("Browser extension error suppressed:", reason);
+        return;
+      }
+    };
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -153,6 +168,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
