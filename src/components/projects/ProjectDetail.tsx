@@ -5,67 +5,44 @@ import AnimatedPage from "../shared/AnimatedPage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import refactored components
 import ProjectHeader from "./detail/ProjectHeader";
 import ProjectOverview from "./detail/ProjectOverview";
 import TeamMembers from "./detail/TeamMembers";
 import ProjectTabs from "./detail/ProjectTabs";
-import { getProjectExtraData, getStatusColor } from "./detail/ProjectDataProvider";
+import { getStatusColor } from "./detail/ProjectDataProvider";
 import { useProjectData } from "./detail/hooks/useProjectData";
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  // Find the project with the matching ID from localStorage
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
   // Use project data hook (only call it if we have an ID)
   const projectData = id ? useProjectData(id) : null;
   
-  // Load project data
-  const loadProject = () => {
-    console.log("Loading project with ID:", id);
-    
+  // Load project data from database
+  const loadProject = async () => {
     if (!id) {
       setLoading(false);
       return;
     }
     
-    // Check localStorage first (for user-created projects)
-    const storedUserProjects = localStorage.getItem("landscape_projects");
-    const userProjects = storedUserProjects ? JSON.parse(storedUserProjects) : [];
-    
-    // Check default projects
-    let foundProject = null;
-    
     try {
-      // First check if we have it in user projects
-      if (userProjects.length > 0) {
-        foundProject = userProjects.find((p: any) => String(p.id) === String(id));
-      }
-      
-      // If not found in user projects, check the projectsData
-      if (!foundProject) {
-        const projectsData = localStorage.getItem("projectsData");
-        if (projectsData) {
-          const projects = JSON.parse(projectsData);
-          foundProject = projects.find((p: any) => String(p.id) === String(id));
-        }
-      }
-      
-      // Also check static project data
-      if (!foundProject) {
-        // Import the static projects for fallback
-        const { projects } = require("./hooks/useProjects");
-        foundProject = projects.find((p: any) => String(p.id) === String(id));
-      }
-      
-      if (foundProject) {
-        console.log("Project found:", foundProject);
-        setProject(foundProject);
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching project:", error);
+      } else if (data) {
+        setProject(data);
       } else {
         console.error("Project not found with ID:", id);
       }
@@ -76,7 +53,6 @@ const ProjectDetail: React.FC = () => {
     setLoading(false);
   };
   
-  // Load project when component mounts or ID changes
   useEffect(() => {
     loadProject();
   }, [id]);
