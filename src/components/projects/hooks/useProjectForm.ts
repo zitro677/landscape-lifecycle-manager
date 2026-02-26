@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { z } from "zod";
 import { addProject, updateProject } from "./projectOperations";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define schema for form validation
 export const projectFormSchema = z.object({
@@ -52,80 +53,59 @@ export const useProjectForm = () => {
     if (id) {
       setIsEditMode(true);
 
-      const loadProject = () => {
+      const loadProject = async () => {
         console.log("Loading project with ID:", id);
         
-        // Check localStorage first (for user-created projects)
-        const storedUserProjects = localStorage.getItem("landscape_projects");
-        const userProjects = storedUserProjects ? JSON.parse(storedUserProjects) : [];
-        
-        // Check default projects
-        let foundProject = null;
-        
         try {
-          // First check if we have it in user projects
-          if (userProjects.length > 0) {
-            foundProject = userProjects.find((p: any) => String(p.id) === String(id));
+          const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+          if (error) {
+            console.error("Error fetching project:", error);
+            toast.error("Error loading project for editing");
+            navigate("/projects");
+            setLoading(false);
+            return;
           }
-          
-          // If not found in user projects, check the projectsData
-          if (!foundProject) {
-            const projectsData = localStorage.getItem("projectsData");
-            if (projectsData) {
-              const projects = JSON.parse(projectsData);
-              foundProject = projects.find((p: any) => String(p.id) === String(id));
-            }
-          }
-          
-          // Also check static project data
-          if (!foundProject) {
-            try {
-              const { projects } = require("./useProjects");
-              foundProject = projects.find((p: any) => String(p.id) === String(id));
-            } catch (error) {
-              console.error("Error loading static projects:", error);
-            }
-          }
-          
-          if (foundProject) {
-            console.log("Project found for editing:", foundProject);
-            setInitialProject(foundProject);
-            
-            // Format dates properly
-            let startDate = new Date();
-            let dueDate = new Date();
-            
-            try {
-              startDate = foundProject.startDate ? new Date(foundProject.startDate) : new Date();
-              dueDate = foundProject.dueDate ? new Date(foundProject.dueDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
-            } catch (error) {
-              console.error("Error parsing dates:", error);
-            }
-            
-            // Clean budget value
-            const cleanBudget = foundProject.budget 
-              ? typeof foundProject.budget === 'string' 
-                ? foundProject.budget.replace(/[$,]/g, '') 
-                : foundProject.budget.toString()
-              : "";
-            
-            // Set form values
-            form.reset({
-              name: foundProject.name || "",
-              client: foundProject.client || "",
-              status: foundProject.status || "Planning",
-              description: foundProject.description || "",
-              startDate: startDate,
-              dueDate: dueDate,
-              budget: cleanBudget,
-              estimatedHours: foundProject.estimatedHours?.toString() || "",
-              team: foundProject.team || [],
-            });
-          } else {
+
+          if (!data) {
             console.error("Project not found for editing with ID:", id);
             toast.error("Project not found for editing");
             navigate("/projects");
+            setLoading(false);
+            return;
           }
+
+          console.log("Project found for editing:", data);
+          setInitialProject(data);
+
+          // Map DB status to display format
+          const statusMap: Record<string, string> = {
+            planning: "Planning",
+            in_progress: "In Progress",
+            on_hold: "On Hold",
+            completed: "Completed",
+          };
+          const displayStatus = statusMap[data.status] || data.status;
+
+          // Parse dates
+          const startDate = data.start_date ? new Date(data.start_date + 'T00:00:00') : new Date();
+          const dueDate = data.end_date ? new Date(data.end_date + 'T00:00:00') : new Date(new Date().setMonth(new Date().getMonth() + 1));
+
+          form.reset({
+            name: data.name || "",
+            client: "",
+            status: displayStatus,
+            description: data.description || "",
+            startDate,
+            dueDate,
+            budget: data.budget?.toString() || "",
+            estimatedHours: data.hours_estimated?.toString() || "",
+            team: [],
+          });
         } catch (error) {
           console.error("Error loading project for edit:", error);
           toast.error("Error loading project for editing");
