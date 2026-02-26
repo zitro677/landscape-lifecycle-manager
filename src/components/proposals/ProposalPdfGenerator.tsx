@@ -65,7 +65,7 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       addTotalsBox(doc, Number(proposal.amount || 0), margin, totalsY, pageWidth);
 
       // Make sure yPosition accounts for totals box height too
-      const totalsEndY = totalsY + 56;
+      const totalsEndY = totalsY + 44;
       if (totalsEndY > yPosition) yPosition = totalsEndY;
 
       // 6) Terms & Conditions (notes)
@@ -76,9 +76,9 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         doc.addPage();
         yPosition = 20;
       }
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(108, 117, 125);
-      doc.text("Thank you for considering Green Landscape Irrigation for your project.", pageWidth / 2, yPosition + 4, { align: "center" });
+      doc.text("Thank you for considering Green Landscape Irrigation for your project.", pageWidth / 2, yPosition + 3, { align: "center" });
 
       // Page numbers
       const pageCount = doc.getNumberOfPages();
