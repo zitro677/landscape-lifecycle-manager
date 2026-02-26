@@ -3,12 +3,10 @@ import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { formatCurrency } from "../formatters";
 
-export const addPricingSummarySection = (
+export const addServicesTable = (
   doc: jsPDF,
-  amount: number,
   margin: number,
   yPosition: number,
-  pageWidth: number,
   contentWidth: number,
   items?: { description: string; quantity?: number | null; unit_price?: number | null; amount?: number | null }[]
 ) => {
@@ -31,8 +29,9 @@ export const addPricingSummarySection = (
 
   autoTable(doc, {
     startY: yPosition,
-    head: [['Description', 'Qty', 'Unit Price', 'Amount']],
-    body: tableItems.map((item: any) => [
+    head: [['#', 'Description', 'Qty', 'Unit Price', 'Amount']],
+    body: tableItems.map((item: any, index: number) => [
+      String(index + 1),
       item.description,
       String(item.quantity ?? 1),
       formatCurrency(item.unit_price ?? 0),
@@ -41,7 +40,7 @@ export const addPricingSummarySection = (
     margin: { left: margin, right: margin },
     theme: 'plain',
     headStyles: {
-      fillColor: [45, 106, 79], // --primary
+      fillColor: [45, 106, 79],
       textColor: 255,
       fontStyle: 'bold',
       fontSize: 8,
@@ -54,13 +53,13 @@ export const addPricingSummarySection = (
     },
     alternateRowStyles: { fillColor: [248, 250, 249] },
     columnStyles: {
-      0: { cellWidth: contentWidth * 0.52 },
-      1: { cellWidth: 18, halign: 'center', fontStyle: 'bold', textColor: [45, 106, 79] },
-      2: { cellWidth: contentWidth * 0.18, halign: 'right' },
-      3: { cellWidth: contentWidth * 0.18, halign: 'right', fontStyle: 'bold' },
+      0: { cellWidth: contentWidth * 0.08, halign: 'center', fontStyle: 'bold', textColor: [45, 106, 79] },
+      1: { cellWidth: contentWidth * 0.44 },
+      2: { cellWidth: contentWidth * 0.12, halign: 'center', fontStyle: 'bold', textColor: [45, 106, 79] },
+      3: { cellWidth: contentWidth * 0.18, halign: 'right' },
+      4: { cellWidth: contentWidth * 0.18, halign: 'right', fontStyle: 'bold' },
     },
     didParseCell: (data) => {
-      // Round top-left and top-right corners via first row styling
       if (data.section === 'head' && data.column.index === 0) {
         data.cell.styles.cellPadding = { top: 6, right: 6, bottom: 6, left: 8 };
       }
@@ -68,8 +67,17 @@ export const addPricingSummarySection = (
   });
 
   yPosition = (doc as any).lastAutoTable.finalY + 10;
+  doc.setTextColor(0, 0, 0);
+  return yPosition;
+};
 
-  // Totals box - dark green gradient style matching the HTML
+export const addTotalsBox = (
+  doc: jsPDF,
+  amount: number,
+  margin: number,
+  yPosition: number,
+  pageWidth: number
+) => {
   const subtotal = amount;
   const tax = subtotal * 0.07;
   const total = subtotal + tax;
@@ -105,7 +113,7 @@ export const addPricingSummarySection = (
   y += 9;
   doc.setFontSize(7);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(116, 198, 157); // --accent-light
+  doc.setTextColor(116, 198, 157);
   doc.text("Total Investment", boxX + 8, y);
   doc.setFontSize(13);
   doc.setFont(undefined, 'bold');
@@ -114,4 +122,19 @@ export const addPricingSummarySection = (
 
   doc.setTextColor(0, 0, 0);
   return yPosition + boxHeight + 10;
+};
+
+// Backward-compatible wrapper
+export const addPricingSummarySection = (
+  doc: jsPDF,
+  amount: number,
+  margin: number,
+  yPosition: number,
+  pageWidth: number,
+  contentWidth: number,
+  items?: { description: string; quantity?: number | null; unit_price?: number | null; amount?: number | null }[]
+) => {
+  yPosition = addServicesTable(doc, margin, yPosition, contentWidth, items);
+  yPosition = addTotalsBox(doc, amount, margin, yPosition, pageWidth);
+  return yPosition;
 };
