@@ -35,11 +35,21 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
 
       // 3) Items table + pricing summary
       // Use proposal_items directly as fallback if items is broken/empty
-      const items = Array.isArray(proposal.items) && proposal.items.length > 0 && !(proposal.items[0] as any)?.message
+      let items = Array.isArray(proposal.items) && proposal.items.length > 0 && !(proposal.items[0] as any)?.message
         ? proposal.items
         : Array.isArray((proposal as any).proposal_items) && (proposal as any).proposal_items.length > 0
           ? (proposal as any).proposal_items
           : [];
+
+      // Fallback: auto-create a single item if no items exist but amount > 0
+      if (items.length === 0 && Number(proposal.amount || 0) > 0) {
+        items = [{
+          description: "Project Services",
+          quantity: 1,
+          unit_price: Number(proposal.amount),
+          amount: Number(proposal.amount),
+        }];
+      }
 
       yPosition = addPricingSummarySection(
         doc,

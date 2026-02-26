@@ -12,8 +12,8 @@ export const addPricingSummarySection = (
   contentWidth: number,
   items?: { description: string; quantity?: number | null; unit_price?: number | null; amount?: number | null }[]
 ) => {
-  // Items table
-  if (items && items.length > 0) {
+  // Items table - always render
+  {
     yPosition += 2;
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
@@ -24,7 +24,7 @@ export const addPricingSummarySection = (
     (doc as any).autoTable({
       startY: yPosition,
       head: [['#', 'Description', 'Qty', 'Unit Price', 'Amount']],
-      body: items.map((item, i) => [
+      body: (items && items.length > 0 ? items : [{ description: "No services listed", quantity: 0, unit_price: 0, amount: 0 }]).map((item: any, i: number) => [
         String(i + 1),
         item.description,
         String(item.quantity ?? 1),

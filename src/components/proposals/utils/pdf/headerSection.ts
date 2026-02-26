@@ -81,10 +81,11 @@ export const addHeaderSection = async (doc: jsPDF, title: string, yPositionIniti
   doc.setFontSize(22);
   doc.setTextColor(93, 144, 73);
   doc.text(title, pageWidth / 2, companyY, { align: "center" });
-  // Light line under title
-  doc.setDrawColor(222, 232, 222);
-  doc.setLineWidth(1);
-  doc.line(pageWidth / 2 - 28, companyY + 2, pageWidth / 2 + 28, companyY + 2);
+
+  // Green accent bar under title
+  doc.setDrawColor(93, 144, 73);
+  doc.setLineWidth(2);
+  doc.line(pageWidth / 2 - 30, companyY + 3, pageWidth / 2 + 30, companyY + 3);
 
   doc.setTextColor(0, 0, 0);
   return companyY + 12;
