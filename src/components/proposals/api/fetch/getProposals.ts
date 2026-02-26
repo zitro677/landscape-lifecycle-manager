@@ -32,11 +32,22 @@ export const getProposals = async (): Promise<Proposal[]> => {
       }
 
       // Process the data to add client_name to each proposal
-      return data.map((proposal: any) => ({
-        ...proposal,
-        client_name: proposal.clients?.name || 'Unknown Client',
-        items: proposal.proposal_items || [],
-      })) as Proposal[];
+      return data.map((proposal: any) => {
+        const items = (proposal.proposal_items || []).map((item: any) => ({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          amount: item.amount,
+          proposal_id: item.proposal_id,
+        }));
+        const { proposal_items, clients, ...rest } = proposal;
+        return {
+          ...rest,
+          client_name: clients?.name || 'Unknown Client',
+          items,
+        };
+      }) as Proposal[];
 
     } catch (error: any) {
       // If the first query fails due to recursion, try a simpler approach
@@ -75,20 +86,24 @@ export const getProposals = async (): Promise<Proposal[]> => {
             // Map client names to proposals
             return proposalsData.map((proposal: any) => {
               const client = clientsData?.find(c => c.id === proposal.client_id);
-              return {
-                ...proposal,
-                client_name: client?.name || 'Unknown Client',
-                items: proposal.proposal_items || [],
-              };
+              const items = (proposal.proposal_items || []).map((item: any) => ({
+                id: item.id, description: item.description, quantity: item.quantity,
+                unit_price: item.unit_price, amount: item.amount, proposal_id: item.proposal_id,
+              }));
+              const { proposal_items, ...rest } = proposal;
+              return { ...rest, client_name: client?.name || 'Unknown Client', items };
             }) as Proposal[];
           }
 
           // If no client IDs, just return the proposals
-          return proposalsData.map((proposal: any) => ({
-            ...proposal,
-            client_name: 'Unknown Client',
-            items: proposal.proposal_items || [],
-          })) as Proposal[];
+          return proposalsData.map((proposal: any) => {
+            const items = (proposal.proposal_items || []).map((item: any) => ({
+              id: item.id, description: item.description, quantity: item.quantity,
+              unit_price: item.unit_price, amount: item.amount, proposal_id: item.proposal_id,
+            }));
+            const { proposal_items, ...rest } = proposal;
+            return { ...rest, client_name: 'Unknown Client', items };
+          }) as Proposal[];
         }
 
         return [];
