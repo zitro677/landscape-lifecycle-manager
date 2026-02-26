@@ -15,38 +15,88 @@ export const addContentSections = (
   startY: number
 ) => {
   let yPosition = startY;
+  const pageHeight = doc.internal.pageSize.height;
 
-  const sections: { title: string; content: string | null | undefined }[] = [
-    { title: "Project Scope", content: data.scope },
-    { title: "Project Timeline", content: data.timeline },
-    { title: "Terms & Notes", content: data.notes },
-  ];
+  // Scope section with accent left border (matching HTML .scope-box)
+  if (data.scope && data.scope.trim()) {
+    if (yPosition > pageHeight - 60) { doc.addPage(); yPosition = 20; }
 
-  sections.forEach(({ title, content }) => {
-    if (!content || !content.trim()) return;
+    const scopeLines = doc.splitTextToSize(data.scope.trim(), contentWidth - 14);
+    const boxH = Math.max(scopeLines.length * 5 + 20, 30);
 
-    if (yPosition > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      yPosition = 20;
-    }
+    // Light background
+    doc.setFillColor(248, 250, 249);
+    doc.roundedRect(margin, yPosition, contentWidth, boxH, 3, 3, 'F');
 
-    // Section header
-    doc.setFillColor(245, 249, 244);
-    doc.roundedRect(margin, yPosition, contentWidth, 10, 2, 2, "F");
+    // Green left accent bar
+    doc.setFillColor(82, 183, 136); // --accent
+    doc.rect(margin, yPosition, 3, boxH, 'F');
+
+    // Title
     doc.setFontSize(11);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(93, 144, 73);
-    doc.text(title, margin + 4, yPosition + 7);
-    yPosition += 14;
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(27, 67, 50);
+    doc.text("Project Details", margin + 10, yPosition + 8);
 
-    // Section body
+    // Content with checkmark bullets
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
     doc.setTextColor(60, 60, 60);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(content.trim(), contentWidth - 2);
-    doc.text(lines, margin + 2, yPosition);
-    yPosition += lines.length * 5 + 8;
-  });
+    let bulletY = yPosition + 16;
+    const lines = data.scope.trim().split('\n').filter(l => l.trim());
+    lines.forEach(line => {
+      if (bulletY > pageHeight - 20) { doc.addPage(); bulletY = 20; }
+      doc.setTextColor(82, 183, 136);
+      doc.setFont(undefined, 'bold');
+      doc.text("✓", margin + 8, bulletY);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont(undefined, 'normal');
+      const wrappedLine = doc.splitTextToSize(line.trim(), contentWidth - 20);
+      doc.text(wrappedLine, margin + 14, bulletY);
+      bulletY += wrappedLine.length * 5 + 2;
+    });
+
+    yPosition += boxH + 6;
+  }
+
+  // Timeline (italic, muted, inside scope area if present)
+  if (data.timeline && data.timeline.trim()) {
+    if (yPosition > pageHeight - 40) { doc.addPage(); yPosition = 20; }
+
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(108, 117, 125);
+    const timelineText = `Estimated Timeline: ${data.timeline.trim()}`;
+    const tLines = doc.splitTextToSize(timelineText, contentWidth - 4);
+    doc.text(tLines, margin + 4, yPosition);
+    yPosition += tLines.length * 5 + 8;
+  }
+
+  // Terms & Notes in footer-style section
+  if (data.notes && data.notes.trim()) {
+    if (yPosition > pageHeight - 60) { doc.addPage(); yPosition = 20; }
+
+    // Light background band
+    doc.setFillColor(248, 250, 249);
+    doc.setDrawColor(216, 243, 220);
+
+    const notesLines = doc.splitTextToSize(data.notes.trim(), contentWidth - 10);
+    const notesH = notesLines.length * 5 + 18;
+
+    doc.rect(0, yPosition - 4, doc.internal.pageSize.width, notesH + 4, 'FD');
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(27, 67, 50);
+    doc.text("Terms & Conditions", margin, yPosition + 6);
+
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(108, 117, 125);
+    doc.text(notesLines, margin, yPosition + 14);
+
+    yPosition += notesH + 6;
+  }
 
   doc.setTextColor(0, 0, 0);
   return yPosition;
