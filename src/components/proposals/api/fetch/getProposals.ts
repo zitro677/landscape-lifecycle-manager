@@ -47,7 +47,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
         // Simplified approach without joins
         const { data: proposalsData, error: proposalsError } = await supabase
           .from('proposals')
-          .select('*')
+          .select('*, proposal_items (*)')
           .eq('user_id', session.user.id)
           .order('created_at', { ascending: false });
 
@@ -78,6 +78,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
               return {
                 ...proposal,
                 client_name: client?.name || 'Unknown Client',
+                items: proposal.proposal_items || [],
               };
             }) as Proposal[];
           }
@@ -86,6 +87,7 @@ export const getProposals = async (): Promise<Proposal[]> => {
           return proposalsData.map((proposal: any) => ({
             ...proposal,
             client_name: 'Unknown Client',
+            items: proposal.proposal_items || [],
           })) as Proposal[];
         }
 
