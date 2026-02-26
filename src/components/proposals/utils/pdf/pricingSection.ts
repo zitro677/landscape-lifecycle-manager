@@ -12,87 +12,106 @@ export const addPricingSummarySection = (
   contentWidth: number,
   items?: { description: string; quantity?: number | null; unit_price?: number | null; amount?: number | null }[]
 ) => {
-  // Items table - always render
-  {
-    yPosition += 2;
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(93, 144, 73);
-    doc.text("Items & Services", margin, yPosition);
-    yPosition += 4;
+  // Section header
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(27, 67, 50);
+  doc.text("Scope of Services", margin, yPosition);
+  yPosition += 3;
+  doc.setFontSize(9);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(108, 117, 125);
+  doc.text("Detailed breakdown of work to be completed", margin, yPosition);
+  yPosition += 6;
 
-    autoTable(doc, {
-      startY: yPosition,
-      head: [['#', 'Description', 'Qty', 'Unit Price', 'Amount']],
-      body: (items && items.length > 0 ? items : [{ description: "No services listed", quantity: 0, unit_price: 0, amount: 0 }]).map((item: any, i: number) => [
-        String(i + 1),
-        item.description,
-        String(item.quantity ?? 1),
-        formatCurrency(item.unit_price ?? 0),
-        formatCurrency(item.amount ?? (item.quantity ?? 1) * (item.unit_price ?? 0)),
-      ]),
-      margin: { left: margin, right: margin },
-      theme: 'striped',
-      headStyles: {
-        fillColor: [93, 144, 73],
-        textColor: 255,
-        fontStyle: 'bold',
-        fontSize: 9,
-      },
-      bodyStyles: { fontSize: 9 },
-      alternateRowStyles: { fillColor: [248, 252, 247] },
-      columnStyles: {
-        0: { cellWidth: 12, halign: 'center' },
-        1: { cellWidth: contentWidth * 0.45 },
-        2: { cellWidth: 18, halign: 'center' },
-        3: { cellWidth: contentWidth * 0.18, halign: 'right' },
-        4: { cellWidth: contentWidth * 0.18, halign: 'right' },
-      },
-    });
+  // Services table
+  const tableItems = items && items.length > 0
+    ? items
+    : [{ description: "No services listed", quantity: 0, unit_price: 0, amount: 0 }];
 
-    yPosition = (doc as any).lastAutoTable.finalY + 6;
-  }
+  autoTable(doc, {
+    startY: yPosition,
+    head: [['Description', 'Qty', 'Unit Price', 'Amount']],
+    body: tableItems.map((item: any) => [
+      item.description,
+      String(item.quantity ?? 1),
+      formatCurrency(item.unit_price ?? 0),
+      formatCurrency(item.amount ?? (item.quantity ?? 1) * (item.unit_price ?? 0)),
+    ]),
+    margin: { left: margin, right: margin },
+    theme: 'plain',
+    headStyles: {
+      fillColor: [45, 106, 79], // --primary
+      textColor: 255,
+      fontStyle: 'bold',
+      fontSize: 8,
+      cellPadding: 6,
+    },
+    bodyStyles: {
+      fontSize: 9,
+      cellPadding: 7,
+      textColor: [27, 67, 50],
+    },
+    alternateRowStyles: { fillColor: [248, 250, 249] },
+    columnStyles: {
+      0: { cellWidth: contentWidth * 0.52 },
+      1: { cellWidth: 18, halign: 'center', fontStyle: 'bold', textColor: [45, 106, 79] },
+      2: { cellWidth: contentWidth * 0.18, halign: 'right' },
+      3: { cellWidth: contentWidth * 0.18, halign: 'right', fontStyle: 'bold' },
+    },
+    didParseCell: (data) => {
+      // Round top-left and top-right corners via first row styling
+      if (data.section === 'head' && data.column.index === 0) {
+        data.cell.styles.cellPadding = { top: 6, right: 6, bottom: 6, left: 8 };
+      }
+    },
+  });
 
-  // Totals box
+  yPosition = (doc as any).lastAutoTable.finalY + 10;
+
+  // Totals box - dark green gradient style matching the HTML
   const subtotal = amount;
   const tax = subtotal * 0.07;
   const total = subtotal + tax;
 
-  // Right-aligned totals block
-  const boxWidth = 80;
+  const boxWidth = 78;
   const boxX = pageWidth - margin - boxWidth;
+  const boxHeight = 42;
 
-  doc.setFillColor(248, 252, 247);
-  doc.setDrawColor(200, 220, 195);
-  doc.roundedRect(boxX, yPosition, boxWidth, 36, 2, 2, 'FD');
+  // Dark green background
+  doc.setFillColor(27, 67, 50);
+  doc.roundedRect(boxX, yPosition, boxWidth, boxHeight, 3, 3, 'F');
 
+  // Subtotal row
+  let y = yPosition + 12;
+  doc.setFontSize(9);
   doc.setFont(undefined, 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(60, 60, 60);
+  doc.setTextColor(200, 230, 210);
+  doc.text("Subtotal", boxX + 8, y);
+  doc.text(formatCurrency(subtotal), boxX + boxWidth - 8, y, { align: "right" });
 
-  const labelX = boxX + 6;
-  const valX = boxX + boxWidth - 6;
-  let y = yPosition + 10;
-
-  doc.text("Subtotal:", labelX, y);
-  doc.text(formatCurrency(subtotal), valX, y, { align: "right" });
-
+  // Tax row
   y += 8;
-  doc.text("Tax (7%):", labelX, y);
-  doc.text(formatCurrency(tax), valX, y, { align: "right" });
+  doc.text("Tax (7%)", boxX + 8, y);
+  doc.text(formatCurrency(tax), boxX + boxWidth - 8, y, { align: "right" });
 
-  y += 3;
-  doc.setDrawColor(93, 144, 73);
-  doc.setLineWidth(0.5);
-  doc.line(labelX, y, valX, y);
+  // Divider line
+  y += 4;
+  doc.setDrawColor(255, 255, 255, 50);
+  doc.setLineWidth(0.3);
+  doc.line(boxX + 8, y, boxX + boxWidth - 8, y);
 
-  y += 8;
-  doc.setFont(undefined, 'bold');
+  // Total row
+  y += 9;
+  doc.setFontSize(7);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(116, 198, 157); // --accent-light
+  doc.text("Total Investment", boxX + 8, y);
   doc.setFontSize(13);
-  doc.setTextColor(47, 86, 37);
-  doc.text("Total:", labelX, y);
-  doc.text(formatCurrency(total), valX, y, { align: "right" });
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text(formatCurrency(total), boxX + boxWidth - 8, y, { align: "right" });
 
   doc.setTextColor(0, 0, 0);
-  return yPosition + 44;
+  return yPosition + boxHeight + 10;
 };

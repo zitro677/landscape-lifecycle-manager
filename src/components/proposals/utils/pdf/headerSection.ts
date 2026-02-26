@@ -1,11 +1,8 @@
+
 import { jsPDF } from "jspdf";
 
-// Updated logo URL to use the new Green Landscape Irrigation tree logo
 const logoUrl = "/lovable-uploads/d13d02a7-c0f4-4b0a-828d-cc566f2b3d02.png";
 
-/**
- * Load an image url to dataUrl (base64). This is async but for PDF export, we want users to wait a split second if needed for best logo quality.
- */
 const getImageDataUrl = (url: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
@@ -15,78 +12,73 @@ const getImageDataUrl = (url: string): Promise<string> => {
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("Canvas 2D context not supported"));
-        return;
-      }
+      if (!ctx) { reject(new Error("No 2D context")); return; }
       ctx.drawImage(img, 0, 0);
       resolve(canvas.toDataURL("image/png"));
     };
-    img.onerror = function (err) {
-      reject(err);
-    };
+    img.onerror = (err) => reject(err);
     img.src = url;
   });
 };
 
 export const addHeaderSection = async (doc: jsPDF, title: string, yPositionInitial: number, pageWidth: number) => {
-  let yPosition = yPositionInitial;
-  const marginLeft = 20;
+  const margin = 0;
+  const headerHeight = 52;
 
-  // Add green line under header
-  doc.setDrawColor(93, 144, 73);
-  doc.setLineWidth(1.5);
-  doc.line(marginLeft, yPosition - 7, pageWidth - marginLeft, yPosition - 7);
+  // Dark green gradient header background
+  doc.setFillColor(27, 67, 50); // --primary-dark
+  doc.rect(margin, margin, pageWidth, headerHeight, 'F');
 
-  // Logo configuration
-  const logoHeight = 40;
-  const logoWidth = 40;
-  const logoY = yPosition - 2;
-  const logoX = marginLeft;
+  // Lighter green overlay on right half for gradient effect
+  doc.setFillColor(45, 106, 79); // --primary
+  doc.rect(pageWidth * 0.5, margin, pageWidth * 0.5, headerHeight, 'F');
+
+  // Try to load logo
+  const logoSize = 28;
+  const logoX = 20;
+  const logoY = 12;
   let logoLoaded = false;
 
-  // Try to load and add logo
   try {
     const logoBase64 = await getImageDataUrl(logoUrl);
     if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      // White circle behind logo
+      doc.setFillColor(255, 255, 255);
+      doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 2, 'F');
+      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoSize, logoSize);
       logoLoaded = true;
     }
-  } catch (error) {
-    console.warn("Failed to load logo for PDF:", error);
-    // Continue without logo
+  } catch {
+    // Fallback: text circle
+    doc.setFillColor(255, 255, 255);
+    doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 2, 'F');
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(27, 67, 50);
+    doc.text("GLI", logoX + logoSize / 2, logoY + logoSize / 2 + 3, { align: "center" });
   }
 
-  // Company name next to logo - left aligned, shifted right, or centered if logo invisible
-  let companyY = yPosition + 10;
-  let nameX = logoLoaded ? marginLeft + logoWidth + 10 : pageWidth / 2;
-  let align: "left" | "center" | "right" | "justify" = logoLoaded ? "left" : "center";
+  // Company name
+  const textX = logoLoaded ? logoX + logoSize + 10 : logoX + logoSize + 10;
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text("GREEN LANDSCAPE IRRIGATION", textX, 24);
 
-  doc.setFontSize(18);
-  doc.setTextColor(33, 53, 34);
-  doc.text("Green Landscape Irrigation", nameX, companyY, { align });
+  // Tagline
+  doc.setFontSize(8);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(200, 230, 210);
+  doc.text("Professional Landscaping & Irrigation Services", textX, 31);
 
-  // Company contact info under name
-  companyY += 7;
-  doc.setFontSize(9);
-  doc.setFont(undefined, "normal");
-  doc.setTextColor(120, 120, 120);
-  doc.text("Phone: (727) 484-5516    Email: greenplanetlandscaping01@gmail.com", nameX, companyY, { align });
-  companyY += 5;
-  doc.text("Web: www.greenlandscapeirrigation.com", nameX, companyY, { align });
-
-  // Title centered under logo+company
-  companyY += 15;
-  doc.setFont(undefined, "bold");
-  doc.setFontSize(22);
-  doc.setTextColor(93, 144, 73);
-  doc.text(title, pageWidth / 2, companyY, { align: "center" });
-
-  // Green accent bar under title
-  doc.setDrawColor(93, 144, 73);
-  doc.setLineWidth(2);
-  doc.line(pageWidth / 2 - 30, companyY + 3, pageWidth / 2 + 30, companyY + 3);
+  // Contact info on the right
+  const rightX = pageWidth - 20;
+  doc.setFontSize(8);
+  doc.setTextColor(220, 240, 225);
+  doc.text("(727) 484-5516", rightX, 20, { align: "right" });
+  doc.text("greenplanetlandscaping01@gmail.com", rightX, 26, { align: "right" });
+  doc.text("Serving Greater Tampa Bay Area", rightX, 32, { align: "right" });
 
   doc.setTextColor(0, 0, 0);
-  return companyY + 12;
+  return headerHeight + 8;
 };
