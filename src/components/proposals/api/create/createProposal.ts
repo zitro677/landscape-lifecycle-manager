@@ -2,24 +2,20 @@
 import { Proposal, ProposalFormData } from "../../types";
 import { getAuthenticatedUserId } from "../utils/sessionUtils";
 import { findClientByEmail, updateClient, createClient, getClientById } from "./clientOperations";
-import { addProposalLineItems, addProposalContentSections } from "./proposalItemOperations";
-import { createProposalRecord, calculateTotalAmount, formatProposalContent } from "./proposalCreation";
+import { addProposalLineItems } from "./proposalItemOperations";
+import { createProposalRecord, calculateTotalAmount } from "./proposalCreation";
 
 /**
  * Creates a new proposal with all associated data (client, items, etc.)
  */
 export const createProposal = async (proposalData: ProposalFormData): Promise<Proposal | null> => {
   try {
-    // Get the authenticated user ID
     const userId = await getAuthenticatedUserId();
-    console.log('Creating proposal for user:', userId);
-    console.log('Proposal data:', proposalData);
     
     // Find or create client
     let client = await findClientByEmail(proposalData.email, userId);
     
     if (client) {
-      // Update existing client
       client = await updateClient(client.id, {
         name: proposalData.client,
         email: proposalData.email,
@@ -27,7 +23,6 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
         address: proposalData.address
       }, userId);
     } else {
-      // Create new client
       client = await createClient({
         name: proposalData.client,
         email: proposalData.email,
@@ -39,16 +34,10 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     if (!client) {
       throw new Error('Client could not be created or retrieved');
     }
-    
-    console.log('Client created/updated:', client);
 
-    // Calculate total amount from items
     const totalAmount = calculateTotalAmount(proposalData.items);
-
-    // Generate a unique proposal number
     const proposalNumber = `PROP-${Date.now().toString(36).toUpperCase()}`;
 
-    // Create the proposal record
     const proposal = await createProposalRecord({
       client_id: client.id,
       title: `Proposal for ${proposalData.client}`,
@@ -61,45 +50,18 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
       user_id: userId,
       proposal_number: proposalNumber
     });
-    
-    console.log('Proposal created:', proposal);
 
-    // Fetch client details separately to avoid relationship conflicts
+    // Add proposal line items — fail loudly
+    await addProposalLineItems(proposal.id, proposalData.items);
+
     let clientDetails;
     try {
       clientDetails = await getClientById(client.id);
     } catch (error) {
       console.error('Error fetching client details:', error);
-      // Continue despite client fetch errors, as the main proposal is created
-      clientDetails = {
-        name: client.name,
-        email: client.email,
-        phone: client.phone,
-        address: client.address
-      };
+      clientDetails = { name: client.name, email: client.email, phone: client.phone, address: client.address };
     }
 
-    // Add proposal items
-    try {
-      await addProposalLineItems(proposal.id, proposalData.items);
-    } catch (error) {
-      console.error('Error adding proposal items:', error);
-      // Continue despite item errors, as the main proposal is created
-    }
-
-    // Add scope, timeline, and notes as separate items
-    try {
-      await addProposalContentSections(proposal.id, {
-        scope: proposalData.scope,
-        timeline: proposalData.timeline,
-        notes: proposalData.notes
-      });
-    } catch (error) {
-      console.error('Error adding additional proposal items:', error);
-      // Continue despite additional item errors
-    }
-
-    // Return the created proposal with client details manually attached
     return {
       ...proposal,
       client_name: client.name,
@@ -117,6 +79,6 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     };
   } catch (error) {
     console.error('Error in createProposal:', error);
-    throw error; // Re-throw the error so it can be properly handled by the mutation
+    throw error;
   }
 };

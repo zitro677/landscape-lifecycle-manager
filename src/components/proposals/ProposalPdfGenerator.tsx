@@ -25,21 +25,15 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
 
-      // Updated: More professional header style (now async)
+      // 1) Header with logo + company info
       yPosition = await addHeaderSection(doc, "PROPOSAL", yPosition, pageWidth);
 
-      // Key Information row: client info and proposal info, now styled
-      const clientBoxY = yPosition;
-      const proposalBoxY = yPosition;
-      // Side-by-side boxes for client (left) and proposal (right)
-      addClientInformationSection(doc, proposal, clientBoxY, margin);
-      addProposalDetailsSection(doc, proposal, proposalBoxY, pageWidth);
+      // 2) Client info (left) + Proposal details (right)
+      addClientInformationSection(doc, proposal, yPosition, margin);
+      addProposalDetailsSection(doc, proposal, yPosition, pageWidth);
+      yPosition += 50;
 
-      // Drop position after both info boxes for pricing/summary
-      // Increase spacing to account for additional client info (phone & address)
-      yPosition += 50; // Increased from 47 to give more space for the client info
-
-      // Updated: improved pricing summary section
+      // 3) Items table + pricing summary
       yPosition = addPricingSummarySection(
         doc,
         Number(proposal.amount || 0),
@@ -50,18 +44,29 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         proposal.items
       );
 
-      // Add content sections if available - build content from scope, timeline, notes
-      const content = [
-        proposal.scope ? `Project Scope:\n${proposal.scope}` : '',
-        proposal.timeline ? `Project Timeline:\n${proposal.timeline}` : '',
-        proposal.notes ? `Terms & Notes:\n${proposal.notes}` : ''
-      ].filter(Boolean).join('\n\n');
-      
-      if (content) {
-        yPosition = addContentSections(doc, content, margin, contentWidth, yPosition);
-      }
+      // 4) Content sections (scope, timeline, notes) — structured, no parsing
+      yPosition = addContentSections(
+        doc,
+        { scope: proposal.scope, timeline: proposal.timeline, notes: proposal.notes },
+        margin,
+        contentWidth,
+        yPosition
+      );
 
-      // Footer with page numbers and generated date
+      // 5) Footer with contact info
+      if (yPosition > doc.internal.pageSize.height - 30) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      doc.setFontSize(8);
+      doc.setTextColor(145, 175, 140);
+      doc.text("Green Landscape Irrigation", margin, yPosition);
+      yPosition += 4;
+      doc.text("Phone: (727) 484-5516 | Email: greenplanetlandscaping01@gmail.com", margin, yPosition);
+      yPosition += 4;
+      doc.text("Web: www.greenlandscapeirrigation.com", margin, yPosition);
+
+      // Page numbers
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -76,7 +81,6 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       }
       doc.setTextColor(0, 0, 0);
 
-      // Save the PDF
       doc.save(`Proposal_${proposal.id.substring(0, 8)}.pdf`);
       toast.success("PDF generated successfully");
       return doc;
