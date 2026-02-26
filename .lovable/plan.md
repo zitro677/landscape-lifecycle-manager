@@ -1,77 +1,74 @@
 
-Goal: make Proposal PDFs always show line items (description, quantity, unit price, amount) and redesign the document to look professional.
 
-What I found (root cause confirmed)
-1. Line items are never saved:
-   - `proposal_items` inserts currently send a non-existent `type` column.
-   - Network logs show 400 errors: `Could not find the 'type' column of 'proposal_items'`.
-   - Because of that, `proposal_items` stays empty, so PDF receives no items.
-2. Errors are swallowed:
-   - Creation flow catches item insert errors and still reports success.
-3. PDF generator still renders an empty “Items & Services” section from legacy parsing:
-   - `contentSections` always includes the section keys and prints fallback text (`No items & services provided`), which looks unprofessional.
+# Fix Proposal PDF: Show Items Always + Branded Professional Redesign
 
-Implementation plan
+## Root Cause (Confirmed via Database)
 
-1) Fix line-item persistence (highest priority)
-- File: `src/components/proposals/api/create/proposalItemOperations.ts`
-  - Remove all `type` usage from insert payloads.
-  - Keep only schema-valid fields: `proposal_id`, `description`, `quantity`, `unit_price`, `amount`.
-  - Compute `amount = quantity * unit_price` before insert.
-  - Stop inserting scope/timeline/notes into `proposal_items` (they belong to `proposals` table fields).
-- File: `src/components/proposals/api/create/createProposal.ts`
-  - Remove `addProposalContentSections` call.
-  - Make line-item insert failures fail loudly (no silent success).
-  - Optionally rollback just-created proposal record if item insert fails, to avoid half-saved records.
-- File: `src/components/proposals/api/update/updateProposal.ts`
-  - Remove legacy `content` update (column is not in current schema).
-  - Update structured fields directly (`scope`, `timeline`, `notes`, `amount`, dates/title).
-  - Reinsert line items with corrected payload (no `type`).
-  - Remove `addProposalContentSections`.
+The item persistence fix from earlier IS working -- the newest proposal (PROP-MM3L6PV5) has 2 items saved correctly in the database. However, the older proposal being tested (PROP-MM3JSJ7N) was created before the fix and has **zero items in the database**. The current PDF code skips the items table entirely when the array is empty.
 
-2) Ensure fetch shape is stable for PDF
-- File: `src/components/proposals/api/fetch/getProposals.ts`
-  - Keep `proposal_items (*)` select.
-  - Keep `items` mapping, but map to a new array (avoid circular-reference logging artifacts).
-- File: `src/components/proposals/api/fetch/getProposalById.ts`
-  - Keep alias `items: proposal_items (*)` and verify this remains the source used for edit/PDF.
+## Plan
 
-3) Redesign Proposal PDF for a professional look
-- File: `src/components/proposals/ProposalPdfGenerator.tsx`
-  - Use a clean section flow:
-    1) branded header
-    2) client/proposal info cards
-    3) itemized table
-    4) pricing summary card
-    5) scope/timeline/notes cards
-    6) footer with generation date + page numbers
-- File: `src/components/proposals/utils/pdf/pricingSection.ts`
-  - Render polished `autoTable` with:
-    - strong header style
-    - alternating row shading
-    - right-aligned currency columns
-    - explicit totals row
-  - Use real line-item data for subtotal; only use proposal total fallback when no items exist.
-- File: `src/components/proposals/utils/pdf/contentSections.ts`
-  - Stop parsing synthetic concatenated text for proposal sections.
-  - Accept structured section values and render only non-empty sections.
-  - Remove the automatic “No items & services provided” text entirely.
+### 1. Add fallback item for proposals with no saved items
+**File: `src/components/proposals/ProposalPdfGenerator.tsx`**
+- When `items` array is empty but `proposal.amount > 0`, auto-create a single fallback item:
+  - Description: "Project Services"
+  - Quantity: 1
+  - Unit Price: proposal.amount
+  - Amount: proposal.amount
+- This ensures every proposal PDF shows at least one row in the items table
 
-4) Backward compatibility for already-broken proposals
-- Existing proposals created while bug existed have missing item rows in the database.
-- Since exact qty/price cannot be reconstructed from total alone, we’ll:
-  - show a clean fallback row (e.g., “Project services”) only when no line items exist, OR
-  - leave table empty but without unprofessional placeholder text.
-- After fix, newly created/updated proposals will persist real item rows correctly.
+### 2. Redesign the full PDF with branded professional style
+**File: `src/components/proposals/ProposalPdfGenerator.tsx`** (orchestrator)
+- Reorder sections for better flow:
+  1. Branded header (logo + company info + green accent bar)
+  2. Proposal number prominently displayed
+  3. Client info card (left) + Proposal details card (right) -- side by side
+  4. Items & Services table (always visible)
+  5. Pricing summary card (right-aligned totals box)
+  6. Scope / Timeline / Notes sections with branded card headers
+  7. Footer with company contact + page numbers
 
-Validation plan (end-to-end)
-1. Create a new proposal with at least 2 items.
-2. Confirm backend request to `proposal_items` succeeds (no 400).
-3. Generate PDF and verify Description + Qty + Unit Price + Amount are present.
-4. Edit same proposal, change quantities/prices, regenerate PDF, verify updates.
-5. Check an older broken proposal to ensure graceful fallback formatting (no “No items & services provided” wording).
+**File: `src/components/proposals/utils/pdf/pricingSection.ts`**
+- Always render the items table (never skip it)
+- Use bold green header row with white text
+- Alternating row shading (light green stripes)
+- Right-aligned currency columns
+- Add a subtotal row inside the table
+- Move the totals summary box directly below the table
 
-Technical notes
-- No database migration is required; schema already supports line items.
-- Main issue is application code writing invalid columns and swallowing failures.
-- This fix aligns with the current structured model (`scope/timeline/notes` on proposal, line items in `proposal_items`).
+**File: `src/components/proposals/utils/pdf/headerSection.ts`**
+- Add proposal number display below the "PROPOSAL" title
+- Tighten spacing for a more compact, professional header
+
+**File: `src/components/proposals/utils/pdf/clientSection.ts`**
+- Slightly taller card to accommodate all client fields
+- Consistent font sizing
+
+**File: `src/components/proposals/utils/pdf/proposalSection.ts`**
+- Remove the "Status" line from the PDF (matching the invoice PDF change)
+
+**File: `src/components/proposals/utils/pdf/contentSections.ts`**
+- No changes needed (already clean)
+
+### 3. Files to modify (6 files total)
+1. `src/components/proposals/ProposalPdfGenerator.tsx` -- fallback item logic + pass proposal_number
+2. `src/components/proposals/utils/pdf/pricingSection.ts` -- always show table, improved styling
+3. `src/components/proposals/utils/pdf/headerSection.ts` -- add proposal number
+4. `src/components/proposals/utils/pdf/proposalSection.ts` -- remove status line
+5. `src/components/proposals/utils/pdf/clientSection.ts` -- minor spacing fix
+6. `src/components/proposals/utils/pdf/contentSections.ts` -- no functional changes, just ensure clean rendering
+
+### Technical Details
+
+**Fallback item logic (in ProposalPdfGenerator.tsx):**
+```text
+if items is empty AND proposal.amount > 0:
+  items = [{ description: "Project Services", quantity: 1, unit_price: proposal.amount, amount: proposal.amount }]
+```
+
+**Items table (in pricingSection.ts):**
+- Always render autoTable regardless of items length
+- If items is truly empty AND amount is 0, show single row "No services listed" with $0.00
+
+**No database changes required.** The fix is purely in the PDF rendering layer.
+
