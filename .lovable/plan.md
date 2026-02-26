@@ -1,74 +1,68 @@
 
 
-# Fix Proposal PDF: Show Items Always + Branded Professional Redesign
+# Redesign Proposal PDF to Match HTML Template Exactly
 
-## Root Cause (Confirmed via Database)
+## Problem
+The current PDF output doesn't match the HTML template you provided (proposal_gli.txt). Several layout differences and missing fields need to be fixed.
 
-The item persistence fix from earlier IS working -- the newest proposal (PROP-MM3L6PV5) has 2 items saved correctly in the database. However, the older proposal being tested (PROP-MM3JSJ7N) was created before the fix and has **zero items in the database**. The current PDF code skips the items table entirely when the array is empty.
+## Key Differences Found
+
+Comparing your uploaded PDF (current output) vs the HTML template:
+
+1. **Meta card is missing "Status"** -- was removed in a prior change, but the template includes it (e.g., "Pending Approval")
+2. **Items table missing row numbers (#)** -- template has a "#" column as the first column
+3. **Section ordering is wrong** -- currently: Items Table -> Totals Box -> Scope -> Timeline -> Notes. Template shows: Items Table -> Scope -> Timeline -> Totals Box -> Notes
+4. **Totals box position** -- should appear AFTER scope/timeline, not immediately after the items table
+5. **"Scope of Services" label** -- currently used as the items table header, but in the template it's the table section title with subtitle "Detailed breakdown of work to be completed" (this part looks correct in code but may not render)
 
 ## Plan
 
-### 1. Add fallback item for proposals with no saved items
-**File: `src/components/proposals/ProposalPdfGenerator.tsx`**
-- When `items` array is empty but `proposal.amount > 0`, auto-create a single fallback item:
-  - Description: "Project Services"
-  - Quantity: 1
-  - Unit Price: proposal.amount
-  - Amount: proposal.amount
-- This ensures every proposal PDF shows at least one row in the items table
-
-### 2. Redesign the full PDF with branded professional style
-**File: `src/components/proposals/ProposalPdfGenerator.tsx`** (orchestrator)
-- Reorder sections for better flow:
-  1. Branded header (logo + company info + green accent bar)
-  2. Proposal number prominently displayed
-  3. Client info card (left) + Proposal details card (right) -- side by side
-  4. Items & Services table (always visible)
-  5. Pricing summary card (right-aligned totals box)
-  6. Scope / Timeline / Notes sections with branded card headers
-  7. Footer with company contact + page numbers
-
-**File: `src/components/proposals/utils/pdf/pricingSection.ts`**
-- Always render the items table (never skip it)
-- Use bold green header row with white text
-- Alternating row shading (light green stripes)
-- Right-aligned currency columns
-- Add a subtotal row inside the table
-- Move the totals summary box directly below the table
-
-**File: `src/components/proposals/utils/pdf/headerSection.ts`**
-- Add proposal number display below the "PROPOSAL" title
-- Tighten spacing for a more compact, professional header
-
+### 1. Re-add Status to meta card
 **File: `src/components/proposals/utils/pdf/clientSection.ts`**
-- Slightly taller card to accommodate all client fields
-- Consistent font sizing
+- Add a 4th row to the meta card: `{ label: "STATUS", value: proposal.status }` with capitalized display
+- Increase meta card height from 44 to 54 to fit
 
-**File: `src/components/proposals/utils/pdf/proposalSection.ts`**
-- Remove the "Status" line from the PDF (matching the invoice PDF change)
+### 2. Add row number (#) column to items table
+**File: `src/components/proposals/utils/pdf/pricingSection.ts`**
+- Add "#" as first column header
+- Prepend row index (1, 2, 3...) to each body row
+- Adjust column widths: # column narrow (~8%), Description ~44%, Qty ~12%, Unit Price ~18%, Amount ~18%
 
+### 3. Restructure section ordering -- separate totals from items
+**File: `src/components/proposals/utils/pdf/pricingSection.ts`**
+- Split into two exports: `addServicesTable` (just the table) and `addTotalsBox` (just the dark green totals summary)
+- This allows the orchestrator to place them in the correct order
+
+**File: `src/components/proposals/utils/pdfSections.ts`**
+- Export the new `addTotalsBox` function
+
+**File: `src/components/proposals/ProposalPdfGenerator.tsx`**
+- Reorder to: Header -> Client/Title -> Items Table -> Scope/Timeline -> Totals Box -> Terms/Notes -> Footer
+
+### 4. Ensure all content sections render correctly
 **File: `src/components/proposals/utils/pdf/contentSections.ts`**
-- No changes needed (already clean)
+- No structural changes needed, just ensure scope and timeline render before the totals box
+- Split notes into a separate export so it can go after totals
 
-### 3. Files to modify (6 files total)
-1. `src/components/proposals/ProposalPdfGenerator.tsx` -- fallback item logic + pass proposal_number
-2. `src/components/proposals/utils/pdf/pricingSection.ts` -- always show table, improved styling
-3. `src/components/proposals/utils/pdf/headerSection.ts` -- add proposal number
-4. `src/components/proposals/utils/pdf/proposalSection.ts` -- remove status line
-5. `src/components/proposals/utils/pdf/clientSection.ts` -- minor spacing fix
-6. `src/components/proposals/utils/pdf/contentSections.ts` -- no functional changes, just ensure clean rendering
+## Files to Modify (5 files)
 
-### Technical Details
+| File | Change |
+|------|--------|
+| `clientSection.ts` | Re-add Status row to meta card |
+| `pricingSection.ts` | Add # column, split into table + totals functions |
+| `contentSections.ts` | Split notes from scope/timeline for reordering |
+| `pdfSections.ts` | Export new split functions |
+| `ProposalPdfGenerator.tsx` | Reorder sections to match template |
 
-**Fallback item logic (in ProposalPdfGenerator.tsx):**
+## Section Order (After Fix)
 ```text
-if items is empty AND proposal.amount > 0:
-  items = [{ description: "Project Services", quantity: 1, unit_price: proposal.amount, amount: proposal.amount }]
+1. Dark green header (logo, company name, contact)
+2. Title section (Official Proposal, title, client, meta card with status)
+3. Items & Services table (with # column)
+4. Project Details (scope with checkmarks)
+5. Estimated Timeline
+6. Totals box (Subtotal, Tax, Total Investment)
+7. Terms & Conditions (notes)
+8. Footer (thank you + page numbers)
 ```
-
-**Items table (in pricingSection.ts):**
-- Always render autoTable regardless of items length
-- If items is truly empty AND amount is 0, show single row "No services listed" with $0.00
-
-**No database changes required.** The fix is purely in the PDF rendering layer.
 
