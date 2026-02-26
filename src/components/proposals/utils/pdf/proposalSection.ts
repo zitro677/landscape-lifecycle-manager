@@ -29,7 +29,5 @@ export const addProposalDetailsSection = (
   doc.text(`Issue: ${formatDate(proposal.issue_date)}`, rightColumn + 6, rightYPosition);
   rightYPosition += 5;
   doc.text(`Valid: ${formatDate(proposal.valid_until)}`, rightColumn + 6, rightYPosition);
-  rightYPosition += 5;
-  doc.text(`Status: ${proposal.status || "Draft"}`, rightColumn + 6, rightYPosition);
   return startY;
 };
