@@ -7,6 +7,12 @@ interface ContentSectionsData {
   notes?: string | null;
 }
 
+/**
+ * Adds Scope (Project Details) with checkmark bullets + Timeline.
+ * This renders on the LEFT side conceptually, but in PDF we render full-width
+ * since PDF doesn't support side-by-side grid easily.
+ * The totals box is placed by the orchestrator after this.
+ */
 export const addScopeAndTimeline = (
   doc: jsPDF,
   data: { scope?: string | null; timeline?: string | null },
@@ -17,55 +23,74 @@ export const addScopeAndTimeline = (
   let yPosition = startY;
   const pageHeight = doc.internal.pageSize.height;
 
-  // Scope section with accent left border
+  // Only render scope box if there's content
   if (data.scope && data.scope.trim()) {
     if (yPosition > pageHeight - 60) { doc.addPage(); yPosition = 20; }
 
-    const scopeLines = doc.splitTextToSize(data.scope.trim(), contentWidth - 14);
-    const boxH = Math.max(scopeLines.length * 5 + 20, 30);
+    const lines = data.scope.trim().split('\n').filter(l => l.trim());
+    // Calculate box height
+    let totalLineHeight = 0;
+    lines.forEach(line => {
+      const wrapped = doc.splitTextToSize(line.trim(), contentWidth * 0.55 - 24);
+      totalLineHeight += wrapped.length * 5 + 3;
+    });
 
+    const timelineExtra = (data.timeline && data.timeline.trim()) ? 18 : 0;
+    const boxH = Math.max(totalLineHeight + 28 + timelineExtra, 40);
+
+    // Background box with left accent border
     doc.setFillColor(248, 250, 249);
-    doc.roundedRect(margin, yPosition, contentWidth, boxH, 3, 3, 'F');
-
+    doc.roundedRect(margin, yPosition, contentWidth * 0.58, boxH, 4, 4, 'F');
+    // Accent left border
     doc.setFillColor(82, 183, 136);
     doc.rect(margin, yPosition, 3, boxH, 'F');
 
-    doc.setFontSize(11);
+    // "Project Details" heading
+    let innerY = yPosition + 12;
+    doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(27, 67, 50);
-    doc.text("Project Details", margin + 10, yPosition + 8);
+    doc.text("Project Details", margin + 12, innerY);
 
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(60, 60, 60);
-    let bulletY = yPosition + 16;
-    const lines = data.scope.trim().split('\n').filter(l => l.trim());
+    // Scope items with checkmarks
+    innerY += 10;
     lines.forEach(line => {
-      if (bulletY > pageHeight - 20) { doc.addPage(); bulletY = 20; }
-      doc.setTextColor(82, 183, 136);
+      if (innerY > pageHeight - 20) { doc.addPage(); innerY = 20; }
+      // Checkmark
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
-      doc.text("✓", margin + 8, bulletY);
-      doc.setTextColor(60, 60, 60);
+      doc.setTextColor(82, 183, 136);
+      doc.text("✓", margin + 10, innerY);
+      // Text
+      doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      const wrappedLine = doc.splitTextToSize(line.trim(), contentWidth - 20);
-      doc.text(wrappedLine, margin + 14, bulletY);
-      bulletY += wrappedLine.length * 5 + 2;
+      doc.setTextColor(27, 67, 50);
+      const wrappedLine = doc.splitTextToSize(line.trim(), contentWidth * 0.55 - 28);
+      doc.text(wrappedLine, margin + 18, innerY);
+      innerY += wrappedLine.length * 5 + 3;
     });
 
+    // Timeline inside the scope box
+    if (data.timeline && data.timeline.trim()) {
+      innerY += 4;
+      doc.setDrawColor(216, 243, 220);
+      doc.setLineWidth(0.3);
+      doc.line(margin + 10, innerY, margin + contentWidth * 0.55 - 10, innerY);
+      innerY += 8;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'italic');
+      doc.setTextColor(108, 117, 125);
+      doc.text(`Estimated Timeline: ${data.timeline.trim()}`, margin + 10, innerY);
+    }
+
     yPosition += boxH + 6;
-  }
-
-  // Timeline
-  if (data.timeline && data.timeline.trim()) {
-    if (yPosition > pageHeight - 40) { doc.addPage(); yPosition = 20; }
-
+  } else if (data.timeline && data.timeline.trim()) {
+    // Timeline only, no scope
     doc.setFontSize(9);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(108, 117, 125);
-    const timelineText = `Estimated Timeline: ${data.timeline.trim()}`;
-    const tLines = doc.splitTextToSize(timelineText, contentWidth - 4);
-    doc.text(tLines, margin + 4, yPosition);
-    yPosition += tLines.length * 5 + 8;
+    doc.text(`Estimated Timeline: ${data.timeline.trim()}`, margin, yPosition);
+    yPosition += 12;
   }
 
   doc.setTextColor(0, 0, 0);
@@ -81,27 +106,30 @@ export const addNotesSection = (
 ) => {
   let yPosition = startY;
   const pageHeight = doc.internal.pageSize.height;
+  const pageWidth = doc.internal.pageSize.width;
 
   if (notes && notes.trim()) {
     if (yPosition > pageHeight - 60) { doc.addPage(); yPosition = 20; }
 
+    // Cream background band (full width)
     doc.setFillColor(248, 250, 249);
     doc.setDrawColor(216, 243, 220);
-
     const notesLines = doc.splitTextToSize(notes.trim(), contentWidth - 10);
-    const notesH = notesLines.length * 5 + 18;
+    const notesH = notesLines.length * 5 + 26;
+    doc.rect(0, yPosition - 4, pageWidth, notesH + 4, 'FD');
 
-    doc.rect(0, yPosition - 4, doc.internal.pageSize.width, notesH + 4, 'FD');
-
-    doc.setFontSize(11);
+    // "Terms & Conditions" heading
+    doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(27, 67, 50);
-    doc.text("Terms & Conditions", margin, yPosition + 6);
+    doc.text("Terms & Conditions", pageWidth / 2, yPosition + 8, { align: "center" });
 
-    doc.setFontSize(8);
+    // Notes text centered
+    doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(108, 117, 125);
-    doc.text(notesLines, margin, yPosition + 14);
+    // Center the text block
+    doc.text(notesLines, pageWidth / 2, yPosition + 18, { align: "center" });
 
     yPosition += notesH + 6;
   }

@@ -7,7 +7,6 @@ import { format } from "date-fns";
 import {
   addHeaderSection,
   addClientInformationSection,
-  addProposalDetailsSection,
   addServicesTable,
   addTotalsBox,
   addScopeAndTimeline,
@@ -26,15 +25,13 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
 
-      // 1) Dark green branded header with logo + contact info
+      // 1) Header with logo + contact info
       let yPosition = await addHeaderSection(doc, "PROPOSAL", 0, pageWidth);
 
-      // 2) Proposal title section (left: title+client, right: meta card)
+      // 2) Title section (Official Proposal, title, client, meta card)
       yPosition = addClientInformationSection(doc, proposal, yPosition, margin);
-      // addProposalDetailsSection is now a no-op (merged into client section)
-      addProposalDetailsSection(doc, proposal, yPosition, pageWidth);
 
-      // 3) Build items array with fallback
+      // 3) Build items array
       let items = Array.isArray(proposal.items) && proposal.items.length > 0 && !(proposal.items[0] as any)?.message
         ? proposal.items
         : Array.isArray((proposal as any).proposal_items) && (proposal as any).proposal_items.length > 0
@@ -50,10 +47,11 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         }];
       }
 
-      // 4) Services table (items only)
+      // 4) Services table
       yPosition = addServicesTable(doc, margin, yPosition, contentWidth, items);
 
-      // 5) Scope / Timeline content sections
+      // 5) Scope/Timeline + Totals (side by side conceptually — scope left, totals right)
+      const scopeStartY = yPosition;
       yPosition = addScopeAndTimeline(
         doc,
         { scope: proposal.scope, timeline: proposal.timeline },
@@ -62,13 +60,18 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         yPosition
       );
 
-      // 6) Totals box (after scope/timeline)
-      yPosition = addTotalsBox(doc, Number(proposal.amount || 0), margin, yPosition, pageWidth);
+      // Place totals box on the right, aligned with scope start
+      const totalsY = scopeStartY;
+      addTotalsBox(doc, Number(proposal.amount || 0), margin, totalsY, pageWidth);
 
-      // 7) Terms & Conditions (notes)
+      // Make sure yPosition accounts for totals box height too
+      const totalsEndY = totalsY + 56;
+      if (totalsEndY > yPosition) yPosition = totalsEndY;
+
+      // 6) Terms & Conditions (notes)
       yPosition = addNotesSection(doc, proposal.notes, margin, contentWidth, yPosition);
 
-      // 6) Footer with thank you + page numbers
+      // 7) Footer
       if (yPosition > doc.internal.pageSize.height - 25) {
         doc.addPage();
         yPosition = 20;
