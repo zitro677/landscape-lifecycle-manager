@@ -23,7 +23,6 @@ const InvoicePdfGenerator = ({ invoice }: InvoicePdfGeneratorProps) => {
       
       doc.setFontSize(12);
       doc.text(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);
-      doc.text(`Status: ${invoice.status}`, pageWidth - 20, yPosition, { align: "right" });
       yPosition += 10;
       
       doc.text("Bill To:", 20, yPosition);
