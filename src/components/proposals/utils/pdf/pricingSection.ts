@@ -1,6 +1,6 @@
 
 import { jsPDF } from "jspdf";
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { formatCurrency } from "../formatters";
 
 export const addPricingSummarySection = (
@@ -21,7 +21,7 @@ export const addPricingSummarySection = (
     doc.text("Items & Services", margin, yPosition);
     yPosition += 4;
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPosition,
       head: [['#', 'Description', 'Qty', 'Unit Price', 'Amount']],
       body: (items && items.length > 0 ? items : [{ description: "No services listed", quantity: 0, unit_price: 0, amount: 0 }]).map((item: any, i: number) => [
