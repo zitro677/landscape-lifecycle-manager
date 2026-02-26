@@ -34,6 +34,13 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
       yPosition += 50;
 
       // 3) Items table + pricing summary
+      // Use proposal_items directly as fallback if items is broken/empty
+      const items = Array.isArray(proposal.items) && proposal.items.length > 0 && !(proposal.items[0] as any)?.message
+        ? proposal.items
+        : Array.isArray((proposal as any).proposal_items) && (proposal as any).proposal_items.length > 0
+          ? (proposal as any).proposal_items
+          : [];
+
       yPosition = addPricingSummarySection(
         doc,
         Number(proposal.amount || 0),
@@ -41,7 +48,7 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         yPosition,
         pageWidth,
         contentWidth,
-        proposal.items
+        items
       );
 
       // 4) Content sections (scope, timeline, notes) — structured, no parsing
