@@ -8,8 +8,10 @@ import {
   addHeaderSection,
   addClientInformationSection,
   addProposalDetailsSection,
-  addPricingSummarySection,
-  addContentSections,
+  addServicesTable,
+  addTotalsBox,
+  addScopeAndTimeline,
+  addNotesSection,
 } from "./utils/pdfSections";
 
 interface ProposalPdfGeneratorProps {
@@ -48,25 +50,23 @@ const ProposalPdfGenerator = ({ proposal }: ProposalPdfGeneratorProps) => {
         }];
       }
 
-      // 4) Services table + dark green totals box
-      yPosition = addPricingSummarySection(
-        doc,
-        Number(proposal.amount || 0),
-        margin,
-        yPosition,
-        pageWidth,
-        contentWidth,
-        items
-      );
+      // 4) Services table (items only)
+      yPosition = addServicesTable(doc, margin, yPosition, contentWidth, items);
 
-      // 5) Scope / Timeline / Notes content sections
-      yPosition = addContentSections(
+      // 5) Scope / Timeline content sections
+      yPosition = addScopeAndTimeline(
         doc,
-        { scope: proposal.scope, timeline: proposal.timeline, notes: proposal.notes },
+        { scope: proposal.scope, timeline: proposal.timeline },
         margin,
         contentWidth,
         yPosition
       );
+
+      // 6) Totals box (after scope/timeline)
+      yPosition = addTotalsBox(doc, Number(proposal.amount || 0), margin, yPosition, pageWidth);
+
+      // 7) Terms & Conditions (notes)
+      yPosition = addNotesSection(doc, proposal.notes, margin, contentWidth, yPosition);
 
       // 6) Footer with thank you + page numbers
       if (yPosition > doc.internal.pageSize.height - 25) {

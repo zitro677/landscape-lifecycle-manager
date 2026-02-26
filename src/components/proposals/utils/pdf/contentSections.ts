@@ -7,9 +7,9 @@ interface ContentSectionsData {
   notes?: string | null;
 }
 
-export const addContentSections = (
+export const addScopeAndTimeline = (
   doc: jsPDF,
-  data: ContentSectionsData,
+  data: { scope?: string | null; timeline?: string | null },
   margin: number,
   contentWidth: number,
   startY: number
@@ -17,28 +17,24 @@ export const addContentSections = (
   let yPosition = startY;
   const pageHeight = doc.internal.pageSize.height;
 
-  // Scope section with accent left border (matching HTML .scope-box)
+  // Scope section with accent left border
   if (data.scope && data.scope.trim()) {
     if (yPosition > pageHeight - 60) { doc.addPage(); yPosition = 20; }
 
     const scopeLines = doc.splitTextToSize(data.scope.trim(), contentWidth - 14);
     const boxH = Math.max(scopeLines.length * 5 + 20, 30);
 
-    // Light background
     doc.setFillColor(248, 250, 249);
     doc.roundedRect(margin, yPosition, contentWidth, boxH, 3, 3, 'F');
 
-    // Green left accent bar
-    doc.setFillColor(82, 183, 136); // --accent
+    doc.setFillColor(82, 183, 136);
     doc.rect(margin, yPosition, 3, boxH, 'F');
 
-    // Title
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(27, 67, 50);
     doc.text("Project Details", margin + 10, yPosition + 8);
 
-    // Content with checkmark bullets
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(60, 60, 60);
@@ -59,7 +55,7 @@ export const addContentSections = (
     yPosition += boxH + 6;
   }
 
-  // Timeline (italic, muted, inside scope area if present)
+  // Timeline
   if (data.timeline && data.timeline.trim()) {
     if (yPosition > pageHeight - 40) { doc.addPage(); yPosition = 20; }
 
@@ -72,15 +68,27 @@ export const addContentSections = (
     yPosition += tLines.length * 5 + 8;
   }
 
-  // Terms & Notes in footer-style section
-  if (data.notes && data.notes.trim()) {
+  doc.setTextColor(0, 0, 0);
+  return yPosition;
+};
+
+export const addNotesSection = (
+  doc: jsPDF,
+  notes: string | null | undefined,
+  margin: number,
+  contentWidth: number,
+  startY: number
+) => {
+  let yPosition = startY;
+  const pageHeight = doc.internal.pageSize.height;
+
+  if (notes && notes.trim()) {
     if (yPosition > pageHeight - 60) { doc.addPage(); yPosition = 20; }
 
-    // Light background band
     doc.setFillColor(248, 250, 249);
     doc.setDrawColor(216, 243, 220);
 
-    const notesLines = doc.splitTextToSize(data.notes.trim(), contentWidth - 10);
+    const notesLines = doc.splitTextToSize(notes.trim(), contentWidth - 10);
     const notesH = notesLines.length * 5 + 18;
 
     doc.rect(0, yPosition - 4, doc.internal.pageSize.width, notesH + 4, 'FD');
@@ -99,5 +107,18 @@ export const addContentSections = (
   }
 
   doc.setTextColor(0, 0, 0);
+  return yPosition;
+};
+
+// Backward-compatible wrapper
+export const addContentSections = (
+  doc: jsPDF,
+  data: ContentSectionsData,
+  margin: number,
+  contentWidth: number,
+  startY: number
+) => {
+  let yPosition = addScopeAndTimeline(doc, data, margin, contentWidth, startY);
+  yPosition = addNotesSection(doc, data.notes, margin, contentWidth, yPosition);
   return yPosition;
 };

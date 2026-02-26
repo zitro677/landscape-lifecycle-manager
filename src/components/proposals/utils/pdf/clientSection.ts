@@ -20,7 +20,7 @@ export const addClientInformationSection = (
   // Light cream background band
   doc.setFillColor(248, 250, 249);
   doc.setDrawColor(216, 243, 220);
-  doc.rect(0, yPosition - 4, pageWidth, 52, 'FD');
+  doc.rect(0, yPosition - 4, pageWidth, 60, 'FD');
 
   // Left side: "OFFICIAL PROPOSAL" label
   const leftX = margin;
@@ -50,7 +50,7 @@ export const addClientInformationSection = (
   const metaBoxWidth = 72;
   const metaBoxX = pageWidth - margin - metaBoxWidth;
   const metaBoxY = yPosition;
-  const metaBoxH = 44;
+  const metaBoxH = 54;
 
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(216, 243, 220);
@@ -64,6 +64,7 @@ export const addClientInformationSection = (
     { label: "PROPOSAL #", value: proposal.proposal_number || "—" },
     { label: "DATE ISSUED", value: formatDate(proposal.issue_date) },
     { label: "VALID UNTIL", value: formatDate(proposal.valid_until) },
+    { label: "STATUS", value: (proposal.status || "Draft").toUpperCase() },
   ];
 
   metaRows.forEach((row, i) => {
@@ -87,5 +88,5 @@ export const addClientInformationSection = (
   });
 
   doc.setTextColor(0, 0, 0);
-  return startY + 54;
+  return startY + 64;
 };
