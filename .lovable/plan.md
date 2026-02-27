@@ -1,18 +1,46 @@
 
 
-# Improve Header Gradient in Proposal PDF
+# Redesign Invoice PDF to Match Proposal PDF Style
 
-## Current State
-The header uses a simple two-block approach: a dark green rectangle covering the full width, then a lighter green rectangle overlapping the right 45%. This creates a hard edge at the 55% mark rather than a smooth gradient.
+## Overview
+Rewrite `InvoicePdfGenerator.tsx` to use the same professional branded design as the proposal PDF, reusing shared utility functions where possible and adapting the layout for invoice-specific data.
 
-## Proposed Change
+## Layout Structure (matching proposal PDF)
 
-**File: `src/components/proposals/utils/pdf/headerSection.ts`**
+1. **Gradient Header** - Reuse `addHeaderSection()` with title "INVOICE"
+2. **Title/Meta Section** - New invoice-specific section with:
+   - Left side: "OFFICIAL INVOICE" label, Invoice number as title, "Bill To:" client info (name, address, email)
+   - Right side: Meta card with Invoice #, Issue Date, Due Date, Status badge
+3. **Services Table** - Reuse `addServicesTable()` with invoice items
+4. **Totals Box + Notes side-by-side** - Notes on the left (if any), Totals box on the right using `addTotalsBox()`
+5. **Footer** - "Thank you" message + page numbers, same as proposal
 
-Replace the current two-rectangle approach with a multi-strip gradient that smoothly transitions from dark green (#1B4332) to medium green (#2D6A4F) to accent green (#40916C) across the header width. Since jsPDF doesn't support native gradients, we simulate it by drawing ~20 thin vertical strips, each with an interpolated color between the start and end values. This produces a visually smooth gradient effect matching the HTML template's `linear-gradient(135deg, #1b4332, #2d6a4f)`.
+## Files to Modify
 
-### Technical Details
-- Draw 20 vertical strips across the header width
-- Interpolate RGB values from (27, 67, 50) on the left to (45, 106, 79) in the middle to (64, 145, 108) on the right
-- Remove the current hard-edged two-rectangle approach
-- No other files need changes
+### 1. `src/components/invoices/InvoicePdfGenerator.tsx` (full rewrite)
+- Import shared functions: `addHeaderSection`, `addServicesTable`, `addTotalsBox`, `addNotesSection`
+- Import `formatDate` from proposal formatters
+- Build the same layout sequence as proposal but adapted for invoice fields:
+  - Use `invoice.invoice_number` instead of proposal title
+  - Use `invoice.issue_date` and `invoice.due_date` instead of issue/valid dates
+  - Show client address/email on the left side
+  - Use `invoice.status` for the status badge
+- Build items array from `invoice.items` with fallback to single "Services" row
+- Use the same totals box with tax calculation
+- Add notes section if invoice has notes
+- Add footer with page numbers
+
+### No new files needed
+All shared PDF utilities already exist and are reusable. The invoice generator just needs to call them with invoice data instead of proposal data.
+
+## Technical Details
+
+| Section | Function | Source |
+|---------|----------|--------|
+| Header | `addHeaderSection(doc, "INVOICE", 0, pageWidth)` | Shared |
+| Client/Meta | Custom inline (similar to `addClientInformationSection` but for invoice fields) | New inline code |
+| Table | `addServicesTable(doc, margin, y, contentWidth, items)` | Shared |
+| Totals | `addTotalsBox(doc, amount, margin, y, pageWidth)` | Shared |
+| Notes | `addNotesSection(doc, notes, margin, contentWidth, y)` | Shared |
+| Footer | Inline (same pattern as proposal) | Copied pattern |
+
