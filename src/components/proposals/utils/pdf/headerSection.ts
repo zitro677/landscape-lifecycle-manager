@@ -24,12 +24,19 @@ const getImageDataUrl = (url: string): Promise<string> => {
 export const addHeaderSection = async (doc: jsPDF, title: string, yPositionInitial: number, pageWidth: number) => {
   const headerHeight = 38;
 
-  // Gradient background: dark green to medium green
-  doc.setFillColor(27, 67, 50);
-  doc.rect(0, 0, pageWidth, headerHeight, 'F');
-  // Lighter overlay on right half
-  doc.setFillColor(45, 106, 79);
-  doc.rect(pageWidth * 0.55, 0, pageWidth * 0.45, headerHeight, 'F');
+  // Smooth gradient background using vertical strips
+  const strips = 30;
+  const stripWidth = pageWidth / strips;
+  const startColor = { r: 27, g: 67, b: 50 };
+  const endColor = { r: 64, g: 145, b: 108 };
+  for (let i = 0; i < strips; i++) {
+    const t = i / (strips - 1);
+    const r = Math.round(startColor.r + (endColor.r - startColor.r) * t);
+    const g = Math.round(startColor.g + (endColor.g - startColor.g) * t);
+    const b = Math.round(startColor.b + (endColor.b - startColor.b) * t);
+    doc.setFillColor(r, g, b);
+    doc.rect(i * stripWidth, 0, stripWidth + 0.5, headerHeight, 'F');
+  }
 
   // Logo
   const logoSize = 20;
