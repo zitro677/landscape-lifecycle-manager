@@ -1,46 +1,34 @@
 
 
-# Redesign Invoice PDF to Match Proposal PDF Style
+# Change Invoice & Proposal Number Format to Year-Sequential
 
-## Overview
-Rewrite `InvoicePdfGenerator.tsx` to use the same professional branded design as the proposal PDF, reusing shared utility functions where possible and adapting the layout for invoice-specific data.
+## Current State
+- **Invoices**: `INV-2026-{random4digits}` (random, not sequential)
+- **Proposals**: `PROP-{base36timestamp}` (timestamp-based, not sequential)
 
-## Layout Structure (matching proposal PDF)
+## New Format
+- **Invoices**: `INV-2026-1001`, `INV-2026-1002`, ...
+- **Proposals**: `PROP-2026-1001`, `PROP-2026-1002`, ...
 
-1. **Gradient Header** - Reuse `addHeaderSection()` with title "INVOICE"
-2. **Title/Meta Section** - New invoice-specific section with:
-   - Left side: "OFFICIAL INVOICE" label, Invoice number as title, "Bill To:" client info (name, address, email)
-   - Right side: Meta card with Invoice #, Issue Date, Due Date, Status badge
-3. **Services Table** - Reuse `addServicesTable()` with invoice items
-4. **Totals Box + Notes side-by-side** - Notes on the left (if any), Totals box on the right using `addTotalsBox()`
-5. **Footer** - "Thank you" message + page numbers, same as proposal
+Each year resets to 1001. The next number is determined by querying the database for the highest existing number in the current year.
 
-## Files to Modify
+## Files to Modify (3 files)
 
-### 1. `src/components/invoices/InvoicePdfGenerator.tsx` (full rewrite)
-- Import shared functions: `addHeaderSection`, `addServicesTable`, `addTotalsBox`, `addNotesSection`
-- Import `formatDate` from proposal formatters
-- Build the same layout sequence as proposal but adapted for invoice fields:
-  - Use `invoice.invoice_number` instead of proposal title
-  - Use `invoice.issue_date` and `invoice.due_date` instead of issue/valid dates
-  - Show client address/email on the left side
-  - Use `invoice.status` for the status badge
-- Build items array from `invoice.items` with fallback to single "Services" row
-- Use the same totals box with tax calculation
-- Add notes section if invoice has notes
-- Add footer with page numbers
+### 1. `src/components/invoices/form/hooks/useInvoiceDetails.ts`
+- Replace random generation with a DB query: fetch invoices where `invoice_number LIKE 'INV-{year}-%'`, extract the max sequential number, and use max+1 (or 1001 if none exist).
 
-### No new files needed
-All shared PDF utilities already exist and are reusable. The invoice generator just needs to call them with invoice data instead of proposal data.
+### 2. `src/components/invoices/form/hooks/useInvoiceSubmission.ts`
+- Same change to its `generateInvoiceNumber` function (duplicate of the above).
 
-## Technical Details
+### 3. `src/components/proposals/api/create/createProposal.ts`
+- Replace `PROP-${Date.now().toString(36).toUpperCase()}` with a DB query: fetch proposals where `proposal_number LIKE 'PROP-{year}-%'`, extract the max sequential number, use max+1 or 1001.
 
-| Section | Function | Source |
-|---------|----------|--------|
-| Header | `addHeaderSection(doc, "INVOICE", 0, pageWidth)` | Shared |
-| Client/Meta | Custom inline (similar to `addClientInformationSection` but for invoice fields) | New inline code |
-| Table | `addServicesTable(doc, margin, y, contentWidth, items)` | Shared |
-| Totals | `addTotalsBox(doc, amount, margin, y, pageWidth)` | Shared |
-| Notes | `addNotesSection(doc, notes, margin, contentWidth, y)` | Shared |
-| Footer | Inline (same pattern as proposal) | Copied pattern |
+### Also update fallback in `useInvoiceMutations.ts`
+- Change the fallback `INV-${Date.now()}` to use the same sequential logic or at minimum match the new format pattern.
+
+## Approach
+For each, create an async helper that:
+1. Queries the relevant table filtering by `invoice_number ILIKE 'INV-{year}-%'` (or `proposal_number ILIKE 'PROP-{year}-%'`)
+2. Extracts the numeric suffix from each match
+3. Returns `{PREFIX}-{year}-{max + 1}` or `{PREFIX}-{year}-1001` if no matches
 
