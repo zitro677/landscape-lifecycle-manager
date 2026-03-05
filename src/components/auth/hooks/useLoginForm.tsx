@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+
 import { toast } from "sonner";
 
 export const useLoginForm = () => {
@@ -32,25 +32,29 @@ export const useLoginForm = () => {
     checkUserCount();
   }, []);
 
-  // Handle Google login using Lovable managed OAuth
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       setErrorMessage(null);
-      
-      console.log("Starting Google login with Lovable managed OAuth...");
-      
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
+        },
       });
-      
-      if (error) {
-        console.error("Google login error:", error);
-        throw error;
+
+      if (error) throw error;
+
+      if (data?.url) {
+        const oauthUrl = new URL(data.url);
+        const allowedHosts = ["accounts.google.com"];
+        if (!allowedHosts.some(host => oauthUrl.hostname === host)) {
+          throw new Error("Invalid OAuth redirect URL");
+        }
+        window.location.href = data.url;
       }
-      
-      console.log("Google OAuth initiated successfully");
-      // The redirect will happen automatically
     } catch (error: any) {
       console.error("Google login error:", error);
       setErrorMessage(error.message || "Failed to login with Google");
