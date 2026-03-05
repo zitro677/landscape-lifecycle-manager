@@ -6,7 +6,11 @@ import { Pencil, Trash2 } from "lucide-react";
 export const expenseColumns: ColumnDef<Expense>[] = [
   {
     accessorKey: "id",
-    header: "ID",
+    header: "#",
+    cell: ({ row }) => {
+      const id = row.getValue<string>("id");
+      return id.substring(0, 6).toUpperCase();
+    },
   },
   {
     accessorKey: "date",
