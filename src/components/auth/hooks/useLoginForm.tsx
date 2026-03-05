@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
+import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
 export const useLoginForm = () => {
@@ -37,24 +37,11 @@ export const useLoginForm = () => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://landscape.arkanatech.net",
-          skipBrowserRedirect: true,
-        },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: "https://landscape.arkanatech.net",
       });
 
       if (error) throw error;
-
-      if (data?.url) {
-        const oauthUrl = new URL(data.url);
-        const allowedHosts = ["accounts.google.com", "eftohgkfjnmlxmkcbvxq.supabase.co"];
-        if (!allowedHosts.some(host => oauthUrl.hostname === host)) {
-          throw new Error("Invalid OAuth redirect URL");
-        }
-        window.location.href = data.url;
-      }
     } catch (error: any) {
       console.error("Google login error:", error);
       setErrorMessage(error.message || "Failed to login with Google");
