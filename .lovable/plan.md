@@ -1,46 +1,67 @@
 
 
-# Redesign Invoice PDF to Match Proposal PDF Style
+# Fix Google OAuth ERR_BLOCKED_BY_RESPONSE
 
-## Overview
-Rewrite `InvoicePdfGenerator.tsx` to use the same professional branded design as the proposal PDF, reusing shared utility functions where possible and adapting the layout for invoice-specific data.
+## Problem
+The `lovable.auth.signInWithOAuth` managed flow uses an auth-bridge that intercepts the OAuth redirect. When accessed from a custom domain or certain preview URLs, Google blocks the response because the redirect goes through an intermediate domain, triggering `ERR_BLOCKED_BY_RESPONSE`.
 
-## Layout Structure (matching proposal PDF)
+## Solution
+Bypass the auth-bridge by using `supabase.auth.signInWithOAuth` directly with `skipBrowserRedirect: true`, then manually redirect to the Google OAuth URL. This avoids the intermediate hop that Google blocks.
 
-1. **Gradient Header** - Reuse `addHeaderSection()` with title "INVOICE"
-2. **Title/Meta Section** - New invoice-specific section with:
-   - Left side: "OFFICIAL INVOICE" label, Invoice number as title, "Bill To:" client info (name, address, email)
-   - Right side: Meta card with Invoice #, Issue Date, Due Date, Status badge
-3. **Services Table** - Reuse `addServicesTable()` with invoice items
-4. **Totals Box + Notes side-by-side** - Notes on the left (if any), Totals box on the right using `addTotalsBox()`
-5. **Footer** - "Thank you" message + page numbers, same as proposal
+## What Changes
 
-## Files to Modify
+### 1. Update `src/components/auth/hooks/useLoginForm.tsx`
 
-### 1. `src/components/invoices/InvoicePdfGenerator.tsx` (full rewrite)
-- Import shared functions: `addHeaderSection`, `addServicesTable`, `addTotalsBox`, `addNotesSection`
-- Import `formatDate` from proposal formatters
-- Build the same layout sequence as proposal but adapted for invoice fields:
-  - Use `invoice.invoice_number` instead of proposal title
-  - Use `invoice.issue_date` and `invoice.due_date` instead of issue/valid dates
-  - Show client address/email on the left side
-  - Use `invoice.status` for the status badge
-- Build items array from `invoice.items` with fallback to single "Services" row
-- Use the same totals box with tax calculation
-- Add notes section if invoice has notes
-- Add footer with page numbers
+Replace the `handleGoogleLogin` function to:
+- Call `supabase.auth.signInWithOAuth` with `provider: "google"`, `redirectTo: window.location.origin`, and `skipBrowserRedirect: true`
+- Validate the returned URL hostname is `accounts.google.com` (security against open redirects)
+- Redirect with `window.location.href = data.url`
 
-### No new files needed
-All shared PDF utilities already exist and are reusable. The invoice generator just needs to call them with invoice data instead of proposal data.
+```typescript
+const handleGoogleLogin = async () => {
+  try {
+    setIsLoading(true);
+    setErrorMessage(null);
 
-## Technical Details
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
+      },
+    });
 
-| Section | Function | Source |
-|---------|----------|--------|
-| Header | `addHeaderSection(doc, "INVOICE", 0, pageWidth)` | Shared |
-| Client/Meta | Custom inline (similar to `addClientInformationSection` but for invoice fields) | New inline code |
-| Table | `addServicesTable(doc, margin, y, contentWidth, items)` | Shared |
-| Totals | `addTotalsBox(doc, amount, margin, y, pageWidth)` | Shared |
-| Notes | `addNotesSection(doc, notes, margin, contentWidth, y)` | Shared |
-| Footer | Inline (same pattern as proposal) | Copied pattern |
+    if (error) throw error;
+
+    if (data?.url) {
+      const oauthUrl = new URL(data.url);
+      const allowedHosts = ["accounts.google.com"];
+      if (!allowedHosts.some(host => oauthUrl.hostname === host)) {
+        throw new Error("Invalid OAuth redirect URL");
+      }
+      window.location.href = data.url;
+    }
+  } catch (error: any) {
+    console.error("Google login error:", error);
+    setErrorMessage(error.message || "Failed to login with Google");
+    toast.error("Failed to login with Google");
+    setIsLoading(false);
+  }
+};
+```
+
+### 2. Configure your published domain as redirect URL
+
+After the code change, you need to ensure your published domain is configured as an allowed redirect URL in your backend authentication settings. Your current published URL is `https://landscape-lifecycle-manager.lovable.app`.
+
+To check/update this:
+- Open the backend dashboard from your project settings
+- Go to Authentication > URL Configuration
+- Ensure **Site URL** is set to `https://landscape-lifecycle-manager.lovable.app`
+- Ensure **Redirect URLs** includes `https://landscape-lifecycle-manager.lovable.app/**`
+
+If you are using a custom domain, add that domain there as well.
+
+## Summary
+One file change (`useLoginForm.tsx`) to bypass the auth-bridge, plus verifying redirect URL configuration in the backend.
 
