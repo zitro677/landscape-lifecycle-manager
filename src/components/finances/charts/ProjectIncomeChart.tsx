@@ -30,34 +30,40 @@ const ProjectIncomeChart: React.FC<ProjectIncomeChartProps> = ({ data }) => {
           <CardTitle>Income by Project</CardTitle>
         </CardHeader>
         <CardContent className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={120}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => [`$${value.toLocaleString()}`, "Revenue"]}
-                contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.8)",
-                  backdropFilter: "blur(8px)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {data.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+              No income data available. Create invoices and mark them as Paid.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [`$${value.toLocaleString()}`, "Revenue"]}
+                  contentStyle={{
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    backdropFilter: "blur(8px)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(0, 0, 0, 0.05)",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
     </motion.div>

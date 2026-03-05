@@ -201,24 +201,28 @@ const generateMonthlyData = (invoices: any[], expenses: any[], year: number) => 
 };
 
 const generateProjectIncomeData = (projects: any[], invoices: any[]) => {
-  if (!projects.length && !invoices.length) return [];
+  const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
+  if (!projects.length && !paidInvoices.length) return [];
 
   const projectIncomeMap = new Map();
 
-  // Group invoices by project
-  invoices
-    .filter(inv => inv.project_id && inv.status === 'Paid')
-    .forEach(inv => {
+  // Group paid invoices by project
+  paidInvoices.forEach(inv => {
+    if (inv.project_id) {
       const project = projects.find(p => p.id === inv.project_id);
-      if (project) {
-        const currentAmount = projectIncomeMap.get(project.name) || 0;
-        projectIncomeMap.set(project.name, currentAmount + parseFloat(inv.amount.toString()));
-      }
-    });
+      const projectName = project ? project.name : 'Other Projects';
+      const currentAmount = projectIncomeMap.get(projectName) || 0;
+      projectIncomeMap.set(projectName, currentAmount + parseFloat(inv.amount.toString()));
+    } else {
+      // Invoices not linked to a project
+      const currentAmount = projectIncomeMap.get('Unassigned') || 0;
+      projectIncomeMap.set('Unassigned', currentAmount + parseFloat(inv.amount.toString()));
+    }
+  });
 
-  // Add projects without invoices but with budget (only if completed)
+  // Add projects with budget that have no paid invoices
   projects.forEach(project => {
-    if (!projectIncomeMap.has(project.name) && project.budget && project.status === 'Completed') {
+    if (!projectIncomeMap.has(project.name) && project.budget && parseFloat(project.budget.toString()) > 0) {
       projectIncomeMap.set(project.name, parseFloat(project.budget.toString()));
     }
   });
