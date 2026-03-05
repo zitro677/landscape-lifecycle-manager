@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Invoice } from "../types";
+import { generateSequentialNumber } from "@/lib/generateSequentialNumber";
 
 // Create invoice mutation
 export const useCreateInvoice = () => {
@@ -31,7 +32,7 @@ export const useCreateInvoice = () => {
         amount: invoice.amount || 0,
         issue_date: invoice.issue_date || new Date().toISOString().split('T')[0],
         due_date: invoice.due_date || new Date().toISOString().split('T')[0],
-        invoice_number: invoice.invoice_number || `INV-${Date.now()}`,
+        invoice_number: invoice.invoice_number || await generateSequentialNumber("invoices", "INV", "invoice_number"),
       };
       
       // Insert the invoice

@@ -4,6 +4,7 @@ import { getAuthenticatedUserId } from "../utils/sessionUtils";
 import { findClientByEmail, updateClient, createClient, getClientById } from "./clientOperations";
 import { addProposalLineItems } from "./proposalItemOperations";
 import { createProposalRecord, calculateTotalAmount } from "./proposalCreation";
+import { generateSequentialNumber } from "@/lib/generateSequentialNumber";
 
 /**
  * Creates a new proposal with all associated data (client, items, etc.)
@@ -36,7 +37,7 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     }
 
     const totalAmount = calculateTotalAmount(proposalData.items);
-    const proposalNumber = `PROP-${Date.now().toString(36).toUpperCase()}`;
+    const proposalNumber = await generateSequentialNumber("proposals", "PROP", "proposal_number");
 
     const proposal = await createProposalRecord({
       client_id: client.id,
