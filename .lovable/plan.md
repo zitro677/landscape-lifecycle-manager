@@ -1,57 +1,46 @@
 
 
-# Fix Google OAuth Redirect URLs
+# Redesign Invoice PDF to Match Proposal PDF Style
 
-## The Problem
-The Lovable Cloud UI only lets you select from two specific redirect URLs:
-- `https://oauth.lovable.app/callback`
-- `https://landscape-lifecycle-manager.lovable.app/~oauth/callback`
+## Overview
+Rewrite `InvoicePdfGenerator.tsx` to use the same professional branded design as the proposal PDF, reusing shared utility functions where possible and adapting the layout for invoice-specific data.
 
-You cannot use `https://eftohgkfjnmlxmkcbvxq.supabase.co/auth/v1/callback` because it's not an option in the UI. The code also needs to switch from direct Supabase auth to the Lovable managed auth client.
+## Layout Structure (matching proposal PDF)
 
-## What Needs to Change
+1. **Gradient Header** - Reuse `addHeaderSection()` with title "INVOICE"
+2. **Title/Meta Section** - New invoice-specific section with:
+   - Left side: "OFFICIAL INVOICE" label, Invoice number as title, "Bill To:" client info (name, address, email)
+   - Right side: Meta card with Invoice #, Issue Date, Due Date, Status badge
+3. **Services Table** - Reuse `addServicesTable()` with invoice items
+4. **Totals Box + Notes side-by-side** - Notes on the left (if any), Totals box on the right using `addTotalsBox()`
+5. **Footer** - "Thank you" message + page numbers, same as proposal
 
-### 1. Google Cloud Console — Update Authorized Redirect URIs
-Replace the current redirect URI with these two:
-- `https://oauth.lovable.app/callback`
-- `https://landscape-lifecycle-manager.lovable.app/~oauth/callback`
+## Files to Modify
 
-Also add your custom domain as an **Authorized JavaScript Origin**:
-- `https://landscape.arkanatech.net`
+### 1. `src/components/invoices/InvoicePdfGenerator.tsx` (full rewrite)
+- Import shared functions: `addHeaderSection`, `addServicesTable`, `addTotalsBox`, `addNotesSection`
+- Import `formatDate` from proposal formatters
+- Build the same layout sequence as proposal but adapted for invoice fields:
+  - Use `invoice.invoice_number` instead of proposal title
+  - Use `invoice.issue_date` and `invoice.due_date` instead of issue/valid dates
+  - Show client address/email on the left side
+  - Use `invoice.status` for the status badge
+- Build items array from `invoice.items` with fallback to single "Services" row
+- Use the same totals box with tax calculation
+- Add notes section if invoice has notes
+- Add footer with page numbers
 
-### 2. Lovable Cloud UI — Select the Redirect URLs
-Check **both** redirect URL checkboxes shown in the dialog, then click Save.
+### No new files needed
+All shared PDF utilities already exist and are reusable. The invoice generator just needs to call them with invoice data instead of proposal data.
 
-### 3. Code Change — Switch to Lovable Managed Auth
-Update `useLoginForm.tsx` to use `lovable.auth.signInWithOAuth` instead of `supabase.auth.signInWithOAuth`:
+## Technical Details
 
-```typescript
-import { lovable } from "@/integrations/lovable/index";
-
-// Replace the current handleGoogleLogin with:
-const handleGoogleLogin = async () => {
-  try {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: "https://landscape.arkanatech.net",
-    });
-
-    if (error) throw error;
-  } catch (error: any) {
-    console.error("Google login error:", error);
-    setErrorMessage(error.message || "Failed to login with Google");
-    toast.error("Failed to login with Google");
-    setIsLoading(false);
-  }
-};
-```
-
-This removes the manual URL validation and `skipBrowserRedirect` workaround, using Lovable's managed OAuth flow instead.
-
-## Summary of Steps
-1. Update Google Cloud Console redirect URIs to match the ones shown in Lovable Cloud
-2. Select both checkboxes in Lovable Cloud and save
-3. Update code to use `lovable.auth.signInWithOAuth`
+| Section | Function | Source |
+|---------|----------|--------|
+| Header | `addHeaderSection(doc, "INVOICE", 0, pageWidth)` | Shared |
+| Client/Meta | Custom inline (similar to `addClientInformationSection` but for invoice fields) | New inline code |
+| Table | `addServicesTable(doc, margin, y, contentWidth, items)` | Shared |
+| Totals | `addTotalsBox(doc, amount, margin, y, pageWidth)` | Shared |
+| Notes | `addNotesSection(doc, notes, margin, contentWidth, y)` | Shared |
+| Footer | Inline (same pattern as proposal) | Copied pattern |
 
