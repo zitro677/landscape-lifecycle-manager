@@ -38,7 +38,7 @@ export const useLoginForm = () => {
       setErrorMessage(null);
 
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: "https://landscape.arkanatech.net",
+        redirect_uri: window.location.origin,
       });
 
       if (error) throw error;
