@@ -1,46 +1,18 @@
 
 
-# Redesign Invoice PDF to Match Proposal PDF Style
+# Fix: Google Auth Redirect URL Configuration
 
-## Overview
-Rewrite `InvoicePdfGenerator.tsx` to use the same professional branded design as the proposal PDF, reusing shared utility functions where possible and adapting the layout for invoice-specific data.
+## What's Happening
+You're seeing "must select at least 1 redirect URL" because you need to **check/select** one of the redirect URL options shown in the dialog before clicking Save. It's a checkbox selection — you must tick at least one.
 
-## Layout Structure (matching proposal PDF)
+## What To Do (No code changes needed)
 
-1. **Gradient Header** - Reuse `addHeaderSection()` with title "INVOICE"
-2. **Title/Meta Section** - New invoice-specific section with:
-   - Left side: "OFFICIAL INVOICE" label, Invoice number as title, "Bill To:" client info (name, address, email)
-   - Right side: Meta card with Invoice #, Issue Date, Due Date, Status badge
-3. **Services Table** - Reuse `addServicesTable()` with invoice items
-4. **Totals Box + Notes side-by-side** - Notes on the left (if any), Totals box on the right using `addTotalsBox()`
-5. **Footer** - "Thank you" message + page numbers, same as proposal
+1. In the dialog you currently see, **select (check the checkbox) for the redirect URL** that matches what you added in Google Cloud Console: `https://eftohgkfjnmlxmkcbvxq.supabase.co/auth/v1/callback`
+2. Click **Save**
 
-## Files to Modify
+## About Propagation
+Google OAuth credential changes are **instant** — there's no propagation delay like DNS. Once you save your Client ID and Client Secret in both Google Cloud Console and Lovable Cloud, it should work immediately.
 
-### 1. `src/components/invoices/InvoicePdfGenerator.tsx` (full rewrite)
-- Import shared functions: `addHeaderSection`, `addServicesTable`, `addTotalsBox`, `addNotesSection`
-- Import `formatDate` from proposal formatters
-- Build the same layout sequence as proposal but adapted for invoice fields:
-  - Use `invoice.invoice_number` instead of proposal title
-  - Use `invoice.issue_date` and `invoice.due_date` instead of issue/valid dates
-  - Show client address/email on the left side
-  - Use `invoice.status` for the status badge
-- Build items array from `invoice.items` with fallback to single "Services" row
-- Use the same totals box with tax calculation
-- Add notes section if invoice has notes
-- Add footer with page numbers
-
-### No new files needed
-All shared PDF utilities already exist and are reusable. The invoice generator just needs to call them with invoice data instead of proposal data.
-
-## Technical Details
-
-| Section | Function | Source |
-|---------|----------|--------|
-| Header | `addHeaderSection(doc, "INVOICE", 0, pageWidth)` | Shared |
-| Client/Meta | Custom inline (similar to `addClientInformationSection` but for invoice fields) | New inline code |
-| Table | `addServicesTable(doc, margin, y, contentWidth, items)` | Shared |
-| Totals | `addTotalsBox(doc, amount, margin, y, pageWidth)` | Shared |
-| Notes | `addNotesSection(doc, notes, margin, contentWidth, y)` | Shared |
-| Footer | Inline (same pattern as proposal) | Copied pattern |
+## Summary
+This is just a UI validation — select the redirect URL checkbox, save, and you should be good to go. No code changes required.
 
