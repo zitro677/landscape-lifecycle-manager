@@ -1,9 +1,9 @@
-
 import { format, addDays } from "date-fns";
 import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { formSchema } from "../formSchema";
+import { generateSequentialNumber } from "@/lib/generateSequentialNumber";
 
 type PaymentTerm = {
   value: string;
@@ -21,13 +21,11 @@ export const useInvoiceDetails = (form: UseFormReturn<z.infer<typeof formSchema>
     { value: "dueOnReceipt", label: "Due on Receipt", days: 0 },
   ];
 
-  const generateInvoiceNumber = (): string => {
-    const year = new Date().getFullYear();
-    const randomPart = Math.floor(1000 + Math.random() * 9000);
-    return `INV-${year}-${randomPart}`;
-  };
+  const [invoiceNumber, setInvoiceNumber] = useState<string>("");
 
-  const [invoiceNumber] = useState<string>(generateInvoiceNumber());
+  useEffect(() => {
+    generateSequentialNumber("invoices", "INV", "invoice_number").then(setInvoiceNumber);
+  }, []);
 
   const updateDueDate = (termValue: string) => {
     const selectedTermOption = paymentTerms.find(term => term.value === termValue);

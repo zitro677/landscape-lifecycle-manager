@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCreateInvoice, useUpdateInvoice } from "../../useInvoices";
 import { formSchema, InvoiceFormValues } from "../formSchema";
+import { generateSequentialNumber } from "@/lib/generateSequentialNumber";
 
 export const useInvoiceSubmission = (
   form: UseFormReturn<z.infer<typeof formSchema>>, 
@@ -19,12 +20,6 @@ export const useInvoiceSubmission = (
   const createInvoice = useCreateInvoice();
   const updateInvoice = useUpdateInvoice();
   const isEditMode = Boolean(invoiceId);
-
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const randomPart = Math.floor(1000 + Math.random() * 9000);
-    return `INV-${year}-${randomPart}`;
-  };
 
   const onSubmit = async (values: InvoiceFormValues) => {
     setIsLoading(true);
@@ -46,7 +41,7 @@ export const useInvoiceSubmission = (
         user_id: user.id,
         client_id: values.client_id,
         project_id: null,
-        invoice_number: isEditMode ? undefined : generateInvoiceNumber(),
+        invoice_number: isEditMode ? undefined : await generateSequentialNumber("invoices", "INV", "invoice_number"),
         issue_date: values.invoiceDate,
         due_date: values.dueDate,
         amount: totalAmount,
