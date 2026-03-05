@@ -31,33 +31,39 @@ const ExpenseBreakdownChart: React.FC<ExpenseBreakdownChartProps> = ({ data }) =
           <CardTitle>Expense Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => [`$${value.toLocaleString()}`, "Expense"]}
-                contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.8)",
-                  backdropFilter: "blur(8px)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {data.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+              No expenses recorded yet. Add expenses in the Expense Tracker.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [`$${value.toLocaleString()}`, "Expense"]}
+                  contentStyle={{
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    backdropFilter: "blur(8px)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(0, 0, 0, 0.05)",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                  }}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
     </motion.div>
