@@ -24,7 +24,6 @@ export const getProposals = async (): Promise<Proposal[]> => {
           ),
           proposal_items (*)
         `)
-        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
