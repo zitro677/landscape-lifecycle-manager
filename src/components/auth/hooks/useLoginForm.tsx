@@ -37,13 +37,25 @@ export const useLoginForm = () => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // Always use Lovable managed OAuth flow for all environments
-      // redirect_uri tells the flow where to send the user after auth
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
+      const isLovableDomain = window.location.hostname.endsWith('.lovable.app') || 
+                               window.location.hostname.endsWith('.lovableproject.com');
 
-      if (error) throw error;
+      if (isLovableDomain) {
+        // Use Lovable managed OAuth flow on Lovable domains
+        const { error } = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
+        });
+        if (error) throw error;
+      } else {
+        // Use direct Supabase OAuth on custom domains (VPS)
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+      }
     } catch (error: any) {
       console.error("Google login error:", error);
       setErrorMessage(error.message || "Failed to login with Google");
