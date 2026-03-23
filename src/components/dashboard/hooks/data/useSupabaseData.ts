@@ -61,7 +61,6 @@ export const useSupabaseData = (lastUpdate: number) => {
                   email
                 )
               `)
-              .eq('user_id', userId)
               .order('issue_date', { ascending: false });
               
             if (error) {
