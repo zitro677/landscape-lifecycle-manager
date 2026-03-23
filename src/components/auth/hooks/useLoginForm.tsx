@@ -38,8 +38,11 @@ export const useLoginForm = () => {
       setErrorMessage(null);
 
       const redirectToOAuth = (url: string) => {
-        const targetWindow = window.top && window.top !== window ? window.top : window;
-        targetWindow.location.href = url;
+        if (window.top && window.top !== window) {
+          window.open(url, "_top");
+        } else {
+          window.location.href = url;
+        }
       };
 
       // Detect if we're on a custom domain (not *.lovable.app)
