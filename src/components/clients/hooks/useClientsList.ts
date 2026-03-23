@@ -36,7 +36,6 @@ export const useClientsList = () => {
         const { data, error } = await supabase
           .from("clients")
           .select("id, name, email, phone, address, created_at, updated_at")
-          .eq("user_id", session.user.id)
           .order("name");
 
         if (error) {

@@ -23,7 +23,6 @@ export const useInventory = () => {
         const { data: inventoryData, error } = await supabase
           .from('inventory')
           .select('*')
-          .eq('user_id', session.user.id)
           .order('name', { ascending: true });
 
         if (error) {

@@ -81,7 +81,6 @@ export const useSupabaseData = (lastUpdate: number) => {
             const { data, error } = await supabase
               .from('clients')
               .select('*')
-              .eq('user_id', userId)
               .order('name', { ascending: true });
               
             if (error) {
