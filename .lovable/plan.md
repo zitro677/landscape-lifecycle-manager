@@ -1,36 +1,57 @@
 
 
-# Google OAuth: ERR_BLOCKED_BY_RESPONSE en Preview
+# Plan: Shared Data Workspace with Admin Role Fix
 
-## Diagnóstico
+## Problem
+Currently, RLS policies use `auth.uid() = user_id` on every table, so each user only sees their own data. Both users need to see and work with the same data. Additionally, `zitro677.lo87@gmail.com` should be the admin.
 
-El error `ERR_BLOCKED_BY_RESPONSE` en el preview de Lovable es **esperado y no se puede solucionar con código**. Ocurre porque:
+## Changes
 
-1. El preview de Lovable corre dentro de un **iframe** embebido
-2. `accounts.google.com` envía headers de seguridad (`Cross-Origin-Opener-Policy`) que **bloquean** la carga desde iframes de otros dominios
-3. Esto es una restricción del navegador, no un bug del código
+### 1. Database Migration: Update RLS Policies for Shared Access
 
-El log confirma esto: `"Sign in was cancelled"` — el popup de Google se bloquea antes de abrirse.
+Update RLS policies on all data tables so **all authenticated users** can read, insert, update, and delete all rows (shared workspace). Affected tables:
+- `clients`, `projects`, `invoices`, `proposals`, `expenses`, `inventory`, `team_members`
+- Junction tables: `invoice_items`, `proposal_items`, `project_tasks`, `project_notes`, `project_materials`, `project_team`
 
-## Estado Actual del Código
+For each table, drop existing policies and create new ones using `true` for authenticated users instead of `auth.uid() = user_id`.
 
-El código ya está correcto para ambos escenarios:
-- **Lovable domains** → usa `lovable.auth.signInWithOAuth` (funciona en la URL publicada, no en el iframe del editor)
-- **Custom domain (VPS)** → usa `supabase.auth.signInWithOAuth` directo (funciona correctamente)
+For INSERT policies on tables with `user_id`, keep `WITH CHECK (auth.uid() = user_id)` so the creator's ID is properly recorded, but SELECT/UPDATE/DELETE will be open to all authenticated users.
 
-## No se necesitan cambios de código
+### 2. Database Migration: Fix Admin Role Assignment
 
-El login con Google **funciona** en estos entornos:
-1. **Tu VPS**: `https://landscape.arkanatech.net` — usa el flujo directo de Supabase
-2. **URL publicada**: `https://landscape-lifecycle-manager.lovable.app` — usa el flujo managed
+Update the `handle_new_user()` trigger function so that `zitro677.lo87@gmail.com` is always assigned admin. Also run a data update to set the correct roles for both users now.
 
-**Donde NO funciona** (y es normal):
-- El preview embebido del editor de Lovable (el iframe)
+### 3. Code Change: Clean Up Role Management
 
-## Cómo Verificar
+Simplify `useRoleManagement.tsx` to remove the hardcoded email checks for `greenplanetlandscaping01@gmail.com` (no longer admin). Keep only the standard role fetch logic.
 
-1. **En tu VPS**: Haz `git pull`, `npm run build`, copia `dist/` a Nginx, y prueba el botón de Google
-2. **En la URL publicada**: Abre `https://landscape-lifecycle-manager.lovable.app/auth` directamente en una pestaña nueva (no dentro del editor)
+### Technical Details
 
-No se requiere ningún cambio en el código.
+**RLS policy pattern for shared access (example for `projects`):**
+```sql
+-- SELECT: all authenticated users see all projects
+CREATE POLICY "Authenticated users can view all projects"
+  ON projects FOR SELECT TO authenticated USING (true);
+
+-- INSERT: user_id must match auth.uid()
+CREATE POLICY "Authenticated users can create projects"
+  ON projects FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+-- UPDATE/DELETE: all authenticated users
+CREATE POLICY "Authenticated users can update all projects"
+  ON projects FOR UPDATE TO authenticated USING (true);
+
+CREATE POLICY "Authenticated users can delete all projects"
+  ON projects FOR DELETE TO authenticated USING (true);
+```
+
+This pattern applies to all 13 tables listed above.
+
+**Role fix SQL:**
+```sql
+UPDATE user_roles SET role = 'admin' 
+  WHERE user_id = (SELECT id FROM auth.users WHERE email = 'zitro677.lo87@gmail.com');
+UPDATE user_roles SET role = 'read_only' 
+  WHERE user_id = (SELECT id FROM auth.users WHERE email = 'greenplanetlandscaping01@gmail.com');
+```
 
