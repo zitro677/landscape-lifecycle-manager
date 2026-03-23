@@ -37,25 +37,17 @@ export const useLoginForm = () => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      const redirectToOAuth = (url: string) => {
-        if (window.top && window.top !== window) {
-          window.open(url, "_top");
-        } else {
-          window.location.href = url;
-        }
-      };
-
       // Detect if we're on a custom domain (not *.lovable.app)
       const isCustomDomain =
         !window.location.hostname.includes("lovable.app") &&
         !window.location.hostname.includes("lovableproject.com");
 
       if (isCustomDomain) {
-        // Bypass Lovable auth-bridge — it doesn't exist on custom servers
+        // Custom domain: use direct Supabase OAuth to avoid auth-bridge 404
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: window.location.origin,
+            redirectTo: `${window.location.origin}`,
             skipBrowserRedirect: true,
           },
         });
@@ -71,41 +63,15 @@ export const useLoginForm = () => {
           if (!allowedHosts.some((host) => oauthUrl.hostname === host)) {
             throw new Error("Invalid OAuth redirect URL");
           }
-          redirectToOAuth(data.url);
+          window.location.href = data.url;
         }
       } else {
-        // On Lovable domains, use managed auth flow
-        const isEmbedded = window.top !== window;
+        // Lovable domains: use managed auth flow
+        const { error } = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
+        });
 
-        if (isEmbedded) {
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: {
-              redirectTo: window.location.origin,
-              skipBrowserRedirect: true,
-            },
-          });
-
-          if (error) throw error;
-
-          if (data?.url) {
-            const oauthUrl = new URL(data.url);
-            const allowedHosts = [
-              "accounts.google.com",
-              "eftohgkfjnmlxmkcbvxq.supabase.co",
-            ];
-            if (!allowedHosts.some((host) => oauthUrl.hostname === host)) {
-              throw new Error("Invalid OAuth redirect URL");
-            }
-            redirectToOAuth(data.url);
-          }
-        } else {
-          const { error } = await lovable.auth.signInWithOAuth("google", {
-            redirect_uri: window.location.origin,
-          });
-
-          if (error) throw error;
-        }
+        if (error) throw error;
       }
     } catch (error: any) {
       console.error("Google login error:", error);
