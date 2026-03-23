@@ -1,57 +1,52 @@
 
+Objetivo: corregir el modo “workspace compartido” para que `magonzalezgud@gmail.com` vea el mismo dashboard y los mismos registros que `zitro677.lo87@gmail.com`.
 
-# Plan: Shared Data Workspace with Admin Role Fix
+Diagnóstico
+- El backend ya está configurado como espacio compartido: las políticas permiten que cualquier usuario autenticado vea los registros.
+- El problema está en el frontend: todavía hay varias consultas que filtran por `user_id = session.user.id`, así que cada usuario solo carga “sus” filas aunque el backend permita ver todas.
+- Además, en la base aparece `magonzalezgud@gmail.com`; en tu mensaje escribiste `magonzalezud@gmail.com`. Conviene verificar el correo exacto, pero no cambia la causa principal.
 
-## Problem
-Currently, RLS policies use `auth.uid() = user_id` on every table, so each user only sees their own data. Both users need to see and work with the same data. Additionally, `zitro677.lo87@gmail.com` should be the admin.
+Qué voy a cambiar
+1. Quitar los filtros por `user_id` en todas las lecturas del dashboard
+- `src/components/dashboard/hooks/data/useProjectsData.ts`
+- `src/components/dashboard/hooks/data/useSupabaseData.ts`
+Así el dashboard cargará proyectos, clientes, facturas y propuestas de todo el workspace, no solo del usuario actual.
 
-## Changes
+2. Quitar los filtros por `user_id` en las pantallas principales relacionadas
+- `src/components/projects/hooks/useProjects.ts`
+- `src/components/projects/hooks/projectData.ts`
+- `src/components/clients/hooks/useClientsList.ts`
+- `src/components/invoices/hooks/useInvoicesList.ts`
+- `src/components/proposals/api/fetch/getProposals.ts`
+- `src/components/finances/inventory/hooks/useInventory.ts`
+Esto evita que el dashboard y los listados muestren datos distintos entre usuarios.
 
-### 1. Database Migration: Update RLS Policies for Shared Access
+3. Mantener `user_id` solo al crear registros
+- No voy a tocar los `insert` que guardan `user_id: session.user.id`.
+- Eso permite seguir registrando quién creó cada fila, sin romper el acceso compartido.
 
-Update RLS policies on all data tables so **all authenticated users** can read, insert, update, and delete all rows (shared workspace). Affected tables:
-- `clients`, `projects`, `invoices`, `proposals`, `expenses`, `inventory`, `team_members`
-- Junction tables: `invoice_items`, `proposal_items`, `project_tasks`, `project_notes`, `project_materials`, `project_team`
+4. Revisar puntos secundarios que pueden seguir aislando datos
+- Buscar más consultas con `.eq('user_id', session.user.id)` en módulos de propuestas, clientes, inventario y proyectos.
+- Ajustar solo las consultas de lectura/listado.
+- Mantener filtros por `id` u otras relaciones funcionales donde sí sean correctos.
 
-For each table, drop existing policies and create new ones using `true` for authenticated users instead of `auth.uid() = user_id`.
+5. Validación esperada después del cambio
+- Si `zitro677.lo87@gmail.com` crea o edita proyectos, clientes, facturas o propuestas, `magonzalezgud@gmail.com` deberá ver esos mismos datos en:
+  - Dashboard
+  - Projects
+  - Clients
+  - Invoices
+  - Proposals
 
-For INSERT policies on tables with `user_id`, keep `WITH CHECK (auth.uid() = user_id)` so the creator's ID is properly recorded, but SELECT/UPDATE/DELETE will be open to all authenticated users.
+Detalles técnicos
+- Hallé filtros activos por usuario en varios archivos críticos, por ejemplo:
+  - `useProjectsData.ts` → `.from('projects').select('*').eq('user_id', session.user.id)`
+  - `useSupabaseData.ts` → mismo patrón en `proposals`, `invoices`, `clients`
+  - `useInvoicesList.ts`, `useClientsList.ts`, `getProposals.ts`, `useInventory.ts` → mismo problema
+- La base ya contiene datos repartidos entre distintos `user_id`, así que en este momento cada usuario ve solo una parte del total.
+- No parece ser un problema de VPS ni de rebuild únicamente; aunque hagas rebuild, mientras ese filtro siga en el código, cada usuario seguirá viendo datos distintos.
 
-### 2. Database Migration: Fix Admin Role Assignment
-
-Update the `handle_new_user()` trigger function so that `zitro677.lo87@gmail.com` is always assigned admin. Also run a data update to set the correct roles for both users now.
-
-### 3. Code Change: Clean Up Role Management
-
-Simplify `useRoleManagement.tsx` to remove the hardcoded email checks for `greenplanetlandscaping01@gmail.com` (no longer admin). Keep only the standard role fetch logic.
-
-### Technical Details
-
-**RLS policy pattern for shared access (example for `projects`):**
-```sql
--- SELECT: all authenticated users see all projects
-CREATE POLICY "Authenticated users can view all projects"
-  ON projects FOR SELECT TO authenticated USING (true);
-
--- INSERT: user_id must match auth.uid()
-CREATE POLICY "Authenticated users can create projects"
-  ON projects FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-
--- UPDATE/DELETE: all authenticated users
-CREATE POLICY "Authenticated users can update all projects"
-  ON projects FOR UPDATE TO authenticated USING (true);
-
-CREATE POLICY "Authenticated users can delete all projects"
-  ON projects FOR DELETE TO authenticated USING (true);
-```
-
-This pattern applies to all 13 tables listed above.
-
-**Role fix SQL:**
-```sql
-UPDATE user_roles SET role = 'admin' 
-  WHERE user_id = (SELECT id FROM auth.users WHERE email = 'zitro677.lo87@gmail.com');
-UPDATE user_roles SET role = 'read_only' 
-  WHERE user_id = (SELECT id FROM auth.users WHERE email = 'greenplanetlandscaping01@gmail.com');
-```
-
+Resultado esperado
+- Un único dashboard compartido para todos los usuarios autenticados.
+- Misma información visible para admin y usuario normal.
+- `user_id` conservado solo como metadato del creador, no como filtro de visibilidad.
