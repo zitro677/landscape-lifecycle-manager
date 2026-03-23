@@ -32,7 +32,6 @@ export const useInvoicesList = () => {
                 email
               )
             `)
-            .eq('user_id', session.user.id)
             .order("issue_date", { ascending: false });
 
           if (error) {
@@ -53,7 +52,6 @@ export const useInvoicesList = () => {
             const { data: invoicesData, error: invoicesError } = await supabase
               .from("invoices")
               .select("*")
-              .eq('user_id', session.user.id)
               .order("issue_date", { ascending: false });
 
             if (invoicesError) {

@@ -35,7 +35,6 @@ export const useSupabaseData = (lastUpdate: number) => {
                   phone
                 )
               `)
-              .eq('user_id', userId)
               .order('created_at', { ascending: false });
               
             if (error) {
@@ -62,7 +61,6 @@ export const useSupabaseData = (lastUpdate: number) => {
                   email
                 )
               `)
-              .eq('user_id', userId)
               .order('issue_date', { ascending: false });
               
             if (error) {
@@ -83,7 +81,6 @@ export const useSupabaseData = (lastUpdate: number) => {
             const { data, error } = await supabase
               .from('clients')
               .select('*')
-              .eq('user_id', userId)
               .order('name', { ascending: true });
               
             if (error) {

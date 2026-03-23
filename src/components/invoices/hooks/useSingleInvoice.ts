@@ -32,7 +32,6 @@ export const useInvoice = (invoiceId?: string) => {
               items:invoice_items(*)
             `)
             .eq('id', invoiceId)
-            .eq('user_id', session.user.id)
             .single();
 
           if (error) throw error;
@@ -48,7 +47,6 @@ export const useInvoice = (invoiceId?: string) => {
             .from("invoices")
             .select("*")
             .eq('id', invoiceId)
-            .eq('user_id', session.user.id)
             .single();
             
           if (invoiceError) throw invoiceError;
