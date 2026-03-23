@@ -32,7 +32,6 @@ export const useInvoicesList = () => {
                 email
               )
             `)
-            .eq('user_id', session.user.id)
             .order("issue_date", { ascending: false });
 
           if (error) {
