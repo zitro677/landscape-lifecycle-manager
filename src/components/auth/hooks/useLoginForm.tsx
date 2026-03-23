@@ -37,42 +37,13 @@ export const useLoginForm = () => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // Detect if we're on a custom domain (not *.lovable.app)
-      const isCustomDomain =
-        !window.location.hostname.includes("lovable.app") &&
-        !window.location.hostname.includes("lovableproject.com");
+      // Always use Lovable managed OAuth flow for all environments
+      // redirect_uri tells the flow where to send the user after auth
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
 
-      if (isCustomDomain) {
-        // Custom domain: use direct Supabase OAuth to avoid auth-bridge 404
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: `${window.location.origin}`,
-            skipBrowserRedirect: true,
-          },
-        });
-
-        if (error) throw error;
-
-        if (data?.url) {
-          const oauthUrl = new URL(data.url);
-          const allowedHosts = [
-            "accounts.google.com",
-            "eftohgkfjnmlxmkcbvxq.supabase.co",
-          ];
-          if (!allowedHosts.some((host) => oauthUrl.hostname === host)) {
-            throw new Error("Invalid OAuth redirect URL");
-          }
-          window.location.href = data.url;
-        }
-      } else {
-        // Lovable domains: use managed auth flow
-        const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
-        });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
     } catch (error: any) {
       console.error("Google login error:", error);
       setErrorMessage(error.message || "Failed to login with Google");
