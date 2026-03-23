@@ -35,7 +35,6 @@ export const useSupabaseData = (lastUpdate: number) => {
                   phone
                 )
               `)
-              .eq('user_id', userId)
               .order('created_at', { ascending: false });
               
             if (error) {
