@@ -1,46 +1,36 @@
 
 
-# Redesign Invoice PDF to Match Proposal PDF Style
+# Google OAuth: ERR_BLOCKED_BY_RESPONSE en Preview
 
-## Overview
-Rewrite `InvoicePdfGenerator.tsx` to use the same professional branded design as the proposal PDF, reusing shared utility functions where possible and adapting the layout for invoice-specific data.
+## Diagnóstico
 
-## Layout Structure (matching proposal PDF)
+El error `ERR_BLOCKED_BY_RESPONSE` en el preview de Lovable es **esperado y no se puede solucionar con código**. Ocurre porque:
 
-1. **Gradient Header** - Reuse `addHeaderSection()` with title "INVOICE"
-2. **Title/Meta Section** - New invoice-specific section with:
-   - Left side: "OFFICIAL INVOICE" label, Invoice number as title, "Bill To:" client info (name, address, email)
-   - Right side: Meta card with Invoice #, Issue Date, Due Date, Status badge
-3. **Services Table** - Reuse `addServicesTable()` with invoice items
-4. **Totals Box + Notes side-by-side** - Notes on the left (if any), Totals box on the right using `addTotalsBox()`
-5. **Footer** - "Thank you" message + page numbers, same as proposal
+1. El preview de Lovable corre dentro de un **iframe** embebido
+2. `accounts.google.com` envía headers de seguridad (`Cross-Origin-Opener-Policy`) que **bloquean** la carga desde iframes de otros dominios
+3. Esto es una restricción del navegador, no un bug del código
 
-## Files to Modify
+El log confirma esto: `"Sign in was cancelled"` — el popup de Google se bloquea antes de abrirse.
 
-### 1. `src/components/invoices/InvoicePdfGenerator.tsx` (full rewrite)
-- Import shared functions: `addHeaderSection`, `addServicesTable`, `addTotalsBox`, `addNotesSection`
-- Import `formatDate` from proposal formatters
-- Build the same layout sequence as proposal but adapted for invoice fields:
-  - Use `invoice.invoice_number` instead of proposal title
-  - Use `invoice.issue_date` and `invoice.due_date` instead of issue/valid dates
-  - Show client address/email on the left side
-  - Use `invoice.status` for the status badge
-- Build items array from `invoice.items` with fallback to single "Services" row
-- Use the same totals box with tax calculation
-- Add notes section if invoice has notes
-- Add footer with page numbers
+## Estado Actual del Código
 
-### No new files needed
-All shared PDF utilities already exist and are reusable. The invoice generator just needs to call them with invoice data instead of proposal data.
+El código ya está correcto para ambos escenarios:
+- **Lovable domains** → usa `lovable.auth.signInWithOAuth` (funciona en la URL publicada, no en el iframe del editor)
+- **Custom domain (VPS)** → usa `supabase.auth.signInWithOAuth` directo (funciona correctamente)
 
-## Technical Details
+## No se necesitan cambios de código
 
-| Section | Function | Source |
-|---------|----------|--------|
-| Header | `addHeaderSection(doc, "INVOICE", 0, pageWidth)` | Shared |
-| Client/Meta | Custom inline (similar to `addClientInformationSection` but for invoice fields) | New inline code |
-| Table | `addServicesTable(doc, margin, y, contentWidth, items)` | Shared |
-| Totals | `addTotalsBox(doc, amount, margin, y, pageWidth)` | Shared |
-| Notes | `addNotesSection(doc, notes, margin, contentWidth, y)` | Shared |
-| Footer | Inline (same pattern as proposal) | Copied pattern |
+El login con Google **funciona** en estos entornos:
+1. **Tu VPS**: `https://landscape.arkanatech.net` — usa el flujo directo de Supabase
+2. **URL publicada**: `https://landscape-lifecycle-manager.lovable.app` — usa el flujo managed
+
+**Donde NO funciona** (y es normal):
+- El preview embebido del editor de Lovable (el iframe)
+
+## Cómo Verificar
+
+1. **En tu VPS**: Haz `git pull`, `npm run build`, copia `dist/` a Nginx, y prueba el botón de Google
+2. **En la URL publicada**: Abre `https://landscape-lifecycle-manager.lovable.app/auth` directamente en una pestaña nueva (no dentro del editor)
+
+No se requiere ningún cambio en el código.
 
